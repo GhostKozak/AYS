@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { DriversService } from './drivers.service';
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverDto } from './dto/update-driver.dto';
-import { ParseMongoIdPipe } from 'src/pipes/parse-mongo-id.pipe';
+import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
 
 @Controller('drivers')
 export class DriversController {
