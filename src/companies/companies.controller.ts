@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
-import { ParseMongoIdPipe } from 'src/pipes/parse-mongo-id.pipe';
+import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
 
 @Controller('companies')
 export class CompaniesController {
