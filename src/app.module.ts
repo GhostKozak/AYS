@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 import { DriversModule } from './drivers/drivers.module';
 import { CompaniesModule } from './companies/companies.module';
+import { VehiclesModule } from './vehicles/vehicles.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { CompaniesModule } from './companies/companies.module';
     MongooseModule.forRoot(process.env.MONGODB_URI as string),
     DriversModule,
     CompaniesModule,
+    VehiclesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
