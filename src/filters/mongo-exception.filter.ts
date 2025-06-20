@@ -1,26 +1,21 @@
-import { ExceptionFilter, Catch, ArgumentsHost, ConflictException } from '@nestjs/common';
-import { MongoServerError } from 'mongodb';
+import { ArgumentsHost, Catch, ConflictException, ExceptionFilter } from '@nestjs/common';
+import { MongoError } from 'mongodb';
 
-@Catch(MongoServerError)
+@Catch(MongoError)
 export class MongoExceptionFilter implements ExceptionFilter {
-  catch(exception: MongoServerError, host: ArgumentsHost) {
-    const ctx = host.switchToHttp();
-    const response = ctx.getResponse();
-
-    if (exception.code === 11000) {
-      // Unique constraint ihlali
-      response.status(409).json({
-        statusCode: 409,
-        message: 'Unique constraint violation',
-        error: 'Conflict',
-      });
-    } else {
-      // Diğer Mongo hataları
-      response.status(400).json({
-        statusCode: 400,
-        message: exception.message,
-        error: 'Bad Request',
-      });
+  catch(exception: MongoError, host: ArgumentsHost) {
+    const response = host.switchToHttp().getResponse();
+    switch (exception.code) {
+      case 11000:
+        throw new ConflictException('Yinelenen anahtar hatası.');
+      case 121: // Document validation failure
+        response.status(400).json({
+            statusCode: 400,
+            message: 'Döküman doğrulama hatası: ' + exception.message,
+        });
+        break;
+      default:
+        response.status(500).json({ message: 'Bilinmeyen bir veritabanı hatası oluştu.' });
     }
   }
 }
