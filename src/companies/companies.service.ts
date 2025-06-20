@@ -4,7 +4,6 @@ import { UpdateCompanyDto } from './dto/update-company.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Company, CompanyDocument } from './schemas/company.schema';
-import slugify from 'slugify';
 
 @Injectable()
 export class CompaniesService {
@@ -13,24 +12,8 @@ export class CompaniesService {
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
   ) {}
 
-  private normalizeName(name: string): string {
-    return slugify(name, {
-      lower: true,
-      strict: true,
-      remove: /[*+~.()'"!:@]/g,
-      replacement: '',
-    });
-  }
-
   async create(createCompanyDto: CreateCompanyDto): Promise<Company> {
-    const normalizedName = this.normalizeName(createCompanyDto.name);
-
-    const companyToCreate = {
-      ...createCompanyDto,
-      name_normalized: normalizedName,
-    };
-
-    const newCompany = new this.companyModel(companyToCreate);
+    const newCompany = new this.companyModel(createCompanyDto);
     return newCompany.save();
   }
 
@@ -49,15 +32,9 @@ export class CompaniesService {
   }
 
   async update(id: string, updateCompanyDto: UpdateCompanyDto): Promise<Company> {
-    const updatePayload: any = { ...updateCompanyDto };
-
-    if (updateCompanyDto.name) {
-      updatePayload.name_normalized = this.normalizeName(updateCompanyDto.name);
-    }
-    
     const updatedCompany = await this.companyModel.findByIdAndUpdate(
       id, 
-      updatePayload, 
+      updateCompanyDto, 
       { new: true }
     ).exec();
 

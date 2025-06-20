@@ -6,6 +6,7 @@ import { getModelToken, getConnectionToken } from '@nestjs/mongoose';
 import { Model, Connection, Types } from 'mongoose';
 import { Driver, DriverDocument } from '../src/drivers/schemas/driver.schema';
 import { Company, CompanyDocument } from '../src/companies/schemas/company.schema';
+import { MongoExceptionFilter } from '../src/filters/mongo-exception.filter';
 
 describe('DriversController (e2e)', () => {
   let app: INestApplication;
@@ -23,32 +24,29 @@ describe('DriversController (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe());
+    app.useGlobalFilters(new MongoExceptionFilter());
     await app.init();
 
     // Hem Driver hem de Company modellerini alıyoruz
     companyModel = moduleFixture.get<Model<CompanyDocument>>(getModelToken(Company.name));
     driverModel = moduleFixture.get<Model<DriverDocument>>(getModelToken(Driver.name));
     connection = moduleFixture.get<Connection>(getConnectionToken());
-
-    await connection.collection('companies').deleteMany({});
-    await connection.collection('drivers').deleteMany({});
   });
 
-  // Her testten önce, testte kullanmak için bir şirket oluşturuyoruz
   beforeEach(async () => {
-    await companyModel.deleteMany({});
-    await driverModel.deleteMany({});
-    testCompany = await companyModel.create({ name: 'Ana Nakliyat', name_normalized: 'ananakliyat' });
+    // Her testten önce yeni bir şirket oluştur
+    testCompany = await companyModel.create({ name: 'Test Şirketi' });
   });
 
-  // Her testten sonra hem drivers hem de companies koleksiyonlarını temizliyoruz
-  // afterEach(async () => {
-  //   await connection.collection('drivers').deleteMany({});
-  //   await connection.collection('companies').deleteMany({});
-  // });
+  afterEach(async () => {
+    await connection.collection('drivers').deleteMany({});
+    await connection.collection('companies').deleteMany({});
+    testCompany = undefined as any;
+  });
 
   afterAll(async () => {
-    await connection.close();
+    await connection.collection('drivers').deleteMany({});
+    await connection.collection('companies').deleteMany({});
     await app.close();
   });
 
