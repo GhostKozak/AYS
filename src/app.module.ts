@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { DriversModule } from './drivers/drivers.module';
 import { CompaniesModule } from './companies/companies.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
+import { TripsModule } from './trips/trips.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { VehiclesModule } from './vehicles/vehicles.module';
     DriversModule,
     CompaniesModule,
     VehiclesModule,
+    TripsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

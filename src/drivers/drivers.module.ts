@@ -14,5 +14,6 @@ import { Company, CompanySchema } from '../companies/schemas/company.schema';
   ],
   controllers: [DriversController],
   providers: [DriversService],
+  exports: [DriversService]
 })
 export class DriversModule {}
