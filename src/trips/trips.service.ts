@@ -18,23 +18,46 @@ export class TripsService {
   ) {}
 
   async create(createTripDto: CreateTripDto): Promise<Trip> {
-    const { driver: driverId, company: companyId, licence_plate, vehicle_type, ...tripDetails } = createTripDto;
+    const {
+      driver_phone_number,
+      driver_full_name,
+      company_name,
+      licence_plate,
+      vehicle_type,
+      ...tripDetails
+    } = createTripDto;
 
-    await this.driversService.findOne(driverId);
-    await this.companiesService.findOne(companyId);
+    // ADIM 1: Firma var mı? Yoksa oluştur.
+    const company = await this.companiesService.findOrCreateByName(company_name);
 
-    const vehicle = await this.vehiclesService.findOrCreateByPlate( // TODO: Vehicles service icinde findOrCreateByPlate metodu olustur
+    // ADIM 2: Şoför var mı? Yoksa oluştur.
+    let driver = await this.driversService.findByPhone(driver_phone_number);
+    if (!driver) {
+      // Eğer şoför yoksa ve DTO'da ismi gönderilmediyse bu bir hatadır.
+      if (!driver_full_name) {
+        throw new BadRequestException(
+          'Yeni şoför için "driver_full_name" alanı zorunludur.',
+        );
+      }
+      // Yeni şoförü, bulunan veya oluşturulan şirkete bağlayarak yarat.
+      driver = await this.driversService.create({
+        full_name: driver_full_name,
+        phone_number: driver_phone_number,
+        company: company._id.toString(),
+      });
+    }
+
+    // ADIM 3: Araç var mı? Yoksa oluştur.
+    const vehicle = await this.vehiclesService.findOrCreateByPlate(
       licence_plate,
       vehicle_type,
     );
-    if (!vehicle) {
-        throw new BadRequestException('Araç oluşturulamadı veya bulunamadı.');
-    }
 
+    // ADIM 4: Tüm parçalar hazır, şimdi seferi oluştur.
     const newTrip = new this.tripModel({
       ...tripDetails,
-      driver: driverId,
-      company: companyId,
+      driver: driver!._id,
+      company: company._id,
       vehicle: vehicle._id,
     });
 

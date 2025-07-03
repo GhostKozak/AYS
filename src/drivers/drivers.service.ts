@@ -1,25 +1,25 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverDto } from './dto/update-driver.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Driver, DriverDocument } from './schemas/driver.schema';
-import { Company, CompanyDocument } from '../companies/schemas/company.schema';
+import { CompaniesService } from '../companies/companies.service';
 
 @Injectable()
 export class DriversService {
 
   constructor(
     @InjectModel(Driver.name) private driverModel: Model<DriverDocument>,
-    @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
+    private readonly companiesService: CompaniesService
   ) {}
 
-  async create(createDriverDto: CreateDriverDto): Promise<Driver> {
-    const company = await this.companyModel.findById(createDriverDto.company);
-    
-    if (!company) {
-      throw new BadRequestException('Geçersiz şirket IDsi');
-    }
+  async findByPhone(phone: string): Promise<DriverDocument | null> {
+    return this.driverModel.findOne({ phone_number: phone }).populate('company').exec();
+  }
+
+  async create(createDriverDto: CreateDriverDto): Promise<DriverDocument> {
+    await this.companiesService.findOne(createDriverDto.company);
     
     const newDriver = new this.driverModel(createDriverDto);
     return newDriver.save();
