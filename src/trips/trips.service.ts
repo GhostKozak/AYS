@@ -7,6 +7,8 @@ import { Trip, TripDocument } from './schema/trips.schema';
 import { CompaniesService } from '../companies/companies.service';
 import { DriversService } from '../drivers/drivers.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { FilterTripDto } from './dto/filter-trip.dto';
 
 @Injectable()
 export class TripsService {
@@ -64,13 +66,42 @@ export class TripsService {
     return newTrip.save();
   }
 
-  async findAll(): Promise<Trip[]> {
-    return this.tripModel
-      .find({ deleted: false })
+  async findAll(paginationQuery: PaginationQueryDto, filterTripDto: FilterTripDto) {
+    const { limit, offset } = paginationQuery;
+    const { companyId, driverId, vehicleId, unload_status, search } = filterTripDto;
+
+    const query: any = { deleted: false };
+
+    if (companyId) query.company = companyId;
+    if (driverId) query.driver = driverId;
+    if (vehicleId) query.vehicle = vehicleId;
+    if (unload_status) query.unload_status = unload_status;
+
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      query.$or = [
+        { 'driver.full_name': searchRegex },
+        { 'company.name': searchRegex },
+        { 'vehicle.licence_plate': searchRegex },
+        { notes: searchRegex },
+      ];
+    }
+
+    const trips = await this.tripModel
+      .find(query)
+      .skip(offset ?? 0)
+      .limit(limit ?? 10)
       .populate('driver', 'full_name')
       .populate('company', 'name')
       .populate('vehicle', 'licence_plate type')
       .exec();
+
+    const count = await this.tripModel.countDocuments(query);
+
+    return {
+      data: trips,
+      count,
+    };
   }
 
   async findOne(id: string): Promise<Trip> {

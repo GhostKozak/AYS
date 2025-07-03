@@ -4,6 +4,8 @@ import { UpdateCompanyDto } from './dto/update-company.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Company, CompanyDocument } from './schemas/company.schema';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { FilterCompanyDto } from './dto/filter-company.dto';
 
 @Injectable()
 export class CompaniesService {
@@ -32,8 +34,27 @@ export class CompaniesService {
     return newCompany.save();
   }
 
-  async findAll(): Promise<Company[]> {
-    return this.companyModel.find({ deleted: false }).exec();
+  async findAll(paginationQuery: PaginationQueryDto, filterCompanyDto: FilterCompanyDto) {
+    const { limit, offset } = paginationQuery;
+    const { search } = filterCompanyDto;
+    const query: any = { deleted: false };
+
+    if (search) { 
+      query.name = { $regex: search, $options: 'i' };
+    }
+
+    const companies = await this.companyModel
+      .find(query)
+      .skip(offset ?? 0)
+      .limit(limit ?? 10)
+      .exec();
+
+    const count = await this.companyModel.countDocuments(query);
+
+    return {
+      data: companies,
+      count,
+    };
   }
 
   async findOne(id: string): Promise<Company> {
