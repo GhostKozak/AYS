@@ -3,6 +3,8 @@ import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { FilterCompanyDto } from './dto/filter-company.dto';
 
 @Controller('companies')
 export class CompaniesController {
@@ -19,8 +21,8 @@ export class CompaniesController {
   }
 
   @Get()
-  findAll() {
-    return this.companiesService.findAll();
+  findAll(@Query() paginationQuery: PaginationQueryDto, @Query() filterCompanyDto: FilterCompanyDto) {
+    return this.companiesService.findAll(paginationQuery, filterCompanyDto);
   }
 
   @Get(':id')

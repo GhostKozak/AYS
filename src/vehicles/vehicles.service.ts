@@ -5,6 +5,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Vehicle, VehicleDocument } from './schema/vehicles.schema';
 import { Model } from 'mongoose';
 import { VehicleType } from './enums/vehicleTypes';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { FilterVehicleDto } from './dto/filter-vehicle.dto';
 
 @Injectable()
 export class VehiclesService {
@@ -63,8 +65,31 @@ export class VehiclesService {
     return newVehicle.save();
   }
 
-  async findAll() {
-    return await this.vehicleModel.find({ deleted: false }).exec()
+  async findAll(paginationQuery: PaginationQueryDto, filterVehicleDto: FilterVehicleDto) {
+    const { limit, offset } = paginationQuery;
+    const { vehicle_type, search } = filterVehicleDto;
+    const query: any = { deleted: false };
+
+    if (vehicle_type) {
+      query.vehicle_type = vehicle_type;
+    }
+
+    if (search) {
+      query.licence_plate = { $regex: search.replace(/\s+/g, ''), $options: 'i' };
+    }
+
+    const vehicles = await this.vehicleModel
+      .find(query)
+      .skip(offset ?? 0)
+      .limit(limit ?? 10)
+      .exec();
+
+    const count = await this.vehicleModel.countDocuments(query);
+
+    return {
+      data: vehicles,
+      count,
+    };
   }
 
   async findOne(id: string) {
