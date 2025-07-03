@@ -12,6 +12,21 @@ export class CompaniesService {
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
   ) {}
 
+  async searchByName(name: string) {
+    return await this.companyModel.find({ name: new RegExp(name, 'i') }).exec();
+  }
+
+  async findOrCreateByName(name: string): Promise<CompanyDocument> {
+    const existingCompany = await this.companyModel.findOne({ name }).exec();
+
+    if (existingCompany) {
+      return existingCompany;
+    }
+
+    const newCompany = new this.companyModel({ name });
+    return newCompany.save();
+  }
+
   async create(createCompanyDto: CreateCompanyDto): Promise<Company> {
     const newCompany = new this.companyModel(createCompanyDto);
     return newCompany.save();

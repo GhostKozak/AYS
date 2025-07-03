@@ -8,6 +8,11 @@ import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
 export class DriversController {
   constructor(private readonly driversService: DriversService) {}
 
+  @Get('by-phone/:phone')
+  findDriverByPhone(@Param('phone') phone: string) {
+    return this.driversService.findByPhone(phone);
+  }
+
   @Post()
   create(@Body() createDriverDto: CreateDriverDto) {
     return this.driversService.create(createDriverDto);
