@@ -3,7 +3,7 @@ import { DriversService } from './drivers.service';
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverDto } from './dto/update-driver.dto';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
-import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { FilterDriverDto } from './dto/filter-driver.dto';
 
 @Controller('drivers')

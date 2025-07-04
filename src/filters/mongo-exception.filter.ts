@@ -9,7 +9,7 @@ export class MongoExceptionFilter implements ExceptionFilter {
 
     switch (exception.code) {
       case 11000:
-        const status = HttpStatus.CONFLICT; // 409
+        const status = HttpStatus.CONFLICT;
         const keyValue = (exception as any).keyValue;
         const field = Object.keys(keyValue)[0];
         const value = keyValue[field];
@@ -21,7 +21,7 @@ export class MongoExceptionFilter implements ExceptionFilter {
         });
         break;
 
-      case 121: // Bu bloğunuz zaten doğruydu.
+      case 121:
         response.status(HttpStatus.BAD_REQUEST).json({
             statusCode: HttpStatus.BAD_REQUEST,
             message: 'Döküman doğrulama hatası: ' + exception.message,

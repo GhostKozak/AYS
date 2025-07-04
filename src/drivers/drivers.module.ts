@@ -3,7 +3,7 @@ import { DriversService } from './drivers.service';
 import { DriversController } from './drivers.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Driver, DriverSchema } from './schemas/driver.schema';
-import { CompaniesModule } from 'src/companies/companies.module';
+import { CompaniesModule } from '../companies/companies.module';
 
 @Module({
   imports: [

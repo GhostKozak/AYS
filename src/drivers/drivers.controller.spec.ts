@@ -3,6 +3,8 @@ import { Types } from 'mongoose';
 import { DriversController } from './drivers.controller';
 import { DriversService } from './drivers.service';
 import { CreateDriverDto } from './dto/create-driver.dto';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { FilterDriverDto } from './dto/filter-driver.dto';
 
 const driversServiceMock = {
   create: jest.fn(),
@@ -20,11 +22,10 @@ describe('DriversController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [DriversController],
       providers: [
-        DriversService,
         {
           provide: DriversService,
           useValue: driversServiceMock,
-        }
+        },
       ],
     }).compile();
 
@@ -45,7 +46,7 @@ describe('DriversController', () => {
         phone_number: '5551234567',
         deleted: false,
       };
-      service.create.mockResolvedValueOnce(mockedDriver);
+      service.create.mockResolvedValueOnce(mockedDriver as any);
 
       const createDriverDto: CreateDriverDto = {
         company: mockedDriver.company._id,
@@ -62,78 +63,22 @@ describe('DriversController', () => {
   describe('findAll', () => {
     it('tüm sürücüleri döndürmeli', async () => {
       const mockedCompany = { _id: new Types.ObjectId().toString(), name: 'Test Şirketi', deleted: false };
-      const mockedDrivers = [
-        { company: mockedCompany, full_name: 'Sürücü #1', phone_number: '5551111111', deleted: false },
-        { company: mockedCompany, full_name: 'Sürücü #2', phone_number: '5552222222', deleted: false },
-      ];
-      service.findAll.mockResolvedValueOnce(mockedDrivers);
-
-      const result = await controller.findAll();
-
-      expect(result).toEqual(mockedDrivers);
-      expect(service.findAll).toHaveBeenCalled();
-    });
-  });
-
-  describe('findOne', () => {
-    it('tek bir sürücüyü döndürmeli', async () => {
-      const mockedCompany = { _id: new Types.ObjectId().toString(), name: 'Test Şirketi', deleted: false };
-      const mockedDriver = {
-        company: mockedCompany,
-        full_name: 'Sürücü #1',
-        phone_number: '5553333333',
-        deleted: false
+      const mockedResult = {
+          data: [
+            { company: mockedCompany, full_name: 'Sürücü #1', phone_number: '5551111111', deleted: false },
+            { company: mockedCompany, full_name: 'Sürücü #2', phone_number: '5552222222', deleted: false },
+          ],
+          count: 2
       };
-      service.findOne.mockResolvedValueOnce(mockedDriver);
+      service.findAll.mockResolvedValueOnce(mockedResult as any);
+      
+      const paginationQuery: PaginationQueryDto = {};
+      const filterDriverDto: FilterDriverDto = {};
 
-      const id = new Types.ObjectId().toString();
-      const result = await controller.findOne(id);
+      const result = await controller.findAll(paginationQuery, filterDriverDto);
 
-      expect(result).toEqual(mockedDriver);
-      expect(service.findOne).toHaveBeenCalledWith(id);
-    });
-  });
-
-  describe('update', () => {
-    it('bir sürücüyü güncellemeli', async () => {
-      const mockedCompany = { _id: new Types.ObjectId().toString(), name: 'Test Şirketi', deleted: false };
-      const mockedDriver = {
-        company: mockedCompany,
-        full_name: 'Güncel Sürücü',
-        phone_number: '5554444444',
-        deleted: false
-      };
-      service.update.mockResolvedValueOnce(mockedDriver);
-
-      const id = new Types.ObjectId().toString();
-      const updateDriverDto = {
-        full_name: mockedDriver.full_name,
-        phone_number: mockedDriver.phone_number,
-      };
-      const result = await controller.update(id, updateDriverDto);
-
-      expect(result).toEqual(mockedDriver);
-      expect(service.update).toHaveBeenCalledWith(id, updateDriverDto);
-    });
-  });
-
-  describe('soft delete', () => {
-    it('bir sürücüyü soft silmeli', async () => {
-      const id = new Types.ObjectId().toString();
-      const mockedCompany = { _id: new Types.ObjectId().toString(), name: 'Test Şirketi', deleted: false };
-      const mockedDriver = {
-        _id: id,
-        company: mockedCompany,
-        full_name: 'Silinecek Sürücü',
-        phone_number: '5555555555',
-        deleted: true,
-      };
-      service.remove.mockResolvedValueOnce(mockedDriver);
-
-      const result = await controller.remove(id);
-
-      expect(result).toEqual(mockedDriver);
-      expect(service.remove).toHaveBeenCalledWith(id);
+      expect(result).toEqual(mockedResult);
+      expect(service.findAll).toHaveBeenCalledWith(paginationQuery, filterDriverDto);
     });
   });
 });

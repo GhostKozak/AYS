@@ -28,37 +28,23 @@ export class VehiclesService {
     return createdVehicle.save();
   }
 
-  /**
-   * Verilen plakaya sahip bir araç bulur. Eğer bulamazsa,
-   * yeni bir tane oluşturur ve onu döndürür.
-   * Bu metod, TripsService tarafından akıcı bir kullanıcı deneyimi için kullanılır.
-   * @param licencePlate Aranacak veya oluşturulacak plaka
-   * @param type Eğer araç yeni oluşturulacaksa kullanılacak tip
-   * @returns {Promise<VehicleDocument>} Bulunan veya yeni oluşturulan araç dokümanı
-   */
   async findOrCreateByPlate(
     licencePlate: string,
     type?: VehicleType,
   ): Promise<VehicleDocument> {
     
-    // Plakayı arama ve kaydetme için standart bir formata getiriyoruz
-    // Örnek: " 34 ABC 123 " -> "34ABC123"
     const normalizedPlate = licencePlate.replace(/\s+/g, '').toUpperCase();
 
-    // 1. Bu normalize plakaya sahip bir araç var mı diye ara
     const existingVehicle = await this.vehicleModel.findOne({ licence_plate: normalizedPlate }).exec();
-
-    // 2. Eğer araç zaten varsa, onu geri döndür
+    
     if (existingVehicle) {
       this.logger.log(`Mevcut araç bulundu: ${normalizedPlate}`);
       return existingVehicle;
     }
 
-    // 3. Eğer araç yoksa, yeni bir tane oluştur
     this.logger.log(`Yeni araç oluşturuluyor: ${normalizedPlate}, Tipi: ${type || VehicleType.TRUCK}`);
     const newVehicle = new this.vehicleModel({
       licence_plate: normalizedPlate,
-      // Eğer DTO'dan bir tip gelmediyse, varsayılan olarak TIR ata
       type: type || VehicleType.TRUCK,
     });
 
