@@ -13,7 +13,7 @@ export class MongoExceptionFilter implements ExceptionFilter {
         const keyValue = (exception as any).keyValue;
         const field = Object.keys(keyValue)[0];
         const value = keyValue[field];
-        const message = `Bu ${field} ('${value}') zaten kullanımda. Lütfen başka bir değer deneyin.`;
+        const message = `This ${field} ('${value}') is already in use. Please try another value.`;
         
         response.status(status).json({
           statusCode: status,
@@ -24,14 +24,14 @@ export class MongoExceptionFilter implements ExceptionFilter {
       case 121:
         response.status(HttpStatus.BAD_REQUEST).json({
             statusCode: HttpStatus.BAD_REQUEST,
-            message: 'Döküman doğrulama hatası: ' + exception.message,
+            message: 'Document validation error: ' + exception.message,
         });
         break;
         
       default:
         response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
           statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: 'Bilinmeyen bir veritabanı hatası oluştu.' 
+          message: 'An unknown database error occurred.' 
         });
     }
   }

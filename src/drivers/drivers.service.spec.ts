@@ -46,16 +46,16 @@ describe('DriversService', () => {
     jest.clearAllMocks();
   });
 
-  it('tanımlı olmalı', () => {
+  it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
   describe('findAll', () => {
-    it('tüm sürücüleri döndürmeli', async () => {
+    it('should return all drivers', async () => {
       const mockedDrivers = {
         data: [
-          { company: new Types.ObjectId().toString(), full_name: 'Sürücü #1', phone_number: '5551111111', deleted: false },
-          { company: new Types.ObjectId().toString(), full_name: 'Sürücü #2', phone_number: '5552222222', deleted: false },
+          { company: new Types.ObjectId().toString(), full_name: 'Driver #1', phone_number: '5551111111', deleted: false },
+          { company: new Types.ObjectId().toString(), full_name: 'Driver #2', phone_number: '5552222222', deleted: false },
         ],
         count: 2
       };

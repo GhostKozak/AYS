@@ -32,7 +32,7 @@ describe('DriversController (e2e)', () => {
   });
 
   beforeEach(async () => {
-    testCompany = await companyModel.create({ name: 'Test Şirketi' });
+    testCompany = await companyModel.create({ name: 'Test Company' });
   });
 
   afterEach(async () => {
@@ -48,7 +48,7 @@ describe('DriversController (e2e)', () => {
   describe('POST /drivers', () => {
     it('should create a new driver', async () => {
       const createDriverDto = {
-        full_name: 'Ahmet Yılmaz',
+        full_name: 'John Doe',
         phone_number: '5551112233',
         company: testCompany._id.toString(),
       };
@@ -65,7 +65,7 @@ describe('DriversController (e2e)', () => {
     it('should fail to create a driver with a non-existent company ID', async () => {
       const nonExistentCompanyId = new Types.ObjectId().toHexString();
       const createDriverDto = {
-        full_name: 'Veli Demir',
+        full_name: 'Jane Smith',
         company: nonExistentCompanyId,
       };
 
@@ -78,7 +78,7 @@ describe('DriversController (e2e)', () => {
 
   describe('GET /drivers', () => {
     it('should return an array of drivers', async () => {
-      await driverModel.create({ full_name: 'Test Sürücü', company: testCompany._id });
+      await driverModel.create({ full_name: 'Test Driver', company: testCompany._id });
       const response = await request(app.getHttpServer())
         .get('/drivers')
         .expect(200);
@@ -92,7 +92,7 @@ describe('DriversController (e2e)', () => {
   describe('Soft deleted drivers', () => {
     let deletedDriver: DriverDocument;
     beforeEach(async () => {
-      deletedDriver = await driverModel.create({ full_name: 'Silinmiş Sürücü', company: testCompany._id, deleted: true });
+      deletedDriver = await driverModel.create({ full_name: 'Deleted Driver', company: testCompany._id, deleted: true });
     });
     it('should not list soft deleted drivers', async () => {
       const response = await request(app.getHttpServer())

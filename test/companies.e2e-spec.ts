@@ -35,8 +35,8 @@ describe('CompaniesController (e2e)', () => {
   });
 
   describe('POST /companies', () => {
-    it('isim ile yeni şirket oluşturur', async () => {
-      const companyDto = { name: 'Test Şirketi' };
+    it('creates a new company by name', async () => {
+      const companyDto = { name: 'Test Company' };
 
       const response = await request(app.getHttpServer())
         .post('/companies')
@@ -48,14 +48,14 @@ describe('CompaniesController (e2e)', () => {
     });
   });
 
-  describe('Mevcut şirket ile işlemler', () => {
+  describe('Operations with existing company', () => {
     let company: CompanyDocument;
 
     beforeEach(async () => {
-      company = await companyModel.create({ name: 'Mevcut Şirket' });
+      company = await companyModel.create({ name: 'Existing Company' });
     });
 
-    it('GET /companies - şirketleri listeler', async () => {
+    it('GET /companies - lists companies', async () => {
       const response = await request(app.getHttpServer())
         .get('/companies')
         .expect(200);
@@ -65,15 +65,15 @@ describe('CompaniesController (e2e)', () => {
       expect(response.body.data[0].name).toEqual(company.name);
     });
 
-    it('GET /companies/:id - id ile şirket getirir', async () => {
+    it('GET /companies/:id - gets company by id', async () => {
       const response = await request(app.getHttpServer())
         .get(`/companies/${company._id}`)
         .expect(200);
       expect(response.body.name).toEqual(company.name);
     });
 
-    it('PATCH /companies/:id - şirket günceller', async () => {
-      const updateDto = { name: 'Güncel İsim' };
+    it('PATCH /companies/:id - updates company', async () => {
+      const updateDto = { name: 'Updated Name' };
       const response = await request(app.getHttpServer())
         .patch(`/companies/${company._id}`)
         .send(updateDto)
@@ -82,14 +82,14 @@ describe('CompaniesController (e2e)', () => {
     });
   });
   
-  describe('Soft silinen şirketler', () => {
+  describe('Soft deleted companies', () => {
     let deletedCompany: CompanyDocument;
     beforeEach(async () => {
-      await companyModel.create({ name: 'Aktif Şirket' });
-      deletedCompany = await companyModel.create({ name: 'Silinecek Şirket', deleted: true });
+      await companyModel.create({ name: 'Active Company' });
+      deletedCompany = await companyModel.create({ name: 'Deleted Company', deleted: true });
     });
 
-    it('soft silinen şirket listede olmamalı', async () => {
+    it('soft deleted company should not be in the list', async () => {
       const response = await request(app.getHttpServer())
         .get('/companies')
         .expect(200);
