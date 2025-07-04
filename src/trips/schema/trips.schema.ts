@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { HydratedDocument, Types } from "mongoose";
-import { Company } from "src/companies/schemas/company.schema";
-import { Driver } from "src/drivers/schemas/driver.schema";
-import { Vehicle } from "src/vehicles/schema/vehicles.schema";
+import { Company } from "../../companies/schemas/company.schema";
+import { Driver } from "../../drivers/schemas/driver.schema";
+import { Vehicle } from "../../vehicles/schema/vehicles.schema";
 import { UnloadStatus } from "../enums/unloadStatus";
 
 export type TripDocument = HydratedDocument<Trip>;

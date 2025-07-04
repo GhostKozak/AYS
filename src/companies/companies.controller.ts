@@ -3,7 +3,7 @@ import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
-import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { FilterCompanyDto } from './dto/filter-company.dto';
 
 @Controller('companies')

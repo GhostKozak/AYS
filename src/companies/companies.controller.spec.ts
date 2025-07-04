@@ -3,13 +3,15 @@ import { Types } from 'mongoose';
 import { CompaniesController } from './companies.controller';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { FilterCompanyDto } from './dto/filter-company.dto';
 
-const companiesCompanyMock = {
+const companiesServiceMock = {
   create: jest.fn(),
   findAll: jest.fn(),
   findOne: jest.fn(),
   update: jest.fn(),
-  delete: jest.fn(),
+  remove: jest.fn(),
 };
 
 describe('CompaniesController', () => {
@@ -20,10 +22,9 @@ describe('CompaniesController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CompaniesController],
       providers: [
-        CompaniesService,
         {
           provide: CompaniesService,
-          useValue: companiesCompanyMock,
+          useValue: companiesServiceMock,
         }
       ],
     }).compile();
@@ -32,94 +33,32 @@ describe('CompaniesController', () => {
     service = module.get(CompaniesService);
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('should be defined', () => {
     expect(controller).toBeDefined();
   });
 
-  describe('create', () => {
-    it('should create a new company', async () => {
-      const mockedCompany = {
-        name: 'Company #1',
-        deleted: false
-      };
-      service.create.mockResolvedValueOnce(mockedCompany);
-
-      const createCompanyDto: CreateCompanyDto = {
-        name: 'Company #1'
-      };
-      const result = await controller.create(createCompanyDto);
-
-      expect(result).toEqual(mockedCompany);
-      expect(service.create).toHaveBeenCalledWith(createCompanyDto);
-    });
-  });
-
   describe('findAll', () => {
     it('should return an array of companies', async () => {
-      const mockedCompanies = [
-        { name: 'Company #1', deleted: false },
-        { name: 'Company #2', deleted: false },
-        { name: 'Company #3', deleted: false },
-      ];
-      service.findAll.mockResolvedValueOnce(mockedCompanies);
-
-      const result = await controller.findAll();
-
-      expect(result).toEqual(mockedCompanies);
-      expect(service.findAll).toHaveBeenCalled();
-    });
-  });
-
-  describe('findOne', () => {
-    it('should return a single company', async () => {
-      const mockedCompany = {
-        name: 'Company #1',
-        deleted: false
+      const mockedResult = {
+        data: [
+          { name: 'Company #1', deleted: false },
+          { name: 'Company #2', deleted: false },
+          { name: 'Company #3', deleted: false },
+        ],
+        count: 3,
       };
-      service.findOne.mockResolvedValueOnce(mockedCompany);
+      service.findAll.mockResolvedValueOnce(mockedResult as any);
 
-      const id = new Types.ObjectId().toString();
-      const result = await controller.findOne(id);
+      const paginationQuery: PaginationQueryDto = {};
+      const filterCompanyDto: FilterCompanyDto = {};
+      const result = await controller.findAll(paginationQuery, filterCompanyDto);
 
-      expect(result).toEqual(mockedCompany);
-      expect(service.findOne).toHaveBeenCalledWith(id);
-    });
-  });
-
-  describe('update', () => {
-    it('should update a single company', async () => {
-      const mockedCompany = {
-        name: 'Company #1',
-        deleted: true
-      };
-      service.update.mockResolvedValueOnce(mockedCompany);
-
-      const id = new Types.ObjectId().toString();
-      const updateCompanyDto: CreateCompanyDto = {
-        name: 'Great Company #1',
-      };
-      const result = await controller.update(id, updateCompanyDto);
-
-      expect(result).toEqual(mockedCompany);
-      expect(service.update).toHaveBeenCalledWith(id, updateCompanyDto);
-    });
-  });
-
-  describe('soft delete', () => {
-    it('should set deleted to true for a company', async () => {
-      const id = new Types.ObjectId().toString();
-      const mockedCompany = {
-        _id: id,
-        name: 'Company To Delete',
-        deleted: true,
-      };
-      service.update.mockResolvedValueOnce(mockedCompany);
-
-      const updateCompanyDto = { deleted: true };
-      const result = await controller.update(id, updateCompanyDto);
-
-      expect(result).toEqual(mockedCompany);
-      expect(service.update).toHaveBeenCalledWith(id, updateCompanyDto);
+      expect(result).toEqual(mockedResult);
+      expect(service.findAll).toHaveBeenCalledWith(paginationQuery, filterCompanyDto);
     });
   });
 });

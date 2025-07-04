@@ -29,19 +29,16 @@ export class TripsService {
       ...tripDetails
     } = createTripDto;
 
-    // ADIM 1: Firma var mı? Yoksa oluştur.
     const company = await this.companiesService.findOrCreateByName(company_name);
 
-    // ADIM 2: Şoför var mı? Yoksa oluştur.
     let driver = await this.driversService.findByPhone(driver_phone_number);
     if (!driver) {
-      // Eğer şoför yoksa ve DTO'da ismi gönderilmediyse bu bir hatadır.
       if (!driver_full_name) {
         throw new BadRequestException(
           'Yeni şoför için "driver_full_name" alanı zorunludur.',
         );
       }
-      // Yeni şoförü, bulunan veya oluşturulan şirkete bağlayarak yarat.
+
       driver = await this.driversService.create({
         full_name: driver_full_name,
         phone_number: driver_phone_number,
@@ -49,13 +46,11 @@ export class TripsService {
       });
     }
 
-    // ADIM 3: Araç var mı? Yoksa oluştur.
     const vehicle = await this.vehiclesService.findOrCreateByPlate(
       licence_plate,
       vehicle_type,
     );
 
-    // ADIM 4: Tüm parçalar hazır, şimdi seferi oluştur.
     const newTrip = new this.tripModel({
       ...tripDetails,
       driver: driver!._id,
