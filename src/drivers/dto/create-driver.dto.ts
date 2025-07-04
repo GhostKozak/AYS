@@ -2,7 +2,7 @@ import { IsMongoId, IsNotEmpty, IsOptional, IsString } from "class-validator";
 
 export class CreateDriverDto {
 
-    @IsMongoId({ message: 'Geçerli bir şirket IDsi girilmelidir.' })
+    @IsMongoId({ message: 'A valid company ID must be provided.' })
     @IsNotEmpty()
     company: string;
 

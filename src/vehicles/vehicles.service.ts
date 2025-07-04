@@ -38,11 +38,11 @@ export class VehiclesService {
     const existingVehicle = await this.vehicleModel.findOne({ licence_plate: normalizedPlate }).exec();
     
     if (existingVehicle) {
-      this.logger.log(`Mevcut araç bulundu: ${normalizedPlate}`);
+      this.logger.log(`Existing vehicle found: ${normalizedPlate}`);
       return existingVehicle;
     }
 
-    this.logger.log(`Yeni araç oluşturuluyor: ${normalizedPlate}, Tipi: ${type || VehicleType.TRUCK}`);
+    this.logger.log(`Creating new vehicle: ${normalizedPlate}, Type: ${type || VehicleType.TRUCK}`);
     const newVehicle = new this.vehicleModel({
       licence_plate: normalizedPlate,
       type: type || VehicleType.TRUCK,

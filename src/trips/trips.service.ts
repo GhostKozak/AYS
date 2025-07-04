@@ -35,7 +35,7 @@ export class TripsService {
     if (!driver) {
       if (!driver_full_name) {
         throw new BadRequestException(
-          'Yeni şoför için "driver_full_name" alanı zorunludur.',
+          '"driver_full_name" field is required for a new driver.',
         );
       }
 

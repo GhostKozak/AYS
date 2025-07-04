@@ -33,16 +33,16 @@ describe('DriversController', () => {
     service = module.get(DriversService);
   });
 
-  it('tanımlı olmalı', () => {
+  it('should be defined', () => {
     expect(controller).toBeDefined();
   });
 
   describe('create', () => {
-    it('yeni bir sürücü oluşturmalı', async () => {
-      const mockedCompany = { _id: new Types.ObjectId().toString(), name: 'Test Şirketi', deleted: false };
+    it('should create a new driver', async () => {
+      const mockedCompany = { _id: new Types.ObjectId().toString(), name: 'Test Company', deleted: false };
       const mockedDriver = {
         company: mockedCompany,
-        full_name: 'Sürücü #1',
+        full_name: 'Driver #1',
         phone_number: '5551234567',
         deleted: false,
       };
@@ -61,12 +61,12 @@ describe('DriversController', () => {
   });
 
   describe('findAll', () => {
-    it('tüm sürücüleri döndürmeli', async () => {
-      const mockedCompany = { _id: new Types.ObjectId().toString(), name: 'Test Şirketi', deleted: false };
+    it('should return all drivers', async () => {
+      const mockedCompany = { _id: new Types.ObjectId().toString(), name: 'Test Company', deleted: false };
       const mockedResult = {
           data: [
-            { company: mockedCompany, full_name: 'Sürücü #1', phone_number: '5551111111', deleted: false },
-            { company: mockedCompany, full_name: 'Sürücü #2', phone_number: '5552222222', deleted: false },
+            { company: mockedCompany, full_name: 'Driver #1', phone_number: '5551111111', deleted: false },
+            { company: mockedCompany, full_name: 'Driver #2', phone_number: '5552222222', deleted: false },
           ],
           count: 2
       };
