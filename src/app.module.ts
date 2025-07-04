@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DriversModule } from './drivers/drivers.module';
 import { CompaniesModule } from './companies/companies.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
@@ -16,7 +16,13 @@ import { TripsModule } from './trips/trips.module';
         ['.env.test.local'] : 
         ['.env', '.env.development.local'],
     }),
-    MongooseModule.forRoot(process.env.MONGODB_URI as string),
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.get<string>('MONGODB_URI'),
+      }),
+      inject: [ConfigService],
+    }),
     DriversModule,
     CompaniesModule,
     VehiclesModule,
