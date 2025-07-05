@@ -1,9 +1,12 @@
 import { ArgumentsHost, Catch, ConflictException, ExceptionFilter, HttpStatus } from '@nestjs/common';
 import { MongoError } from 'mongodb';
+import { I18nService } from 'nestjs-i18n';
 
 @Catch(MongoError)
 export class MongoExceptionFilter implements ExceptionFilter {
-  catch(exception: MongoError, host: ArgumentsHost) {
+  constructor(private readonly i18n: I18nService) {}
+
+  async catch(exception: MongoError, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
 
@@ -13,7 +16,9 @@ export class MongoExceptionFilter implements ExceptionFilter {
         const keyValue = (exception as any).keyValue;
         const field = Object.keys(keyValue)[0];
         const value = keyValue[field];
-        const message = `This ${field} ('${value}') is already in use. Please try another value.`;
+        const message = await this.i18n.translate('database.DUPLICATE_KEY', {
+          args: { field, value },
+        });
         
         response.status(status).json({
           statusCode: status,

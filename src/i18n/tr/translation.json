@@ -1,0 +1,28 @@
+{
+    "validation": {
+      "IS_NOT_EMPTY": "{property} alanı boş olamaz.",
+      "IS_STRING": "{property} alanı metin olmalıdır.",
+      "IS_MONGOID": "Geçerli bir MongoDB ID'si girilmelidir.",
+      "NEW_DRIVER_NAME_REQUIRED": "Yeni şoför için \"driver_full_name\" alanı zorunludur.",
+      "IS_ENUM": "{property} alanı şu değerlerden biri olmalıdır: {enum}.",
+      "MIN_LENGTH": "{property} alanı en az {min} karakter uzunluğunda olmalıdır.",
+      "IS_BOOLEAN": "{property} alanı boolean değer olmalıdır.",
+      "IS_POSITIVE": "{property} alanı pozitif bir sayı olmalıdır.",
+      "MIN": "{property} alanı en az {min} olmalıdır."
+    },
+    "database": {
+      "DUPLICATE_KEY": "Bu {field} ('{value}') zaten kullanımda. Lütfen başka bir değer deneyin."
+    },
+    "trip": {
+      "NOT_FOUND": "\"{id}\" ID'li sefer bulunamadı"
+    },
+    "company": {
+      "NOT_FOUND": "\"{id}\" ID'li şirket bulunamadı"
+    },
+    "driver": {
+      "NOT_FOUND": "\"{id}\" ID'li sürücü bulunamadı"
+    },
+    "vehicle": {
+      "NOT_FOUND": "\"{id}\" ID'li araç bulunamadı"
+    }
+  }

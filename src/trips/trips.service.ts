@@ -9,6 +9,7 @@ import { DriversService } from '../drivers/drivers.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { FilterTripDto } from './dto/filter-trip.dto';
+import { I18nService } from 'nestjs-i18n';
 
 @Injectable()
 export class TripsService {
@@ -17,6 +18,7 @@ export class TripsService {
     private readonly companiesService: CompaniesService,
     private readonly driversService: DriversService,
     private readonly vehiclesService: VehiclesService,
+    private readonly i18n: I18nService,
   ) {}
 
   async create(createTripDto: CreateTripDto): Promise<Trip> {
@@ -35,7 +37,7 @@ export class TripsService {
     if (!driver) {
       if (!driver_full_name) {
         throw new BadRequestException(
-          '"driver_full_name" field is required for a new driver.',
+          await this.i18n.translate('validation.NEW_DRIVER_NAME_REQUIRED'),
         );
       }
 
@@ -108,7 +110,9 @@ export class TripsService {
       .exec();
 
     if (!trip || trip.deleted) {
-      throw new NotFoundException(`Trip with ID "${id}" not found`);
+      throw new NotFoundException(
+        await this.i18n.translate('trip.NOT_FOUND', { args: { id } })
+      );
     }
 
     return trip;
@@ -124,7 +128,9 @@ export class TripsService {
     ).exec();
     
     if (!updatedTrip) {
-      throw new NotFoundException(`Trip with ID "${id}" not found`);
+      throw new NotFoundException(
+        await this.i18n.translate('trip.NOT_FOUND', { args: { id } })
+      );
     }
 
     return updatedTrip;
@@ -139,7 +145,9 @@ export class TripsService {
     ).exec();
 
     if (!deletedTrip) {
-      throw new NotFoundException(`Trip with ID "${id}" not found`);
+      throw new NotFoundException(
+        await this.i18n.translate('trip.NOT_FOUND', { args: { id } })
+      );
     }
 
     return deletedTrip;

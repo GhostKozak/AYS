@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -7,13 +7,15 @@ import { Model } from 'mongoose';
 import { VehicleType } from './enums/vehicleTypes';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { FilterVehicleDto } from './dto/filter-vehicle.dto';
+import { I18nService } from 'nestjs-i18n';
 
 @Injectable()
 export class VehiclesService {
   private readonly logger = new Logger(VehiclesService.name);
 
   constructor(
-    @InjectModel(Vehicle.name) private vehicleModel: Model<VehicleDocument>
+    @InjectModel(Vehicle.name) private vehicleModel: Model<VehicleDocument>,
+    private readonly i18n: I18nService
   ) {}
 
   create(createVehicleDto: CreateVehicleDto) {
@@ -79,22 +81,46 @@ export class VehiclesService {
   }
 
   async findOne(id: string) {
-    return await this.vehicleModel.findById(id).exec()
+    const vehicle = await this.vehicleModel.findById(id).exec();
+    
+    if (!vehicle) {
+      throw new NotFoundException(
+        await this.i18n.translate('vehicle.NOT_FOUND', { args: { id } }),
+      );
+    }
+    
+    return vehicle;
   }
 
   async update(id: string, updateVehicleDto: UpdateVehicleDto) {
-    return await this.vehicleModel.findByIdAndUpdate(
+    const updatedVehicle = await this.vehicleModel.findByIdAndUpdate(
       id,
       updateVehicleDto,
       { new: true }
-    ).exec()
+    ).exec();
+
+    if (!updatedVehicle) {
+      throw new NotFoundException(
+        await this.i18n.translate('vehicle.NOT_FOUND', { args: { id } }),
+      );
+    }
+
+    return updatedVehicle;
   }
 
   async remove(id: string) {
-    return await this.vehicleModel.findByIdAndUpdate(
+    const deletedVehicle = await this.vehicleModel.findByIdAndUpdate(
       id,
       { deleted: true },
       { new: true }
-    ).exec()
+    ).exec();
+
+    if (!deletedVehicle) {
+      throw new NotFoundException(
+        await this.i18n.translate('vehicle.NOT_FOUND', { args: { id } }),
+      );
+    }
+
+    return deletedVehicle;
   }
 }

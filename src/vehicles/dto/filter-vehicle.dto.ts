@@ -3,10 +3,10 @@ import { VehicleType } from '../enums/vehicleTypes';
 
 export class FilterVehicleDto {
   @IsOptional()
-  @IsEnum(VehicleType)
+  @IsEnum(VehicleType, { message: 'validation.IS_ENUM' })
   vehicle_type?: VehicleType;
 
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'validation.IS_STRING' })
   search?: string;
 }
