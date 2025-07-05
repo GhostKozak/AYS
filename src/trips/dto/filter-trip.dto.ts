@@ -3,22 +3,22 @@ import { UnloadStatus } from '../enums/unloadStatus';
 
 export class FilterTripDto {
   @IsOptional()
-  @IsMongoId()
+  @IsMongoId({ message: 'validation.IS_MONGOID' })
   companyId?: string;
 
   @IsOptional()
-  @IsMongoId()
+  @IsMongoId({ message: 'validation.IS_MONGOID' })
   driverId?: string;
 
   @IsOptional()
-  @IsMongoId()
+  @IsMongoId({ message: 'validation.IS_MONGOID' })
   vehicleId?: string;
 
   @IsOptional()
-  @IsEnum(UnloadStatus)
+  @IsEnum(UnloadStatus, { message: 'validation.IS_ENUM' })
   unload_status?: UnloadStatus;
 
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'validation.IS_STRING' })
   search?: string;
 }

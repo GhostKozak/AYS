@@ -7,13 +7,15 @@ import { Driver, DriverDocument } from './schemas/driver.schema';
 import { CompaniesService } from '../companies/companies.service';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { FilterDriverDto } from './dto/filter-driver.dto';
+import { I18nService } from 'nestjs-i18n';
 
 @Injectable()
 export class DriversService {
 
   constructor(
     @InjectModel(Driver.name) private driverModel: Model<DriverDocument>,
-    private readonly companiesService: CompaniesService
+    private readonly companiesService: CompaniesService,
+    private readonly i18n: I18nService
   ) {}
 
   async findByPhone(phone: string): Promise<DriverDocument | null> {
@@ -62,7 +64,9 @@ export class DriversService {
     const driver = await this.driverModel.findById(id).exec();
 
     if (!driver) {
-      throw new NotFoundException(`Driver with ID "${id}" not found`);
+      throw new NotFoundException(
+        await this.i18n.translate('driver.NOT_FOUND', { args: { id } }),
+      );
     }
 
     return driver;
@@ -76,7 +80,9 @@ export class DriversService {
     ).exec();
 
     if (!updatedDriver) {
-      throw new NotFoundException(`Driver with ID "${id}" not found`);
+      throw new NotFoundException(
+        await this.i18n.translate('driver.NOT_FOUND', { args: { id } }),
+      );
     }
 
     return updatedDriver;
@@ -90,7 +96,9 @@ export class DriversService {
     ).exec();
 
     if (!deletedDriver) {
-      throw new NotFoundException(`Driver with ID "${id}" not found`);
+      throw new NotFoundException(
+        await this.i18n.translate('driver.NOT_FOUND', { args: { id } }),
+      );
     }
 
     return deletedDriver;

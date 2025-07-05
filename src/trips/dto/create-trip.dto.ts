@@ -2,29 +2,29 @@ import { IsEnum, IsNotEmpty, IsOptional, IsString, MinLength, ValidateIf } from 
 import { VehicleType } from '../../vehicles/enums/vehicleTypes';
 
 export class CreateTripDto {
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'validation.IS_STRING' })
+  @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
   driver_phone_number: string;
 
   @IsOptional()
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'validation.IS_STRING' })
+  @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
   driver_full_name?: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'validation.IS_STRING' })
+  @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
   company_name: string;
 
-  @IsString()
-  @IsNotEmpty()
-  @MinLength(4)
+  @IsString({ message: 'validation.IS_STRING' })
+  @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
+  @MinLength(4, { message: 'validation.MIN_LENGTH' })
   licence_plate: string;
 
   @IsOptional()
-  @IsEnum(VehicleType)
+  @IsEnum(VehicleType, { message: 'validation.IS_ENUM' })
   vehicle_type?: VehicleType;
 
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'validation.IS_STRING' })
   notes?: string;
 }

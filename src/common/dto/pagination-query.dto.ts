@@ -3,12 +3,12 @@ import { Type } from 'class-transformer';
 
 export class PaginationQueryDto {
   @IsOptional()
-  @IsPositive()
+  @IsPositive({ message: 'validation.IS_POSITIVE' })
   @Type(() => Number)
   limit?: number;
 
   @IsOptional()
-  @Min(0)
+  @Min(0, { message: 'validation.MIN' })
   @Type(() => Number)
   offset?: number;
 }

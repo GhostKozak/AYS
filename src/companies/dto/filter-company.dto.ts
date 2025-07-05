@@ -2,6 +2,6 @@ import { IsOptional, IsString } from 'class-validator';
 
 export class FilterCompanyDto {
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'validation.IS_STRING' })
   search?: string;
 }

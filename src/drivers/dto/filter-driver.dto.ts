@@ -2,10 +2,10 @@ import { IsOptional, IsString, IsMongoId } from 'class-validator';
 
 export class FilterDriverDto {
   @IsOptional()
-  @IsMongoId()
+  @IsMongoId({ message: 'validation.IS_MONGOID' })
   companyId?: string;
 
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'validation.IS_STRING' })
   search?: string;
 }

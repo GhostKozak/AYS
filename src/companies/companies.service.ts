@@ -6,12 +6,14 @@ import { Model } from 'mongoose';
 import { Company, CompanyDocument } from './schemas/company.schema';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { FilterCompanyDto } from './dto/filter-company.dto';
+import { I18nService } from 'nestjs-i18n';
 
 @Injectable()
 export class CompaniesService {
 
   constructor(
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
+    private readonly i18n: I18nService,
   ) {}
 
   async searchByName(name: string) {
@@ -61,7 +63,9 @@ export class CompaniesService {
     const company = await this.companyModel.findById(id).exec();
     
     if (!company) {
-      throw new NotFoundException(`Company with ID "${id}" not found`);
+      throw new NotFoundException(
+        await this.i18n.translate('company.NOT_FOUND', { args: { id } }),
+      );
     }
     
     return company;
@@ -75,7 +79,9 @@ export class CompaniesService {
     ).exec();
 
     if (!updatedCompany) {
-      throw new NotFoundException(`Company with ID "${id}" not found`);
+      throw new NotFoundException(
+        await this.i18n.translate('company.NOT_FOUND', { args: { id } }),
+      );
     }
 
     return updatedCompany;
@@ -89,7 +95,9 @@ export class CompaniesService {
     ).exec();
     
     if (!deletedCompany) {
-      throw new NotFoundException(`Company with ID "${id}" not found`);
+      throw new NotFoundException(
+        await this.i18n.translate('company.NOT_FOUND', { args: { id } }),
+      );
     }
 
     return deletedCompany;
