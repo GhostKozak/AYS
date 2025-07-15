@@ -1,0 +1,11 @@
+{
+  "IS_NOT_EMPTY": "The {property} field cannot be empty.",
+  "IS_STRING": "The {property} field must be a string.",
+  "IS_MONGOID": "A valid MongoDB ID must be provided.",
+  "NEW_DRIVER_NAME_REQUIRED": "The 'driver_full_name' field is required for a new driver.",
+  "IS_ENUM": "The {property} field must be one of the following values: {enum}.",
+  "MIN_LENGTH": "The {property} field must be at least {min} characters long.",
+  "IS_BOOLEAN": "The {property} field must be a boolean value.",
+  "IS_POSITIVE": "The {property} field must be a positive number.",
+  "MIN": "The {property} field must be at least {min}."
+}
