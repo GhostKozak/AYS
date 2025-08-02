@@ -1,3 +1,5 @@
 {
-  "DUPLICATE_KEY": "This {field} ('{value}') is already in use. Please try another value."
+  "DUPLICATE_KEY": "This {field} ('{value}') is already in use. Please try another value.",
+  "DOCUMENT_VALIDATION_ERROR": "Document validation error: {error}",
+  "UNKNOWN_ERROR": "An unknown database error occurred."
 }

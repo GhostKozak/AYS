@@ -7,5 +7,6 @@
   "MIN_LENGTH": "The {property} field must be at least {min} characters long.",
   "IS_BOOLEAN": "The {property} field must be a boolean value.",
   "IS_POSITIVE": "The {property} field must be a positive number.",
-  "MIN": "The {property} field must be at least {min}."
+  "MIN": "The {property} field must be at least {min}.",
+  "IS_EMAIL": "The {property} field must be a valid email address."
 }

@@ -1,3 +1,5 @@
 {
-  "DUPLICATE_KEY": "Bu {field} ('{value}') zaten kullanımda. Lütfen başka bir değer deneyin."
+  "DUPLICATE_KEY": "Bu {field} ('{value}') zaten kullanımda. Lütfen başka bir değer deneyin.",
+  "DOCUMENT_VALIDATION_ERROR": "Belge doğrulama hatası: {error}",
+  "UNKNOWN_ERROR": "Bilinmeyen bir veritabanı hatası oluştu."
 }

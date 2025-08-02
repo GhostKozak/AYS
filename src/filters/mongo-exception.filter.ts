@@ -29,14 +29,16 @@ export class MongoExceptionFilter implements ExceptionFilter {
       case 121:
         response.status(HttpStatus.BAD_REQUEST).json({
             statusCode: HttpStatus.BAD_REQUEST,
-            message: 'Document validation error: ' + exception.message,
+            message: this.i18n.translate('database.DOCUMENT_VALIDATION_ERROR', {
+                args: { error: exception.message },
+            }),
         });
         break;
         
       default:
         response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
           statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: 'An unknown database error occurred.' 
+          message: this.i18n.translate('database.UNKNOWN_ERROR') 
         });
     }
   }

@@ -7,5 +7,6 @@
   "MIN_LENGTH": "{property} alanı en az {min} karakter uzunluğunda olmalıdır.",
   "IS_BOOLEAN": "{property} alanı boolean değer olmalıdır.",
   "IS_POSITIVE": "{property} alanı pozitif bir sayı olmalıdır.",
-  "MIN": "{property} alanı en az {min} olmalıdır."
+  "MIN": "{property} alanı en az {min} olmalıdır.",
+  "IS_EMAIL": "{property} alanı geçerli bir email adresi olmalıdır."
 }
