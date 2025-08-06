@@ -1,3 +1,4 @@
 {
-  "NOT_FOUND": "\"{id}\" ID'li sefer bulunamadı"
+  "NOT_FOUND": "\"{id}\" ID'li sefer bulunamadı",
+  "CONFLICT_TRIP": "Bu araç/şoför için zaten aktif bir sefer kaydı bulunmaktadır (Durum: {unload_status}). Yeni kayıt açılamaz."
 }

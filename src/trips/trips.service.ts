@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
 import { Model } from 'mongoose';
@@ -10,6 +10,7 @@ import { VehiclesService } from '../vehicles/vehicles.service';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { FilterTripDto } from './dto/filter-trip.dto';
 import { I18nService } from 'nestjs-i18n';
+import { UnloadStatus } from './enums/unloadStatus';
 
 @Injectable()
 export class TripsService {
@@ -52,6 +53,27 @@ export class TripsService {
       licence_plate,
       vehicle_type,
     );
+
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+
+    const existingTrip = await this.tripModel.findOne({
+      vehicle: vehicle._id,
+      driver: driver._id,
+      company: company._id,
+      arrival_time: { $gte: twoWeeksAgo }
+    }).sort({ arrival_time: -1 });
+
+    if (existingTrip) {
+      if (
+        !existingTrip.is_trip_canceled &&
+        existingTrip.unload_status !== UnloadStatus.UNLOADED
+      ) {
+        throw new ConflictException(
+          await this.i18n.translate('trip.CONFLICT_TRIP', { args: { unload_status: existingTrip.unload_status } }),
+        );
+      }
+    }
 
     const newTrip = new this.tripModel({
       ...tripDetails,

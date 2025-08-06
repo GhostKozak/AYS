@@ -1,3 +1,4 @@
 {
-  "NOT_FOUND": "Trip with ID \"{id}\" not found"
+  "NOT_FOUND": "Trip with ID \"{id}\" not found",
+  "CONFLICT_TRIP": "There is already an active trip record for this vehicle/driver (Status: {unload_status}). New record cannot be created."
 }
