@@ -110,9 +110,9 @@ export class TripsService {
       .find(query)
       .skip(offset ?? 0)
       .limit(limit ?? 10)
-      .populate('driver', 'full_name')
+      .populate('driver', 'full_name phone_number')
       .populate('company', 'name')
-      .populate('vehicle', 'licence_plate type')
+      .populate('vehicle', 'licence_plate vehicle_type')
       .exec();
 
     const count = await this.tripModel.countDocuments(query);
