@@ -17,7 +17,18 @@ export class CompaniesService {
   ) {}
 
   async searchByName(name: string) {
-    return await this.companyModel.find({ name: new RegExp(name, 'i') }).exec();
+    const query = { 
+      name: new RegExp(name, 'i'),
+      deleted: false 
+    };
+
+    const companies = await this.companyModel.find(query).exec();
+    const count = await this.companyModel.countDocuments(query);
+
+    return {
+      data: companies,
+      count,
+    };
   }
 
   async findOrCreateByName(name: string): Promise<CompanyDocument> {
