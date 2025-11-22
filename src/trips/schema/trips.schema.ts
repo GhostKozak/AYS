@@ -40,6 +40,12 @@ export class Trip {
     @Prop({ default: false })
     is_trip_canceled: boolean;
 
+    @Prop({ default: false })
+    is_in_parking_lot: boolean;
+
+    @Prop({ default: null })
+    parked_at: Date;
+
     @Prop()
     notes: string;
 

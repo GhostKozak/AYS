@@ -21,6 +21,12 @@ export class DriversController {
     return this.driversService.findByPhone(phone);
   }
 
+  @Get('search')
+  @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
+  findDriverByNameOrPhone(@Query('query') query: string) {
+    return this.driversService.findDriverByNameOrPhone(query);
+  }
+
   @Post()
   @Roles(UserRole.ADMIN, UserRole.EDITOR)
   create(@Body() createDriverDto: CreateDriverDto) {

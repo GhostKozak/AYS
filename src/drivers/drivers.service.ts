@@ -22,6 +22,25 @@ export class DriversService {
     return this.driverModel.findOne({ phone_number: phone }).populate('company').exec();
   }
 
+  async findDriverByNameOrPhone(query: string): Promise<{data:DriverDocument[]; count: number | null}> {
+    const queryPayload: any = { 
+      deleted: false 
+    };
+
+    queryPayload.$or = [
+      { full_name: new RegExp(query, 'i') },
+      { phone_number: new RegExp(query, 'i') }
+    ];
+
+    const drivers = await this.driverModel.find(queryPayload).populate('company').exec();
+    const count = await this.driverModel.countDocuments(queryPayload);
+
+    return {
+      data: drivers,
+      count,
+    };
+  }
+
   async create(createDriverDto: CreateDriverDto): Promise<DriverDocument> {
     await this.companiesService.findOne(createDriverDto.company);
     
