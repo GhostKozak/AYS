@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -7,6 +7,7 @@ import { Company, CompanyDocument } from './schemas/company.schema';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { FilterCompanyDto } from './dto/filter-company.dto';
 import { I18nService } from 'nestjs-i18n';
+import { UpdateDriverDto } from 'src/drivers/dto/update-driver.dto';
 
 @Injectable()
 export class CompaniesService {
@@ -43,6 +44,24 @@ export class CompaniesService {
   }
 
   async create(createCompanyDto: CreateCompanyDto): Promise<Company> {
+    const existingCompany = await this.companyModel.findOne({
+      name: createCompanyDto.name
+    }).exec();
+
+    if (existingCompany) {
+      if (existingCompany.deleted) {
+        return this.update(existingCompany._id.toString(), {
+          deleted: false
+        })
+      }
+
+      throw new ConflictException(
+        await this.i18n.translate('database.DUPLICATE_KEY', {
+          args: { field: 'name', value: createCompanyDto.name }
+        })
+      )
+    }
+
     const newCompany = new this.companyModel(createCompanyDto);
     return newCompany.save();
   }
