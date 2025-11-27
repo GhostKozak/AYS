@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverDto } from './dto/update-driver.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -42,6 +42,24 @@ export class DriversService {
   }
 
   async create(createDriverDto: CreateDriverDto): Promise<DriverDocument> {
+    const existingDriver = await this.driverModel.findOne({
+      phone_number: createDriverDto.phone_number
+    }).exec();
+
+    if (existingDriver) {
+      if (existingDriver.deleted) {
+        return this.update(existingDriver._id.toString(), {
+          deleted: false
+        });
+      }
+
+      throw new ConflictException(
+        await this.i18n.translate('database.DUPLICATE_KEY', {
+          args: { field: 'phone_number', value: createDriverDto.phone_number }
+        })
+      )
+    }
+
     await this.companiesService.findOne(createDriverDto.company);
     
     const newDriver = new this.driverModel(createDriverDto);
@@ -79,7 +97,7 @@ export class DriversService {
     };
   }
 
-  async findOne(id: string): Promise<Driver> {
+  async findOne(id: string): Promise<DriverDocument> {
     const driver = await this.driverModel.findById(id).exec();
 
     if (!driver) {
@@ -91,7 +109,7 @@ export class DriversService {
     return driver;
   }
 
-  async update(id: string, updateDriverDto: UpdateDriverDto): Promise<Driver> {
+  async update(id: string, updateDriverDto: UpdateDriverDto): Promise<DriverDocument> {
     const updatedDriver = await this.driverModel.findByIdAndUpdate(
       id,
       updateDriverDto,
