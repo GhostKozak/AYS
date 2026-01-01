@@ -23,36 +23,52 @@ export class TripsService {
   ) {}
 
   async create(createTripDto: CreateTripDto): Promise<Trip> {
-    const {
-      driver_phone_number,
-      driver_full_name,
-      company_name,
-      licence_plate,
-      vehicle_type,
-      ...tripDetails
-    } = createTripDto;
 
-    const company = await this.companiesService.findOrCreateByName(company_name);
-
-    let driver = await this.driversService.findByPhone(driver_phone_number);
-    if (!driver) {
-      if (!driver_full_name) {
+    let company;
+    if (createTripDto.company) {
+      company = await this.companiesService.findOne(createTripDto.company);
+    } else {
+      if (!createTripDto.company_name) {
         throw new BadRequestException(
-          await this.i18n.translate('validation.NEW_DRIVER_NAME_REQUIRED'),
+          await this.i18n.translate('validation.COMPANY_NAME_REQUIRED'),
         );
       }
-
-      driver = await this.driversService.create({
-        full_name: driver_full_name,
-        phone_number: driver_phone_number,
-        company: company._id.toString(),
-      });
+      company = await this.companiesService.findOrCreateByName(createTripDto.company_name);
     }
 
-    const vehicle = await this.vehiclesService.findOrCreateByPlate(
-      licence_plate,
-      vehicle_type,
-    );
+    let driver;
+    if (createTripDto.driver) {
+      driver = await this.driversService.findOne(createTripDto.driver);
+    } else {
+      if (!createTripDto.driver_phone_number) {
+        throw new BadRequestException(
+          await this.i18n.translate('validation.DRIVER_PHONE_NUMBER_REQUIRED'),
+        );
+      }
+      driver = await this.driversService.findByPhone(createTripDto.driver_phone_number);
+      if (!driver) {
+        if (!createTripDto.driver_full_name) {
+          throw new BadRequestException(
+            await this.i18n.translate('validation.NEW_DRIVER_NAME_REQUIRED'),
+          );
+        }
+        driver = await this.driversService.create({
+          full_name: createTripDto.driver_full_name,
+          phone_number: createTripDto.driver_phone_number,
+          company: company._id.toString(),
+        });
+      }
+    }
+
+    let vehicle;
+    if (createTripDto.vehicle) {
+      vehicle = await this.vehiclesService.findOne(createTripDto.vehicle);
+    } else if (createTripDto.licence_plate) {
+      vehicle = await this.vehiclesService.findOrCreateByPlate(
+        createTripDto.licence_plate,
+        createTripDto.vehicle_type,
+      );
+    }
 
     const twoWeeksAgo = new Date();
     twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
@@ -76,8 +92,8 @@ export class TripsService {
     }
 
     const newTrip = new this.tripModel({
-      ...tripDetails,
-      driver: driver!._id,
+      ...createTripDto, 
+      driver: driver._id,
       company: company._id,
       vehicle: vehicle._id,
     });
