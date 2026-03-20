@@ -120,4 +120,30 @@ describe('Reports (e2e)', () => {
       }
     });
   });
+
+  describe('GET /reports/export/excel', () => {
+    it('should return excel file buffer', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/reports/export/excel')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(response.header['content-type']).toBe('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      expect(response.header['content-disposition']).toContain('attachment; filename=trips-report.xlsx');
+      expect(response.body).toBeDefined();
+    });
+  });
+
+  describe('GET /reports/export/pdf', () => {
+    it('should return pdf file buffer', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/reports/export/pdf')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(response.header['content-type']).toBe('application/pdf');
+      expect(response.header['content-disposition']).toContain('attachment; filename=trips-report.pdf');
+      expect(response.body).toBeDefined();
+    });
+  });
 });

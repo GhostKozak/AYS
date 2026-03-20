@@ -6,6 +6,8 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/schemas/user.schema';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Response } from 'express';
+import { Res } from '@nestjs/common';
 
 @ApiTags('reports')
 @ApiBearerAuth('access-token')
@@ -55,5 +57,29 @@ export class ReportsController {
   @ApiResponse({ status: 200, description: 'Return chronological trip counts' })
   getTrend(@Query() query: ReportQueryDto) {
     return this.reportsService.getTrend(query.period || ReportPeriod.MONTH);
+  }
+
+  @Get('export/excel')
+  @ApiOperation({ summary: 'Export trips to Excel' })
+  async exportExcel(@Query() query: ReportQueryDto, @Res() res: Response) {
+    const buffer = await this.reportsService.exportTripsToExcel(query.period || ReportPeriod.MONTH);
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': 'attachment; filename=trips-report.xlsx',
+      'Content-Length': buffer.length,
+    });
+    res.end(buffer);
+  }
+
+  @Get('export/pdf')
+  @ApiOperation({ summary: 'Export trips to PDF' })
+  async exportPdf(@Query() query: ReportQueryDto, @Res() res: Response) {
+    const buffer = await this.reportsService.exportTripsToPdf(query.period || ReportPeriod.MONTH);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'attachment; filename=trips-report.pdf',
+      'Content-Length': buffer.length,
+    });
+    res.end(buffer);
   }
 }

@@ -4,6 +4,8 @@ import { Model } from 'mongoose';
 import { Trip, TripDocument } from '../trips/schema/trips.schema';
 import { ReportPeriod } from './dto/report-query.dto';
 import * as dayjs from 'dayjs';
+import * as ExcelJS from 'exceljs';
+const PDFDocument = require('pdfkit-table');
 
 @Injectable()
 export class ReportsService {
@@ -201,6 +203,94 @@ export class ReportsService {
         },
       },
     ]);
+  }
+
+  async exportTripsToExcel(period: ReportPeriod): Promise<Buffer> {
+    const dateQuery = this.getDateRange(period);
+    const trips = await this.tripModel.find({ is_trip_canceled: false, ...dateQuery })
+      .populate('company')
+      .populate('driver')
+      .populate('vehicle')
+      .sort({ arrival_time: -1 })
+      .exec();
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Trips');
+
+    worksheet.columns = [
+      { header: 'Arrival Time', key: 'arrival', width: 20 },
+      { header: 'Company', key: 'company', width: 25 },
+      { header: 'Plate', key: 'plate', width: 15 },
+      { header: 'Driver', key: 'driver', width: 25 },
+      { header: 'Status', key: 'status', width: 15 },
+      { header: 'Notes', key: 'notes', width: 30 },
+    ];
+
+    trips.forEach(trip => {
+      worksheet.addRow({
+        arrival: dayjs(trip.arrival_time).format('YYYY-MM-DD HH:mm'),
+        company: trip.company?.name || 'N/A',
+        plate: trip.vehicle?.licence_plate || 'N/A',
+        driver: trip.driver?.full_name || 'N/A',
+        status: trip.unload_status,
+        notes: trip.notes || '',
+      });
+    });
+
+    return (await workbook.xlsx.writeBuffer()) as unknown as Buffer;
+  }
+
+  async exportTripsToPdf(period: ReportPeriod): Promise<Buffer> {
+    const dateQuery = this.getDateRange(period);
+    const trips = await this.tripModel.find({ is_trip_canceled: false, ...dateQuery })
+      .populate('company')
+      .populate('driver')
+      .populate('vehicle')
+      .sort({ arrival_time: -1 })
+      .exec();
+
+    const doc = new PDFDocument({ margin: 30, size: 'A4' });
+    
+    // Support for Turkish characters (ğ, ü, ş, İ, ö, ç)
+    const fontPath = '/usr/share/fonts/TTF/DejaVuSans.ttf';
+    const boldFontPath = '/usr/share/fonts/TTF/DejaVuSans-Bold.ttf';
+    
+    try {
+      doc.font(fontPath);
+    } catch (e) {
+      // Fallback if font is not found in the exact path
+    }
+
+    const buffers: any[] = [];
+    doc.on('data', buffers.push.bind(buffers));
+
+    return new Promise((resolve) => {
+      doc.on('end', () => {
+        resolve(Buffer.concat(buffers));
+      });
+
+      doc.font(boldFontPath).text(`Trips Report - ${period.toUpperCase()}`, { align: 'center', size: 18 });
+      doc.moveDown();
+
+      const table = {
+        title: "Trips Summary",
+        headers: ["Date", "Company", "Plate", "Driver", "Status"],
+        rows: trips.map(trip => [
+          dayjs(trip.arrival_time).format('DD.MM.YYYY HH:mm'),
+          trip.company?.name || 'N/A',
+          trip.vehicle?.licence_plate || 'N/A',
+          trip.driver?.full_name || 'N/A',
+          trip.unload_status
+        ]),
+      };
+
+      doc.table(table, {
+        prepareHeader: () => doc.font(boldFontPath).fontSize(10),
+        prepareRow: (row: any, i: any) => doc.font(fontPath).fontSize(10),
+      });
+
+      doc.end();
+    });
   }
 
   private getDateRange(period: ReportPeriod) {
