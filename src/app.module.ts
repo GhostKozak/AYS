@@ -12,6 +12,8 @@ import { AuthModule } from './auth/auth.module';
 import { SeedModule } from './seed/seed.module';
 import { AcceptLanguageResolver, HeaderResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
 
 @Module({
@@ -45,6 +47,10 @@ import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
         new HeaderResolver(['x-lang']),
       ],
     }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 10,
+    }]),
     UsersModule,
     AuthModule,
     SeedModule,
@@ -54,6 +60,12 @@ import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
     TripsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule { }
