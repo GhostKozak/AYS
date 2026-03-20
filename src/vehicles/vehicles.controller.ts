@@ -9,7 +9,10 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/schemas/user.schema';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('vehicles')
+@ApiBearerAuth()
 @Controller('vehicles')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class VehiclesController {
