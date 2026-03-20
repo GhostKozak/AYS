@@ -11,6 +11,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiParam, ApiQuery, ApiUnauthorizedResponse, ApiForbiddenResponse } from '@nestjs/swagger';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User, UserRole } from '../users/schemas/user.schema';
+import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
 
 @ApiTags('companies')
 @ApiBearerAuth('access-token')
@@ -66,6 +67,7 @@ export class CompaniesController {
   }
 
   @Patch(':id')
+  @SkipAudit()
   @Roles(UserRole.ADMIN, UserRole.EDITOR)
   @ApiOperation({ summary: 'Update company details' })
   @ApiParam({ name: 'id', description: 'Company MongoDB ID' })

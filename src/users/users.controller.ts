@@ -8,6 +8,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from './schemas/user.schema';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiParam, ApiForbiddenResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
 
 @ApiTags('users')
 @ApiBearerAuth('access-token')
@@ -45,6 +46,7 @@ export class UsersController {
   }
 
   @Patch(':id')
+  @SkipAudit()
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Update user details (Admin only)' })
   @ApiParam({ name: 'id', description: 'User MongoDB ID' })

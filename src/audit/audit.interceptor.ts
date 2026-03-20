@@ -7,15 +7,30 @@ import {
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { AuditService } from './audit.service';
+import { Reflector } from '@nestjs/core';
+import { SKIP_AUDIT_KEY } from './decorators/skip-audit.decorator';
 
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
-  constructor(private readonly auditService: AuditService) {}
+  constructor(
+    private readonly auditService: AuditService,
+    private readonly reflector: Reflector,
+  ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
     const { user, method, url, ip, body } = request;
     const userAgent = request.headers['user-agent'];
+
+    // Check if auditing should be skipped for this handler
+    const skipAudit = this.reflector.getAllAndOverride<boolean>(SKIP_AUDIT_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (skipAudit) {
+      return next.handle();
+    }
 
     // Only log write operations for now (can be customized)
     const writeMethods = ['POST', 'PATCH', 'DELETE', 'PUT'];

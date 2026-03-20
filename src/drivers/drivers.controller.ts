@@ -11,6 +11,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiParam, ApiQuery, ApiUnauthorizedResponse, ApiForbiddenResponse } from '@nestjs/swagger';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User, UserRole } from '../users/schemas/user.schema';
+import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
 
 @ApiTags('drivers')
 @ApiBearerAuth('access-token')
@@ -76,6 +77,7 @@ export class DriversController {
   }
 
   @Patch(':id')
+  @SkipAudit()
   @Roles(UserRole.ADMIN, UserRole.EDITOR)
   @ApiOperation({ summary: 'Update driver details' })
   @ApiParam({ name: 'id', description: 'Driver MongoDB ID' })

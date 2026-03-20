@@ -10,6 +10,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiParam, ApiUnauthorizedResponse, ApiForbiddenResponse } from '@nestjs/swagger';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User, UserRole } from '../users/schemas/user.schema';
+import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
 
 @ApiTags('trips')
@@ -57,6 +58,7 @@ export class TripsController {
   }
 
   @Patch(':id')
+  @SkipAudit()
   @Roles(UserRole.ADMIN, UserRole.EDITOR)
   @ApiOperation({ summary: 'Update trip details' })
   @ApiParam({ name: 'id', description: 'Trip MongoDB ID' })
