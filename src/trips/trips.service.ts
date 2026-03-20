@@ -25,6 +25,13 @@ export class TripsService {
   ) {}
 
   async create(createTripDto: CreateTripDto): Promise<Trip> {
+    // Normalize identifiers
+    if (createTripDto.licence_plate) {
+      createTripDto.licence_plate = createTripDto.licence_plate.replace(/\s+/g, '').toUpperCase();
+    }
+    if (createTripDto.driver_phone_number) {
+      createTripDto.driver_phone_number = createTripDto.driver_phone_number.replace(/[^\d+]/g, '');
+    }
 
     let company;
     if (createTripDto.company) {

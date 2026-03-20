@@ -95,6 +95,7 @@ describe('DriversController (e2e)', () => {
       const nonExistentCompanyId = new Types.ObjectId().toHexString();
       const createDriverDto = {
         full_name: 'Jane Smith',
+        phone_number: '5551112233',
         company: nonExistentCompanyId,
       };
 

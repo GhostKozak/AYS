@@ -21,16 +21,20 @@ export class DriversService {
   ) {}
 
   async findByPhone(phone: string): Promise<DriverDocument | null> {
-    return this.driverModel.findOne({ phone_number: phone }).populate('company').exec();
+    const normalizedPhone = phone.replace(/[^\d+]/g, '');
+    return this.driverModel.findOne({ phone_number: normalizedPhone }).populate('company').exec();
   }
 
   async findDriverByNameOrPhone(query: string): Promise<{data:DriverDocument[]; count: number | null}> {
     const queryPayload: any = {};
 
     const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const normalizedQuery = query.replace(/[^\d+]/g, '');
+    const escapedNormalizedQuery = normalizedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
     queryPayload.$or = [
       { full_name: new RegExp(escapedQuery, 'i') },
-      { phone_number: new RegExp(escapedQuery, 'i') }
+      { phone_number: new RegExp(escapedNormalizedQuery, 'i') }
     ];
 
     const drivers = await this.driverModel.find(queryPayload).populate('company').exec();
@@ -43,9 +47,10 @@ export class DriversService {
   }
 
   async create(createDriverDto: CreateDriverDto): Promise<DriverDocument> {
-    const existingDriver = await this.driverModel.findOne({
-      phone_number: createDriverDto.phone_number
-    }).exec();
+    const normalizedPhone = createDriverDto.phone_number?.replace(/[^\d+]/g, '');
+    const existingDriver = normalizedPhone ? await this.driverModel.findOne({
+      phone_number: normalizedPhone
+    }).exec() : null;
 
     if (existingDriver) {
       if (existingDriver.deleted) {
@@ -62,7 +67,10 @@ export class DriversService {
 
     await this.companiesService.findOne(createDriverDto.company);
     
-    const newDriver = new this.driverModel(createDriverDto);
+    const newDriver = new this.driverModel({
+      ...createDriverDto,
+      phone_number: normalizedPhone,
+    });
     return newDriver.save();
   }
 
@@ -77,9 +85,12 @@ export class DriversService {
 
     if (search) {
       const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const normalizedSearch = search.replace(/[^\d+]/g, '');
+      const escapedNormalizedSearch = normalizedSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      
       query.$or = [
         { full_name: { $regex: escapedSearch, $options: 'i' } },
-        { phone_number: { $regex: escapedSearch, $options: 'i' } }
+        { phone_number: { $regex: escapedNormalizedSearch, $options: 'i' } }
       ];
     }
 
@@ -113,6 +124,10 @@ export class DriversService {
 
   async update(id: string, updateDriverDto: UpdateDriverDto, user?: any): Promise<DriverDocument> {
     const oldValue = await this.findOne(id);
+
+    if (updateDriverDto.phone_number) {
+      updateDriverDto.phone_number = updateDriverDto.phone_number.replace(/[^\d+]/g, '');
+    }
 
     const updatedDriver = await this.driverModel.findOneAndUpdate(
       { _id: id },
