@@ -7,6 +7,23 @@ import { Types } from 'mongoose';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { FilterTripDto } from './dto/filter-trip.dto';
 
+import { User, UserRole } from '../users/schemas/user.schema';
+
+import { 
+  mockI18nService, 
+  getMockProvider 
+} from '../common/test/test-utils';
+import { I18nService } from 'nestjs-i18n';
+
+const mockUser: User = {
+  _id: new Types.ObjectId(),
+  full_name: 'Test Admin',
+  email: 'admin@test.com',
+  password: 'hashedpassword',
+  role: UserRole.ADMIN,
+  deleted: false,
+} as any;
+
 const tripsServiceMock = {
   create: jest.fn(),
   findAll: jest.fn(),
@@ -27,6 +44,7 @@ describe('TripsController', () => {
           provide: TripsService,
           useValue: tripsServiceMock,
         },
+        getMockProvider(I18nService, mockI18nService()),
       ],
     }).compile();
 
@@ -61,9 +79,9 @@ describe('TripsController', () => {
       const expectedTrips = [{ _id: new Types.ObjectId(), licence_plate: '34XYZ789', deleted: false }];
       service.findAll.mockResolvedValue(expectedTrips as any);
 
-      const result = await controller.findAll(paginationQuery, filterTripDto);
+      const result = await controller.findAll(paginationQuery, filterTripDto, mockUser);
       expect(result).toEqual(expectedTrips);
-      expect(service.findAll).toHaveBeenCalledWith(paginationQuery, filterTripDto);
+      expect(service.findAll).toHaveBeenCalledWith(paginationQuery, filterTripDto, true);
     });
   });
 
@@ -73,9 +91,9 @@ describe('TripsController', () => {
       const expectedTrip = { _id: tripId, licence_plate: '34ABC123', deleted: false };
       service.findOne.mockResolvedValue(expectedTrip as any);
 
-      const result = await controller.findOne(tripId);
+      const result = await controller.findOne(tripId, mockUser);
       expect(result).toEqual(expectedTrip);
-      expect(service.findOne).toHaveBeenCalledWith(tripId);
+      expect(service.findOne).toHaveBeenCalledWith(tripId, true);
     });
   });
 
@@ -86,9 +104,9 @@ describe('TripsController', () => {
       const expectedTrip = { _id: tripId, ...updateTripDto, deleted: false };
       service.update.mockResolvedValue(expectedTrip as any);
 
-      const result = await controller.update(tripId, updateTripDto);
+      const result = await controller.update(tripId, updateTripDto, mockUser);
       expect(result).toEqual(expectedTrip);
-      expect(service.update).toHaveBeenCalledWith(tripId, updateTripDto);
+      expect(service.update).toHaveBeenCalledWith(tripId, updateTripDto, mockUser);
     });
   });
 

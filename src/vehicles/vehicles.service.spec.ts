@@ -1,28 +1,22 @@
+import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { VehiclesService } from './vehicles.service';
-import { getModelToken } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
 import { Vehicle } from './schema/vehicles.schema';
-import { CreateVehicleDto } from './dto/create-vehicle.dto';
-import { VehicleType } from './enums/vehicleTypes';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { FilterVehicleDto } from './dto/filter-vehicle.dto';
-
-const vehicleModelStatics = {
-  findOne: jest.fn(),
-  find: jest.fn(),
-  findById: jest.fn(),
-  findByIdAndUpdate: jest.fn(),
-  countDocuments: jest.fn(),
-};
-const vehicleModelConstructor = jest.fn().mockImplementation(() => ({
-  save: jest.fn(),
-}));
-const vehicleModelMock = Object.assign(vehicleModelConstructor, vehicleModelStatics);
+import { 
+  mockI18nService, 
+  mockAuditService, 
+  mockModel, 
+  mockQuery,
+  getMockProvider 
+} from '../common/test/test-utils';
+import { I18nService } from 'nestjs-i18n';
+import { AuditService } from '../audit/audit.service';
 
 describe('VehiclesService', () => {
   let service: VehiclesService;
-  let model: jest.Mocked<Model<Vehicle>>;
+  let model: any;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -30,8 +24,10 @@ describe('VehiclesService', () => {
         VehiclesService,
         {
           provide: getModelToken(Vehicle.name),
-          useValue: vehicleModelMock,
+          useValue: mockModel(),
         },
+        getMockProvider(I18nService, mockI18nService()),
+        getMockProvider(AuditService, mockAuditService()),
       ],
     }).compile();
 
@@ -53,12 +49,8 @@ describe('VehiclesService', () => {
             data: [{ licence_plate: '34ABC123' }],
             count: 1,
         };
-        (model.find as jest.Mock).mockReturnValue({
-            skip: jest.fn().mockReturnThis(),
-            limit: jest.fn().mockReturnThis(),
-            exec: jest.fn().mockResolvedValue(mockedResult.data),
-        });
-        (model.countDocuments as jest.Mock).mockResolvedValue(mockedResult.count);
+        model.find.mockReturnValue(mockQuery(mockedResult.data));
+        model.countDocuments.mockReturnValue(mockQuery(mockedResult.count));
 
         const paginationQuery: PaginationQueryDto = {};
         const filterVehicleDto: FilterVehicleDto = {};

@@ -6,12 +6,31 @@ import { CreateDriverDto } from './dto/create-driver.dto';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { FilterDriverDto } from './dto/filter-driver.dto';
 
+import { User, UserRole } from '../users/schemas/user.schema';
+
+import { 
+  mockI18nService, 
+  getMockProvider 
+} from '../common/test/test-utils';
+import { I18nService } from 'nestjs-i18n';
+
+const mockUser: User = {
+  _id: new Types.ObjectId(),
+  full_name: 'Test Admin',
+  email: 'admin@test.com',
+  password: 'hashedpassword',
+  role: UserRole.ADMIN,
+  deleted: false,
+} as any;
+
 const driversServiceMock = {
   create: jest.fn(),
   findAll: jest.fn(),
   findOne: jest.fn(),
   update: jest.fn(),
   remove: jest.fn(),
+  findByPhone: jest.fn(),
+  findDriverByNameOrPhone: jest.fn(),
 };
 
 describe('DriversController', () => {
@@ -26,6 +45,7 @@ describe('DriversController', () => {
           provide: DriversService,
           useValue: driversServiceMock,
         },
+        getMockProvider(I18nService, mockI18nService()),
       ],
     }).compile();
 
@@ -75,10 +95,36 @@ describe('DriversController', () => {
       const paginationQuery: PaginationQueryDto = {};
       const filterDriverDto: FilterDriverDto = {};
 
-      const result = await controller.findAll(paginationQuery, filterDriverDto);
+      const result = await controller.findAll(paginationQuery, filterDriverDto, mockUser);
 
       expect(result).toEqual(mockedResult);
-      expect(service.findAll).toHaveBeenCalledWith(paginationQuery, filterDriverDto);
+      expect(service.findAll).toHaveBeenCalledWith(paginationQuery, filterDriverDto, true);
+    });
+  });
+
+  describe('findOne', () => {
+    it('should return a single driver', async () => {
+      const driverId = new Types.ObjectId().toString();
+      const expectedDriver = { _id: driverId, full_name: 'Driver #1', deleted: false };
+      service.findOne.mockResolvedValue(expectedDriver as any);
+
+      const result = await controller.findOne(driverId, mockUser);
+
+      expect(result).toEqual(expectedDriver);
+      expect(service.findOne).toHaveBeenCalledWith(driverId, true);
+    });
+  });
+
+  describe('update', () => {
+    it('should update a driver', async () => {
+      const driverId = new Types.ObjectId().toString();
+      const updateDriverDto = { full_name: 'Updated Driver' };
+      const expectedDriver = { _id: driverId, ...updateDriverDto, deleted: false };
+      service.update.mockResolvedValue(expectedDriver as any);
+
+      const result = await controller.update(driverId, updateDriverDto, mockUser);
+      expect(result).toEqual(expectedDriver);
+      expect(service.update).toHaveBeenCalledWith(driverId, updateDriverDto, mockUser);
     });
   });
 });

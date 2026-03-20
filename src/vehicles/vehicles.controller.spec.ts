@@ -7,14 +7,22 @@ import { VehicleType } from './enums/vehicleTypes';
 import { Types } from 'mongoose';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { FilterVehicleDto } from './dto/filter-vehicle.dto';
+import { User, UserRole } from '../users/schemas/user.schema';
 
-const vehiclesServiceMock = {
-  create: jest.fn(),
-  findAll: jest.fn(),
-  findOne: jest.fn(),
-  update: jest.fn(),
-  remove: jest.fn(),
-};
+import { 
+  mockI18nService, 
+  getMockProvider 
+} from '../common/test/test-utils';
+import { I18nService } from 'nestjs-i18n';
+
+const mockUser: User = {
+  _id: new Types.ObjectId(),
+  full_name: 'Test Admin',
+  email: 'admin@test.com',
+  password: 'hashedpassword',
+  role: UserRole.ADMIN,
+  deleted: false,
+} as any;
 
 describe('VehiclesController', () => {
   let controller: VehiclesController;
@@ -26,8 +34,15 @@ describe('VehiclesController', () => {
       providers: [
         {
           provide: VehiclesService,
-          useValue: vehiclesServiceMock,
+          useValue: {
+            create: jest.fn(),
+            findAll: jest.fn(),
+            findOne: jest.fn(),
+            update: jest.fn(),
+            remove: jest.fn(),
+          },
         },
+        getMockProvider(I18nService, mockI18nService()),
       ],
     }).compile();
 
@@ -62,10 +77,10 @@ describe('VehiclesController', () => {
       const expectedVehicles = [{ _id: new Types.ObjectId(), licence_plate: '34DEF456', deleted: false }];
       service.findAll.mockResolvedValue(expectedVehicles as any);
 
-      const result = await controller.findAll(paginationQuery, filterVehicleDto);
+      const result = await controller.findAll(paginationQuery, filterVehicleDto, mockUser);
 
       expect(result).toEqual(expectedVehicles);
-      expect(service.findAll).toHaveBeenCalledWith(paginationQuery, filterVehicleDto);
+      expect(service.findAll).toHaveBeenCalledWith(paginationQuery, filterVehicleDto, true);
     });
   });
 
@@ -75,10 +90,10 @@ describe('VehiclesController', () => {
       const expectedVehicle = { _id: vehicleId, licence_plate: '34GHI789', deleted: false };
       service.findOne.mockResolvedValue(expectedVehicle as any);
 
-      const result = await controller.findOne(vehicleId);
+      const result = await controller.findOne(vehicleId, mockUser);
 
       expect(result).toEqual(expectedVehicle);
-      expect(service.findOne).toHaveBeenCalledWith(vehicleId);
+      expect(service.findOne).toHaveBeenCalledWith(vehicleId, true);
     });
   });
 
@@ -89,9 +104,9 @@ describe('VehiclesController', () => {
       const expectedVehicle = { _id: vehicleId, ...updateVehicleDto, deleted: false };
       service.update.mockResolvedValue(expectedVehicle as any);
 
-      const result = await controller.update(vehicleId, updateVehicleDto);
+      const result = await controller.update(vehicleId, updateVehicleDto, mockUser);
       expect(result).toEqual(expectedVehicle);
-      expect(service.update).toHaveBeenCalledWith(vehicleId, updateVehicleDto);
+      expect(service.update).toHaveBeenCalledWith(vehicleId, updateVehicleDto, mockUser);
     });
   });
 

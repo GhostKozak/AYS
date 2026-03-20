@@ -1,43 +1,39 @@
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Model, Types } from 'mongoose';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { Company } from './schemas/company.schema';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { FilterCompanyDto } from './dto/filter-company.dto';
-
-const companyModelStatics = {
-  find: jest.fn(),
-  findOne: jest.fn(),
-  findById: jest.fn(),
-  findByIdAndUpdate: jest.fn(),
-  findByIdAndDelete: jest.fn(),
-  countDocuments: jest.fn(),
-};
-const companyModelConstructor = jest.fn().mockImplementation((dto) => ({
-  save: jest.fn().mockResolvedValue({ _id: new Types.ObjectId(), ...dto }),
-}));
-const companyModelMock = Object.assign(companyModelConstructor, companyModelStatics);
-
+import { 
+  mockI18nService, 
+  mockAuditService, 
+  mockModel, 
+  mockQuery,
+  getMockProvider 
+} from '../common/test/test-utils';
+import { I18nService } from 'nestjs-i18n';
+import { AuditService } from '../audit/audit.service';
 
 describe('CompaniesService', () => {
   let service: CompaniesService;
-  let model: jest.Mocked<Model<Company>>;
+  let model: any;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CompaniesService,
         {
-          provide: getModelToken('Company'),
-          useValue: companyModelMock,
+          provide: getModelToken(Company.name),
+          useValue: mockModel(),
         },
+        getMockProvider(I18nService, mockI18nService()),
+        getMockProvider(AuditService, mockAuditService()),
       ],
     }).compile();
 
     service = module.get(CompaniesService);
-    model = module.get(getModelToken('Company'));
+    model = module.get(getModelToken(Company.name));
   });
 
   afterEach(() => {
@@ -54,9 +50,11 @@ describe('CompaniesService', () => {
         name: 'Test Company #1'
       };
       
+      model.findOne.mockReturnValue(mockQuery(null));
+
       const result = await service.create(createCompanyDto);
       
-      expect(companyModelConstructor).toHaveBeenCalledWith(createCompanyDto);
+      expect(model).toHaveBeenCalledWith(createCompanyDto);
       expect(result.name).toEqual(createCompanyDto.name);
     });
   });
@@ -70,12 +68,8 @@ describe('CompaniesService', () => {
         ],
         count: 2,
       };
-      (model.find as jest.Mock).mockReturnValue({
-        skip: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(mockedResult.data),
-      });
-      (model.countDocuments as jest.Mock).mockResolvedValue(mockedResult.count);
+      model.find.mockReturnValue(mockQuery(mockedResult.data));
+      model.countDocuments.mockReturnValue(mockQuery(mockedResult.count));
       
       const paginationQuery: PaginationQueryDto = {};
       const filterCompanyDto: FilterCompanyDto = {};
