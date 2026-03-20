@@ -26,7 +26,7 @@ export class Trip {
     @Prop({ default: null })
     departure_time: Date;
 
-    @Prop({ default: Date.now, required: true })
+    @Prop({ default: Date.now, required: true, index: true })
     arrival_time: Date;
 
     @Prop({ type: String, enum: UnloadStatus, default: UnloadStatus.WAITING })

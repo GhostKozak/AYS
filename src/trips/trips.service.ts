@@ -92,7 +92,7 @@ export class TripsService {
       driver: driver._id,
       company: company._id,
       arrival_time: { $gte: twoWeeksAgo }
-    }).sort({ arrival_time: -1 });
+    }).sort({ arrival_time: -1 }).lean();
 
     if (existingTrip) {
       if (
@@ -146,11 +146,13 @@ export class TripsService {
     const trips = await this.tripModel
       .find(query)
       .setOptions({ skipSoftDelete: showDeleted })
+      .select('arrival_time departure_time unload_status is_in_parking_lot notes company driver vehicle')
       .skip(offset ?? 0)
       .limit(limit ?? 10)
       .populate('driver', 'full_name phone_number')
       .populate('company', 'name')
       .populate('vehicle', 'licence_plate vehicle_type')
+      .lean()
       .exec();
 
     const count = await this.tripModel.countDocuments(query).setOptions({ skipSoftDelete: showDeleted });
@@ -168,6 +170,7 @@ export class TripsService {
       .populate('driver', 'full_name phone_number')
       .populate('company')
       .populate('vehicle')
+      .lean()
       .exec();
 
     if (!trip) {
@@ -180,37 +183,40 @@ export class TripsService {
   }
 
   async update(id: string, updateTripDto: UpdateTripDto, user?: any): Promise<Trip> {
-    const oldValue = await this.findOne(id);
-
-    const updatedTrip = await this.tripModel.findByIdAndUpdate(
-      id,
+    const updatedTrip = await this.tripModel.findOneAndUpdate(
+      { _id: id },
       updateTripDto,
-      { new: true },
-    ).setOptions({ skipSoftDelete: false }).exec();
-    
+      { new: true, returnDocument: 'after', skipSoftDelete: false }
+    ).setOptions({ skipSoftDelete: false })
+     .populate('driver', 'full_name phone_number')
+     .populate('company')
+     .populate('vehicle')
+     .lean()
+     .exec();
+
     if (!updatedTrip) {
       throw new NotFoundException(
-        await this.i18n.translate('trip.NOT_FOUND', { args: { id } })
+        await this.i18n.translate('trip.NOT_FOUND', { args: { id } }),
       );
     }
 
     if (user) {
-      this.auditService.log({
-        user: user._id || user.id || user.userId,
-        action: 'UPDATE',
-        entity: 'Trip',
-        entityId: id,
-        oldValue,
-        newValue: updatedTrip,
-      }).catch(err => console.error('Audit log failed', err));
+      setImmediate(() => {
+        this.auditService.log({
+          user: user.userId,
+          action: 'UPDATE',
+          entity: 'Trip',
+          entityId: id,
+          oldValue: null,
+          newValue: updatedTrip,
+        }).catch(err => console.error('Audit log failed', err));
+      });
     }
 
     await this.cacheManager.clear();
-    
-    // Broadcast real-time event
-    this.eventsGateway.emitTripUpdated(updatedTrip);
+    this.eventsGateway.emitTripUpdated(updatedTrip as any);
 
-    return updatedTrip;
+    return updatedTrip as any;
   }
 
   async remove(id: string): Promise<Trip> {

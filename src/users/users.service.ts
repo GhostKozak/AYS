@@ -15,7 +15,7 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const existingUser = await this.userModel.findOne({ email: createUserDto.email });
+    const existingUser = await this.userModel.findOne({ email: createUserDto.email }).lean();
     if (existingUser) {
       throw new ConflictException(this.i18n.translate('user.EMAIL_ALREADY_EXISTS'));
     }
@@ -32,11 +32,11 @@ export class UsersService {
   }
 
   async findAll(): Promise<User[]> {
-    return this.userModel.find({}, { password: 0 }).exec();
+    return this.userModel.find({}, { password: 0 }).lean().exec();
   }
 
   async findOne(id: string): Promise<User> {
-    const user = await this.userModel.findById(id, { password: 0 }).exec();
+    const user = await this.userModel.findById(id, { password: 0 }).lean().exec();
     if (!user) {
       throw new NotFoundException(this.i18n.translate('user.NOT_FOUND'));
     }
@@ -44,7 +44,7 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<User> {
-    const user = await this.userModel.findOne({ email }).exec();
+    const user = await this.userModel.findOne({ email }).lean().exec();
     if (!user) {
       throw new NotFoundException(this.i18n.translate('user.NOT_FOUND'));
     }
@@ -52,7 +52,7 @@ export class UsersService {
   }
 
   async findForAuth(email: string): Promise<User | null> {
-    return this.userModel.findOne({ email }).exec();
+    return this.userModel.findOne({ email }).lean().exec();
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {

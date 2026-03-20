@@ -4,12 +4,14 @@ import { MongoExceptionFilter } from './filters/mongo-exception.filter';
 import { I18nService, I18nValidationExceptionFilter, I18nValidationPipe } from 'nestjs-i18n';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
+import * as compression from 'compression';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const i18nService = app.get(I18nService) as any;
 
   app.use(helmet());
+  app.use(compression());
   app.useGlobalPipes(new I18nValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
   app.useGlobalFilters(
     new MongoExceptionFilter(i18nService),
@@ -38,7 +40,8 @@ async function bootstrap() {
         name: 'JWT',
         description: 'Enter JWT token',
         in: 'header',
-      },
+        email: 'email',
+      } as any,
       'access-token',
     )
     .build();

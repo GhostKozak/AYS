@@ -202,7 +202,8 @@ describe('TripsService', () => {
       
       // Mock the tripModel.findOne for conflict check
       tripModel.findOne.mockReturnValue({
-        sort: jest.fn().mockResolvedValue(activeTrip)
+        sort: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockResolvedValue(activeTrip)
       });
 
       await expect(service.create(createTripDto)).rejects.toThrow('trip.CONFLICT_TRIP');
@@ -266,16 +267,8 @@ describe('TripsService', () => {
       const filter = { search: 'test' };
       const trips = [{ _id: '1' }];
       
-      tripModel.find.mockReturnValue({
-        setOptions: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        populate: jest.fn().mockReturnThis(),
-        exec: jest.fn().mockResolvedValue(trips),
-      });
-      tripModel.countDocuments.mockReturnValue({
-        setOptions: jest.fn().mockResolvedValue(1)
-      });
+      tripModel.find.mockReturnValue(mockQuery(trips));
+      tripModel.countDocuments.mockReturnValue(mockQuery(1));
 
       const result = await service.findAll(pagination, filter);
       
@@ -294,12 +287,17 @@ describe('TripsService', () => {
       const user = { _id: 'admin-id' };
 
       tripModel.findOne.mockReturnValue(mockQuery(oldTrip));
-      tripModel.findByIdAndUpdate.mockReturnValue({
+      tripModel.findOneAndUpdate.mockReturnValue({
         setOptions: jest.fn().mockReturnThis(),
+        populate: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockReturnThis(),
         exec: jest.fn().mockResolvedValue(updatedTrip),
       });
 
       const result = await service.update(tripId, updateDto, user);
+      
+      // Wait for detached audit logging (setImmediate)
+      await new Promise(resolve => setImmediate(resolve));
 
       expect(result).toEqual(updatedTrip);
       expect(auditService.log).toHaveBeenCalled();

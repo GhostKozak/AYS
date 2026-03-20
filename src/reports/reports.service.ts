@@ -205,16 +205,25 @@ export class ReportsService {
     ]);
   }
 
-  async exportTripsToExcel(period: ReportPeriod): Promise<Buffer> {
+  async exportTripsToExcel(period: ReportPeriod, response: any): Promise<void> {
     const dateQuery = this.getDateRange(period);
-    const trips = await this.tripModel.find({ is_trip_canceled: false, ...dateQuery })
-      .populate('company')
-      .populate('driver')
-      .populate('vehicle')
+    
+    // Create cursor for streaming
+    const cursor = this.tripModel.find({ is_trip_canceled: false, ...dateQuery })
+      .select('arrival_time unload_status company driver vehicle')
+      .populate('company', 'name')
+      .populate('driver', 'full_name')
+      .populate('vehicle', 'licence_plate')
       .sort({ arrival_time: -1 })
-      .exec();
+      .lean()
+      .cursor();
 
-    const workbook = new ExcelJS.Workbook();
+    const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
+      stream: response,
+      useStyles: true,
+      useSharedStrings: true
+    });
+
     const worksheet = workbook.addWorksheet('Trips');
 
     worksheet.columns = [
@@ -226,7 +235,7 @@ export class ReportsService {
       { header: 'Notes', key: 'notes', width: 30 },
     ];
 
-    trips.forEach(trip => {
+    for (let trip = await cursor.next(); trip != null; trip = await cursor.next()) {
       worksheet.addRow({
         arrival: dayjs(trip.arrival_time).format('YYYY-MM-DD HH:mm'),
         company: trip.company?.name || 'N/A',
@@ -234,63 +243,59 @@ export class ReportsService {
         driver: trip.driver?.full_name || 'N/A',
         status: trip.unload_status,
         notes: trip.notes || '',
-      });
-    });
+      }).commit();
+    }
 
-    return (await workbook.xlsx.writeBuffer()) as unknown as Buffer;
+    await workbook.commit();
   }
 
-  async exportTripsToPdf(period: ReportPeriod): Promise<Buffer> {
+  async exportTripsToPdf(period: ReportPeriod, response: any): Promise<void> {
     const dateQuery = this.getDateRange(period);
-    const trips = await this.tripModel.find({ is_trip_canceled: false, ...dateQuery })
-      .populate('company')
-      .populate('driver')
-      .populate('vehicle')
+    
+    // Create cursor for streaming
+    const cursor = this.tripModel.find({ is_trip_canceled: false, ...dateQuery })
+      .select('arrival_time unload_status company driver vehicle')
+      .populate('company', 'name')
+      .populate('driver', 'full_name')
+      .populate('vehicle', 'licence_plate')
       .sort({ arrival_time: -1 })
-      .exec();
+      .lean()
+      .cursor();
 
     const doc = new PDFDocument({ margin: 30, size: 'A4' });
+    doc.pipe(response);
     
-    // Support for Turkish characters (ğ, ü, ş, İ, ö, ç)
     const fontPath = '/usr/share/fonts/TTF/DejaVuSans.ttf';
     const boldFontPath = '/usr/share/fonts/TTF/DejaVuSans-Bold.ttf';
     
-    try {
-      doc.font(fontPath);
-    } catch (e) {
-      // Fallback if font is not found in the exact path
+    try { doc.font(fontPath); } catch (e) {}
+
+    doc.font(boldFontPath).text(`Trips Report - ${period.toUpperCase()}`, { align: 'center', size: 18 });
+    doc.moveDown();
+
+    const tableRows: any[] = [];
+    for (let trip = await cursor.next(); trip != null; trip = await cursor.next()) {
+      tableRows.push([
+        dayjs(trip.arrival_time).format('DD.MM.YYYY HH:mm'),
+        trip.company?.name || 'N/A',
+        trip.vehicle?.licence_plate || 'N/A',
+        trip.driver?.full_name || 'N/A',
+        trip.unload_status
+      ]);
     }
 
-    const buffers: any[] = [];
-    doc.on('data', buffers.push.bind(buffers));
+    const table = {
+      title: "Trips Summary",
+      headers: ["Date", "Company", "Plate", "Driver", "Status"],
+      rows: tableRows,
+    };
 
-    return new Promise((resolve) => {
-      doc.on('end', () => {
-        resolve(Buffer.concat(buffers));
-      });
-
-      doc.font(boldFontPath).text(`Trips Report - ${period.toUpperCase()}`, { align: 'center', size: 18 });
-      doc.moveDown();
-
-      const table = {
-        title: "Trips Summary",
-        headers: ["Date", "Company", "Plate", "Driver", "Status"],
-        rows: trips.map(trip => [
-          dayjs(trip.arrival_time).format('DD.MM.YYYY HH:mm'),
-          trip.company?.name || 'N/A',
-          trip.vehicle?.licence_plate || 'N/A',
-          trip.driver?.full_name || 'N/A',
-          trip.unload_status
-        ]),
-      };
-
-      doc.table(table, {
-        prepareHeader: () => doc.font(boldFontPath).fontSize(10),
-        prepareRow: (row: any, i: any) => doc.font(fontPath).fontSize(10),
-      });
-
-      doc.end();
+    doc.table(table, {
+      prepareHeader: () => doc.font(boldFontPath).fontSize(10),
+      prepareRow: (row: any, i: any) => doc.font(fontPath).fontSize(10),
     });
+
+    doc.end();
   }
 
   private getDateRange(period: ReportPeriod) {

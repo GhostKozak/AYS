@@ -41,7 +41,7 @@ export class VehiclesService {
     
     const normalizedPlate = licencePlate.replace(/\s+/g, '').toUpperCase();
 
-    const existingVehicle = await this.vehicleModel.findOne({ licence_plate: normalizedPlate }).exec();
+    const existingVehicle = await this.vehicleModel.findOne({ licence_plate: normalizedPlate }).lean().exec();
     
     if (existingVehicle) {
       this.logger.log(`Existing vehicle found: ${normalizedPlate}`);
@@ -79,6 +79,7 @@ export class VehiclesService {
       .setOptions({ skipSoftDelete: showDeleted })
       .skip(offset ?? 0)
       .limit(limit ?? 10)
+      .lean()
       .exec();
 
     const count = await this.vehicleModel.countDocuments(query).setOptions({ skipSoftDelete: showDeleted });
@@ -90,7 +91,7 @@ export class VehiclesService {
   }
 
   async findOne(id: string, showDeleted = false) {
-    const vehicle = await this.vehicleModel.findOne({ _id: id }).setOptions({ skipSoftDelete: showDeleted }).exec();
+    const vehicle = await this.vehicleModel.findOne({ _id: id }).setOptions({ skipSoftDelete: showDeleted }).lean().exec();
     
     if (!vehicle) {
       throw new NotFoundException(
@@ -102,13 +103,11 @@ export class VehiclesService {
   }
 
   async update(id: string, updateVehicleDto: UpdateVehicleDto, user?: any) {
-    const oldValue = await this.findOne(id);
-    
     const updatedVehicle = await this.vehicleModel.findOneAndUpdate(
       { _id: id },
       updateVehicleDto,
-      { new: true }
-    ).setOptions({ skipSoftDelete: false }).exec();
+      { new: true, returnDocument: 'after' }
+    ).setOptions({ skipSoftDelete: false }).lean().exec();
 
     if (!updatedVehicle) {
       throw new NotFoundException(
@@ -117,14 +116,16 @@ export class VehiclesService {
     }
 
     if (user) {
-      this.auditService.log({
-        user: user.userId,
-        action: 'UPDATE',
-        entity: 'Vehicle',
-        entityId: id,
-        oldValue,
-        newValue: updatedVehicle,
-      }).catch(err => this.logger.error('Audit log failed', err));
+      setImmediate(() => {
+        this.auditService.log({
+          user: user.userId,
+          action: 'UPDATE',
+          entity: 'Vehicle',
+          entityId: id,
+          oldValue: null,
+          newValue: updatedVehicle,
+        }).catch(err => this.logger.error('Audit log failed', err));
+      });
     }
 
     this.eventsGateway.emitVehicleUpdated(updatedVehicle);

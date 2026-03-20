@@ -27,7 +27,7 @@ export class CompaniesService {
       deleted: false 
     };
 
-    const companies = await this.companyModel.find(query).exec();
+    const companies = await this.companyModel.find(query).lean().exec();
     const count = await this.companyModel.countDocuments(query);
 
     return {
@@ -37,7 +37,7 @@ export class CompaniesService {
   }
 
   async findOrCreateByName(name: string): Promise<CompanyDocument> {
-    const existingCompany = await this.companyModel.findOne({ name }).exec();
+    const existingCompany = await this.companyModel.findOne({ name }).lean().exec();
 
     if (existingCompany) {
       return existingCompany;
@@ -50,7 +50,7 @@ export class CompaniesService {
   async create(createCompanyDto: CreateCompanyDto): Promise<Company> {
     const existingCompany = await this.companyModel.findOne({
       name: createCompanyDto.name
-    }).exec();
+    }).lean().exec();
 
     if (existingCompany) {
       if (existingCompany.deleted) {
@@ -84,6 +84,7 @@ export class CompaniesService {
       .setOptions({ skipSoftDelete: showDeleted })
       .skip(offset ?? 0)
       .limit(limit ?? 10)
+      .lean()
       .exec();
 
     const count = await this.companyModel.countDocuments(query).setOptions({ skipSoftDelete: showDeleted });
@@ -95,7 +96,7 @@ export class CompaniesService {
   }
 
   async findOne(id: string, showDeleted = false): Promise<Company> {
-    const company = await this.companyModel.findOne({ _id: id }).setOptions({ skipSoftDelete: showDeleted }).exec();
+    const company = await this.companyModel.findOne({ _id: id }).setOptions({ skipSoftDelete: showDeleted }).lean().exec();
     
     if (!company) {
       throw new NotFoundException(
@@ -107,13 +108,11 @@ export class CompaniesService {
   }
 
   async update(id: string, updateCompanyDto: UpdateCompanyDto, user?: any): Promise<Company> {
-    const oldValue = await this.findOne(id);
-
     const updatedCompany = await this.companyModel.findOneAndUpdate(
       { _id: id }, 
       updateCompanyDto, 
-      { new: true }
-    ).setOptions({ skipSoftDelete: false }).exec();
+      { new: true, returnDocument: 'after' }
+    ).setOptions({ skipSoftDelete: false }).lean().exec();
 
     if (!updatedCompany) {
       throw new NotFoundException(
@@ -122,14 +121,16 @@ export class CompaniesService {
     }
 
     if (user) {
-      this.auditService.log({
-        user: user.userId,
-        action: 'UPDATE',
-        entity: 'Company',
-        entityId: id,
-        oldValue,
-        newValue: updatedCompany,
-      }).catch(err => console.error('Audit log failed', err));
+      setImmediate(() => {
+        this.auditService.log({
+          user: user.userId,
+          action: 'UPDATE',
+          entity: 'Company',
+          entityId: id,
+          oldValue: null,
+          newValue: updatedCompany,
+        }).catch(err => console.error('Audit log failed', err));
+      });
     }
 
     this.eventsGateway.emitCompanyUpdated(updatedCompany);

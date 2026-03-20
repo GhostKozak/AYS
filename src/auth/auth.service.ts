@@ -22,7 +22,8 @@ export class AuthService {
 
     if (await bcrypt.compare(password, user.password)) {
       await this.usersService.resetFailedLogins(user._id as string);
-      const { password: userPassword, ...result } = user.toObject();
+      // user is already a POJO because of .lean() in findForAuth
+      const { password: userPassword, ...result } = user;
       return result;
     }
 
@@ -43,8 +44,10 @@ export class AuthService {
   async login(user: any) {
     const payload = { email: user.email, sub: user._id, role: user.role };
     
-    // Update last login time
-    await this.usersService.updateLastLogin(user._id);
+    // Update last login time (Detached)
+    setImmediate(() => {
+      this.usersService.updateLastLogin(user._id).catch(err => console.error('Last login update failed', err));
+    });
     
     return {
       access_token: this.jwtService.sign(payload),

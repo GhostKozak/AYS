@@ -24,7 +24,7 @@ export class DriversService {
 
   async findByPhone(phone: string): Promise<DriverDocument | null> {
     const normalizedPhone = phone.replace(/[^\d+]/g, '');
-    return this.driverModel.findOne({ phone_number: normalizedPhone }).populate('company').exec();
+    return this.driverModel.findOne({ phone_number: normalizedPhone }).populate('company').lean().exec();
   }
 
   async findDriverByNameOrPhone(query: string): Promise<{data:DriverDocument[]; count: number | null}> {
@@ -39,7 +39,7 @@ export class DriversService {
       { phone_number: new RegExp(escapedNormalizedQuery, 'i') }
     ];
 
-    const drivers = await this.driverModel.find(queryPayload).populate('company').exec();
+    const drivers = await this.driverModel.find(queryPayload).populate('company').lean().exec();
     const count = await this.driverModel.countDocuments(queryPayload);
 
     return {
@@ -52,7 +52,7 @@ export class DriversService {
     const normalizedPhone = createDriverDto.phone_number?.replace(/[^\d+]/g, '');
     const existingDriver = normalizedPhone ? await this.driverModel.findOne({
       phone_number: normalizedPhone
-    }).exec() : null;
+    }).lean().exec() : null;
 
     if (existingDriver) {
       if (existingDriver.deleted) {
@@ -102,6 +102,7 @@ export class DriversService {
       .skip(offset ?? 0)
       .limit(limit ?? 10)
       .populate('company', 'name')
+      .lean()
       .exec();
 
     const count = await this.driverModel.countDocuments(query).setOptions({ skipSoftDelete: showDeleted });
@@ -113,7 +114,7 @@ export class DriversService {
   }
 
   async findOne(id: string, showDeleted = false): Promise<DriverDocument> {
-    const driver = await this.driverModel.findOne({ _id: id }).setOptions({ skipSoftDelete: showDeleted }).exec();
+    const driver = await this.driverModel.findOne({ _id: id }).setOptions({ skipSoftDelete: showDeleted }).lean().exec();
 
     if (!driver) {
       throw new NotFoundException(
@@ -125,8 +126,6 @@ export class DriversService {
   }
 
   async update(id: string, updateDriverDto: UpdateDriverDto, user?: any): Promise<DriverDocument> {
-    const oldValue = await this.findOne(id);
-
     if (updateDriverDto.phone_number) {
       updateDriverDto.phone_number = updateDriverDto.phone_number.replace(/[^\d+]/g, '');
     }
@@ -134,8 +133,8 @@ export class DriversService {
     const updatedDriver = await this.driverModel.findOneAndUpdate(
       { _id: id },
       updateDriverDto,
-      { new: true }
-    ).setOptions({ skipSoftDelete: false }).exec();
+      { new: true, returnDocument: 'after' }
+    ).setOptions({ skipSoftDelete: false }).lean().exec();
 
     if (!updatedDriver) {
       throw new NotFoundException(
@@ -144,14 +143,16 @@ export class DriversService {
     }
 
     if (user) {
-      this.auditService.log({
-        user: user.userId,
-        action: 'UPDATE',
-        entity: 'Driver',
-        entityId: id,
-        oldValue,
-        newValue: updatedDriver,
-      }).catch(err => console.error('Audit log failed', err));
+      setImmediate(() => {
+        this.auditService.log({
+          user: user.userId,
+          action: 'UPDATE',
+          entity: 'Driver',
+          entityId: id,
+          oldValue: null,
+          newValue: updatedDriver,
+        }).catch(err => console.error('Audit log failed', err));
+      });
     }
 
     this.eventsGateway.emitDriverUpdated(updatedDriver);

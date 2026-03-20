@@ -64,24 +64,20 @@ export class ReportsController {
   @Get('export/excel')
   @ApiOperation({ summary: 'Export trips to Excel' })
   async exportExcel(@Query() query: ReportQueryDto, @Res() res: Response) {
-    const buffer = await this.reportsService.exportTripsToExcel(query.period || ReportPeriod.MONTH);
     res.set({
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'Content-Disposition': 'attachment; filename=trips-report.xlsx',
-      'Content-Length': buffer.length,
     });
-    res.end(buffer);
+    await this.reportsService.exportTripsToExcel(query.period || ReportPeriod.MONTH, res);
   }
 
   @Get('export/pdf')
   @ApiOperation({ summary: 'Export trips to PDF' })
   async exportPdf(@Query() query: ReportQueryDto, @Res() res: Response) {
-    const buffer = await this.reportsService.exportTripsToPdf(query.period || ReportPeriod.MONTH);
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': 'attachment; filename=trips-report.pdf',
-      'Content-Length': buffer.length,
     });
-    res.end(buffer);
+    await this.reportsService.exportTripsToPdf(query.period || ReportPeriod.MONTH, res);
   }
 }
