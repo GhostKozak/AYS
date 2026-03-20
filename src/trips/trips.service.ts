@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, Inject } from '@nestjs/common';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
 import { Model } from 'mongoose';
@@ -12,6 +12,8 @@ import { FilterTripDto } from './dto/filter-trip.dto';
 import { I18nService } from 'nestjs-i18n';
 import { UnloadStatus } from './enums/unloadStatus';
 import { AuditService } from '../audit/audit.service';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class TripsService {
@@ -22,6 +24,7 @@ export class TripsService {
     private readonly vehiclesService: VehiclesService,
     private readonly i18n: I18nService,
     private readonly auditService: AuditService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async create(createTripDto: CreateTripDto): Promise<Trip> {
@@ -107,7 +110,9 @@ export class TripsService {
       vehicle: vehicle._id,
     });
 
-    return newTrip.save();
+    const savedTrip = await newTrip.save();
+    await this.cacheManager.clear();
+    return savedTrip;
   }
 
   async findAll(paginationQuery: PaginationQueryDto, filterTripDto: FilterTripDto, showDeleted = false) {
@@ -193,6 +198,7 @@ export class TripsService {
       }).catch(err => console.error('Audit log failed', err));
     }
 
+    await this.cacheManager.clear();
     return updatedTrip;
   }
 
@@ -210,6 +216,7 @@ export class TripsService {
       );
     }
 
+    await this.cacheManager.clear();
     return deletedTrip;
   }
 }

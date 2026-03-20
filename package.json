@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json --runInBand ----detectOpenHandles --forceExit"
   },
   "dependencies": {
+    "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
@@ -33,6 +34,8 @@
     "@nestjs/throttler": "^6.5.0",
     "@types/pdfkit": "^0.17.5",
     "bcryptjs": "^3.0.2",
+    "cache-manager": "^7.2.8",
+    "cache-manager-redis-yet": "^5.1.5",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "dayjs": "^1.11.20",

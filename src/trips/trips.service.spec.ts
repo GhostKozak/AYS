@@ -8,6 +8,7 @@ import { DriversService } from '../drivers/drivers.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { 
   mockI18nService, 
   mockAuditService, 
@@ -32,6 +33,14 @@ const driversServiceMock = {
 const vehiclesServiceMock = {
   findOrCreateByPlate: jest.fn(),
   findOne: jest.fn(),
+};
+
+const mockCacheManager = {
+  clear: jest.fn(),
+  reset: jest.fn(), // for compatibility check
+  get: jest.fn(),
+  set: jest.fn(),
+  del: jest.fn(),
 };
 
 describe('TripsService', () => {
@@ -62,6 +71,10 @@ describe('TripsService', () => {
         },
         getMockProvider(I18nService, mockI18nService()),
         getMockProvider(AuditService, auditService),
+        {
+          provide: CACHE_MANAGER,
+          useValue: mockCacheManager,
+        },
       ],
     }).compile();
 

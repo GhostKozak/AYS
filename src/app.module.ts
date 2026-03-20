@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { CacheModule } from '@nestjs/cache-manager';
+import { redisStore } from 'cache-manager-redis-yet';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -55,6 +57,20 @@ import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
       ttl: 60000,
       limit: 10,
     }]),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        store: await redisStore({
+          socket: {
+            host: configService.get('REDIS_HOST', 'localhost'),
+            port: parseInt(configService.get('REDIS_PORT', '6379'), 10),
+          },
+          ttl: parseInt(configService.get('CACHE_TTL', '600000'), 10),
+        }),
+      }),
+      inject: [ConfigService],
+    }),
     UsersModule,
     AuthModule,
     SeedModule,

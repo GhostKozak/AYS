@@ -1,4 +1,5 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, UseInterceptors } from '@nestjs/common';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import { ReportsService } from './reports.service';
 import { ReportQueryDto, ReportPeriod } from './dto/report-query.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -14,6 +15,7 @@ import { Res } from '@nestjs/common';
 @Controller('reports')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN, UserRole.EDITOR)
+@UseInterceptors(CacheInterceptor)
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
