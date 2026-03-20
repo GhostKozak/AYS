@@ -8,12 +8,14 @@ import { FilterCompanyDto } from './dto/filter-company.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiParam, ApiQuery, ApiUnauthorizedResponse, ApiForbiddenResponse } from '@nestjs/swagger';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User, UserRole } from '../users/schemas/user.schema';
 
 @ApiTags('companies')
 @ApiBearerAuth('access-token')
+@ApiUnauthorizedResponse({ description: 'Unauthorized - Invalid or missing token' })
+@ApiForbiddenResponse({ description: 'Forbidden - Insufficient permissions' })
 @Controller('companies')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class CompaniesController {
@@ -21,18 +23,25 @@ export class CompaniesController {
 
   @Get('search')
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
+  @ApiOperation({ summary: 'Search companies by name' })
+  @ApiQuery({ name: 'name', description: 'Company name search term' })
+  @ApiResponse({ status: 200, description: 'Return matching companies' })
   searchCompanies(@Query('name') name: string) {
     return this.companiesService.searchByName(name);
   }
 
   @Post()
   @Roles(UserRole.ADMIN, UserRole.EDITOR)
+  @ApiOperation({ summary: 'Create a new company' })
+  @ApiResponse({ status: 201, description: 'Company created successfully' })
   create(@Body() createCompanyDto: CreateCompanyDto) {
     return this.companiesService.create(createCompanyDto);
   }
 
   @Get()
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
+  @ApiOperation({ summary: 'Get all companies (paged)' })
+  @ApiResponse({ status: 200, description: 'Return paged companies' })
   findAll(
     @Query() paginationQuery: PaginationQueryDto, 
     @Query() filterCompanyDto: FilterCompanyDto,
@@ -44,6 +53,10 @@ export class CompaniesController {
 
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
+  @ApiOperation({ summary: 'Get company by ID' })
+  @ApiParam({ name: 'id', description: 'Company MongoDB ID' })
+  @ApiResponse({ status: 200, description: 'Return company details' })
+  @ApiResponse({ status: 404, description: 'Company not found' })
   findOne(
     @Param('id', ParseMongoIdPipe) id: string,
     @GetUser() user: User
@@ -54,6 +67,9 @@ export class CompaniesController {
 
   @Patch(':id')
   @Roles(UserRole.ADMIN, UserRole.EDITOR)
+  @ApiOperation({ summary: 'Update company details' })
+  @ApiParam({ name: 'id', description: 'Company MongoDB ID' })
+  @ApiResponse({ status: 200, description: 'Company updated successfully' })
   update(
     @Param('id', ParseMongoIdPipe) id: string, 
     @Body() updateCompanyDto: UpdateCompanyDto,
@@ -64,6 +80,9 @@ export class CompaniesController {
 
   @Delete(':id')
   @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Soft-delete a company (Admin only)' })
+  @ApiParam({ name: 'id', description: 'Company MongoDB ID' })
+  @ApiResponse({ status: 200, description: 'Company deleted successfully' })
   remove(@Param('id', ParseMongoIdPipe) id: string) {
     return this.companiesService.remove(id);
   }
