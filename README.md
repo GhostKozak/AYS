@@ -1,98 +1,63 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# AYS - Araç Yönetim Sistemi (Vehicle Management System)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+AYS, filo, araç ve nakliye operasyonlarını yönetmek için geliştirilmiş, yüksek performanslı ve gerçek zamanlı bir takip sistemidir.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🚀 Öne Çıkan Özellikler
 
-## Description
+- **Gerçek Zamanlı Takip**: WebSockets (Socket.io) entegrasyonu ile canlı dashboard güncellemeleri.
+- **Yüksek Performanslı Mimari**:
+  - **Streaming Exports**: On binlerce kaydı bellek tüketmeden (O(1) Memory) doğrudan HTTP yanıtına akıtan (Streaming) Excel ve PDF dışa aktarma motoru.
+  - **Atomik Operasyonlar**: Veritabanı gidiş-dönüş süresini (roundtrip) minimize eden atomik güncelleme mimarisi.
+  - **Mongoose .lean()**: Global düzeyde optimize edilmiş salt okunur sorgular ile %70'e varan bellek tasarrufu.
+  - **Gzip/Brotli Sıkıştırma**: Tüm JSON yanıtları için yerleşik sıkıştırma desteği.
+- **Güvenlik (Production-Ready)**:
+  - **Account Lockout**: Hatalı giriş denemelerine karşı otomatik hesap kilitleme mekanizması.
+  - **Helmet & Security Headers**: Modern web güvenlik standartlarına tam uyumluluk.
+  - **Audit Logging**: Asenkron (non-blocking) çalışan detaylı işlem denetim izleri.
+  - **ReDoS Koruması**: Arama filtrelerinde düzenli ifade saldırılarına karşı önlem.
+- **Uluslararasılaştırma (i18n)**: Türkçe ve İngilizce dil desteği.
+- **API Dokümantasyonu**: `/api` endpoint'i üzerinden erişilebilen kapsamlı Swagger dokümantasyonu.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🛠️ Teknik Yığın
 
-## Project setup
+- **Framework**: [NestJS](https://nestjs.com/)
+- **Veritabanı**: [MongoDB](https://www.mongodb.com/) (Mongoose)
+- **Caching**: [Redis](https://redis.io/)
+- **Orkestrasyon**: [Podman](https://podman.io/) / [Docker](https://www.docker.com/)
 
-```bash
-$ npm install
-```
+## 📦 Kurulum ve Çalıştırma
 
-## Compile and run the project
+### Yerel Geliştirme (Local)
 
-```bash
-# development
-$ npm run start
+1. Bağımlılıkları yükleyin:
+   ```bash
+   npm install
+   ```
+2. `.env` dosyasını oluşturun (bakınız `.env.example`).
+3. Uygulamayı başlatın:
+   ```bash
+   npm run start:dev
+   ```
 
-# watch mode
-$ npm run start:dev
+### Konteyner (Docker/Podman)
 
-# production mode
-$ npm run start:prod
-```
-
-## Run tests
+Orkestrasyon dosyası tüm bağımlılıkları (Redis, MongoDB) otomatik olarak ayağa kaldırır:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+podman-compose up -d --build
 ```
+*(Docker kullanıyorsanız `docker-compose` komutunu tercih edebilirsiniz.)*
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## 🧪 Testler
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Birim Testler
+npm run test
+
+# E2E (Uçtan Uca) Testler
+npm run test:e2e
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 📜 Lisans
 
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Bu proje [MIT](LICENSE) lisansı ile korunmaktadır.
