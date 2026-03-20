@@ -54,8 +54,12 @@ export class CompaniesController {
 
   @Patch(':id')
   @Roles(UserRole.ADMIN, UserRole.EDITOR)
-  update(@Param('id', ParseMongoIdPipe) id: string, @Body() updateCompanyDto: UpdateCompanyDto) {
-    return this.companiesService.update(id, updateCompanyDto);
+  update(
+    @Param('id', ParseMongoIdPipe) id: string, 
+    @Body() updateCompanyDto: UpdateCompanyDto,
+    @GetUser() user: User
+  ) {
+    return this.companiesService.update(id, updateCompanyDto, user);
   }
 
   @Delete(':id')

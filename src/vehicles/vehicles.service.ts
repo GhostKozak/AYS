@@ -8,6 +8,7 @@ import { VehicleType } from './enums/vehicleTypes';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { FilterVehicleDto } from './dto/filter-vehicle.dto';
 import { I18nService } from 'nestjs-i18n';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class VehiclesService {
@@ -15,7 +16,8 @@ export class VehiclesService {
 
   constructor(
     @InjectModel(Vehicle.name) private vehicleModel: Model<VehicleDocument>,
-    private readonly i18n: I18nService
+    private readonly i18n: I18nService,
+    private readonly auditService: AuditService,
   ) {}
 
   create(createVehicleDto: CreateVehicleDto) {
@@ -97,7 +99,9 @@ export class VehiclesService {
     return vehicle;
   }
 
-  async update(id: string, updateVehicleDto: UpdateVehicleDto) {
+  async update(id: string, updateVehicleDto: UpdateVehicleDto, user?: any) {
+    const oldValue = await this.findOne(id);
+    
     const updatedVehicle = await this.vehicleModel.findByIdAndUpdate(
       id,
       updateVehicleDto,
@@ -108,6 +112,17 @@ export class VehiclesService {
       throw new NotFoundException(
         await this.i18n.translate('vehicle.NOT_FOUND', { args: { id } }),
       );
+    }
+
+    if (user) {
+      this.auditService.log({
+        user: user._id || user.id,
+        action: 'UPDATE',
+        entity: 'Vehicle',
+        entityId: id,
+        oldValue,
+        newValue: updatedVehicle,
+      }).catch(err => this.logger.error('Audit log failed', err));
     }
 
     return updatedVehicle;

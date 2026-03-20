@@ -11,6 +11,7 @@ import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { FilterTripDto } from './dto/filter-trip.dto';
 import { I18nService } from 'nestjs-i18n';
 import { UnloadStatus } from './enums/unloadStatus';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class TripsService {
@@ -20,6 +21,7 @@ export class TripsService {
     private readonly driversService: DriversService,
     private readonly vehiclesService: VehiclesService,
     private readonly i18n: I18nService,
+    private readonly auditService: AuditService,
   ) {}
 
   async create(createTripDto: CreateTripDto): Promise<Trip> {
@@ -158,8 +160,8 @@ export class TripsService {
     return trip;
   }
 
-  async update(id: string, updateTripDto: UpdateTripDto): Promise<Trip> {
-    await this.findOne(id);
+  async update(id: string, updateTripDto: UpdateTripDto, user?: any): Promise<Trip> {
+    const oldValue = await this.findOne(id);
 
     const updatedTrip = await this.tripModel.findByIdAndUpdate(
       id,
@@ -171,6 +173,17 @@ export class TripsService {
       throw new NotFoundException(
         await this.i18n.translate('trip.NOT_FOUND', { args: { id } })
       );
+    }
+
+    if (user) {
+      this.auditService.log({
+        user: user._id || user.id,
+        action: 'UPDATE',
+        entity: 'Trip',
+        entityId: id,
+        oldValue,
+        newValue: updatedTrip,
+      }).catch(err => console.error('Audit log failed', err));
     }
 
     return updatedTrip;

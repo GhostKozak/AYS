@@ -7,6 +7,7 @@ import { Company, CompanyDocument } from './schemas/company.schema';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { FilterCompanyDto } from './dto/filter-company.dto';
 import { I18nService } from 'nestjs-i18n';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class CompaniesService {
@@ -14,6 +15,7 @@ export class CompaniesService {
   constructor(
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     private readonly i18n: I18nService,
+    private readonly auditService: AuditService,
   ) {}
 
   async searchByName(name: string) {
@@ -102,7 +104,9 @@ export class CompaniesService {
     return company;
   }
 
-  async update(id: string, updateCompanyDto: UpdateCompanyDto): Promise<Company> {
+  async update(id: string, updateCompanyDto: UpdateCompanyDto, user?: any): Promise<Company> {
+    const oldValue = await this.findOne(id);
+
     const updatedCompany = await this.companyModel.findByIdAndUpdate(
       id, 
       updateCompanyDto, 
@@ -113,6 +117,17 @@ export class CompaniesService {
       throw new NotFoundException(
         await this.i18n.translate('company.NOT_FOUND', { args: { id } }),
       );
+    }
+
+    if (user) {
+      this.auditService.log({
+        user: user._id || user.id,
+        action: 'UPDATE',
+        entity: 'Company',
+        entityId: id,
+        oldValue,
+        newValue: updatedCompany,
+      }).catch(err => console.error('Audit log failed', err));
     }
 
     return updatedCompany;

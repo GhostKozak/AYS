@@ -48,8 +48,12 @@ export class VehiclesController {
 
   @Patch(':id')
   @Roles(UserRole.ADMIN, UserRole.EDITOR)
-  update(@Param('id', ParseMongoIdPipe) id: string, @Body() updateVehicleDto: UpdateVehicleDto) {
-    return this.vehiclesService.update(id, updateVehicleDto);
+  update(
+    @Param('id', ParseMongoIdPipe) id: string, 
+    @Body() updateVehicleDto: UpdateVehicleDto,
+    @GetUser() user: User
+  ) {
+    return this.vehiclesService.update(id, updateVehicleDto, user);
   }
 
   @Delete(':id')

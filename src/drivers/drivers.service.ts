@@ -8,6 +8,7 @@ import { CompaniesService } from '../companies/companies.service';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { FilterDriverDto } from './dto/filter-driver.dto';
 import { I18nService } from 'nestjs-i18n';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class DriversService {
@@ -15,7 +16,8 @@ export class DriversService {
   constructor(
     @InjectModel(Driver.name) private driverModel: Model<DriverDocument>,
     private readonly companiesService: CompaniesService,
-    private readonly i18n: I18nService
+    private readonly i18n: I18nService,
+    private readonly auditService: AuditService,
   ) {}
 
   async findByPhone(phone: string): Promise<DriverDocument | null> {
@@ -109,7 +111,9 @@ export class DriversService {
     return driver;
   }
 
-  async update(id: string, updateDriverDto: UpdateDriverDto): Promise<DriverDocument> {
+  async update(id: string, updateDriverDto: UpdateDriverDto, user?: any): Promise<DriverDocument> {
+    const oldValue = await this.findOne(id);
+
     const updatedDriver = await this.driverModel.findByIdAndUpdate(
       id,
       updateDriverDto,
@@ -120,6 +124,17 @@ export class DriversService {
       throw new NotFoundException(
         await this.i18n.translate('driver.NOT_FOUND', { args: { id } }),
       );
+    }
+
+    if (user) {
+      this.auditService.log({
+        user: user._id || user.id,
+        action: 'UPDATE',
+        entity: 'Driver',
+        entityId: id,
+        oldValue,
+        newValue: updatedDriver,
+      }).catch(err => console.error('Audit log failed', err));
     }
 
     return updatedDriver;

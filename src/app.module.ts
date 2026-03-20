@@ -13,7 +13,9 @@ import { SeedModule } from './seed/seed.module';
 import { AcceptLanguageResolver, HeaderResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { AuditModule } from './audit/audit.module';
+import { AuditInterceptor } from './audit/audit.interceptor';
 import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
 
 @Module({
@@ -58,6 +60,7 @@ import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
     CompaniesModule,
     VehiclesModule,
     TripsModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [
@@ -65,6 +68,10 @@ import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditInterceptor,
     },
   ],
 })

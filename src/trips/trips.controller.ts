@@ -48,8 +48,12 @@ export class TripsController {
 
   @Patch(':id')
   @Roles(UserRole.ADMIN, UserRole.EDITOR)
-  update(@Param('id', ParseMongoIdPipe) id: string, @Body() updateTripDto: UpdateTripDto) {
-    return this.tripsService.update(id, updateTripDto);
+  update(
+    @Param('id', ParseMongoIdPipe) id: string, 
+    @Body() updateTripDto: UpdateTripDto,
+    @GetUser() user: User
+  ) {
+    return this.tripsService.update(id, updateTripDto, user);
   }
 
   @Delete(':id')

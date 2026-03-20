@@ -60,8 +60,12 @@ export class DriversController {
 
   @Patch(':id')
   @Roles(UserRole.ADMIN, UserRole.EDITOR)
-  update(@Param('id', ParseMongoIdPipe) id: string, @Body() updateDriverDto: UpdateDriverDto) {
-    return this.driversService.update(id, updateDriverDto);
+  update(
+    @Param('id', ParseMongoIdPipe) id: string, 
+    @Body() updateDriverDto: UpdateDriverDto,
+    @GetUser() user: User
+  ) {
+    return this.driversService.update(id, updateDriverDto, user);
   }
 
   @Delete(':id')
