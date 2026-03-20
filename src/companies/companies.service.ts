@@ -8,6 +8,7 @@ import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { FilterCompanyDto } from './dto/filter-company.dto';
 import { I18nService } from 'nestjs-i18n';
 import { AuditService } from '../audit/audit.service';
+import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class CompaniesService {
@@ -16,6 +17,7 @@ export class CompaniesService {
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     private readonly i18n: I18nService,
     private readonly auditService: AuditService,
+    private readonly eventsGateway: EventsGateway,
   ) {}
 
   async searchByName(name: string) {
@@ -129,6 +131,8 @@ export class CompaniesService {
         newValue: updatedCompany,
       }).catch(err => console.error('Audit log failed', err));
     }
+
+    this.eventsGateway.emitCompanyUpdated(updatedCompany);
 
     return updatedCompany;
   }

@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Driver, DriverSchema } from './schemas/driver.schema';
 import { CompaniesModule } from '../companies/companies.module';
 import { AuditModule } from '../audit/audit.module';
+import { EventsModule } from '../events/events.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { AuditModule } from '../audit/audit.module';
     ]),
     CompaniesModule,
     AuditModule,
+    EventsModule,
   ],
   controllers: [DriversController],
   providers: [DriversService],

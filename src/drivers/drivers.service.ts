@@ -9,6 +9,7 @@ import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { FilterDriverDto } from './dto/filter-driver.dto';
 import { I18nService } from 'nestjs-i18n';
 import { AuditService } from '../audit/audit.service';
+import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class DriversService {
@@ -18,6 +19,7 @@ export class DriversService {
     private readonly companiesService: CompaniesService,
     private readonly i18n: I18nService,
     private readonly auditService: AuditService,
+    private readonly eventsGateway: EventsGateway,
   ) {}
 
   async findByPhone(phone: string): Promise<DriverDocument | null> {
@@ -151,6 +153,8 @@ export class DriversService {
         newValue: updatedDriver,
       }).catch(err => console.error('Audit log failed', err));
     }
+
+    this.eventsGateway.emitDriverUpdated(updatedDriver);
 
     return updatedDriver;
   }

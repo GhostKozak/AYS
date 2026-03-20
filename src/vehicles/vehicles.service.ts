@@ -9,6 +9,7 @@ import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { FilterVehicleDto } from './dto/filter-vehicle.dto';
 import { I18nService } from 'nestjs-i18n';
 import { AuditService } from '../audit/audit.service';
+import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class VehiclesService {
@@ -18,6 +19,7 @@ export class VehiclesService {
     @InjectModel(Vehicle.name) private vehicleModel: Model<VehicleDocument>,
     private readonly i18n: I18nService,
     private readonly auditService: AuditService,
+    private readonly eventsGateway: EventsGateway,
   ) {}
 
   create(createVehicleDto: CreateVehicleDto) {
@@ -124,6 +126,8 @@ export class VehiclesService {
         newValue: updatedVehicle,
       }).catch(err => this.logger.error('Audit log failed', err));
     }
+
+    this.eventsGateway.emitVehicleUpdated(updatedVehicle);
 
     return updatedVehicle;
   }

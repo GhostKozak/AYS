@@ -54,4 +54,16 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   emitTripDeleted(tripId: string) {
     this.server.emit('trip_deleted', tripId);
   }
+
+  emitVehicleUpdated(vehicle: any) {
+    this.server.emit('vehicle_updated', vehicle);
+  }
+
+  emitDriverUpdated(driver: any) {
+    this.server.emit('driver_updated', driver);
+  }
+
+  emitCompanyUpdated(company: any) {
+    this.server.emit('company_updated', company);
+  }
 }

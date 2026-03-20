@@ -16,14 +16,14 @@ services:
       - ays-network
 
   redis:
-    image: redis:7.2-alpine
+    image: docker.io/library/redis:7.2-alpine
     ports:
       - "6379:6379"
     networks:
       - ays-network
 
   mongodb:
-    image: mongo:6.0
+    image: docker.io/library/mongo:6.0
     ports:
       - "27017:27017"
     volumes:

@@ -14,6 +14,11 @@ import {
 } from '../common/test/test-utils';
 import { I18nService } from 'nestjs-i18n';
 import { AuditService } from '../audit/audit.service';
+import { EventsGateway } from '../events/events.gateway';
+
+const mockEventsGateway = {
+  emitCompanyUpdated: jest.fn(),
+};
 
 describe('CompaniesService', () => {
   let service: CompaniesService;
@@ -29,6 +34,10 @@ describe('CompaniesService', () => {
         },
         getMockProvider(I18nService, mockI18nService()),
         getMockProvider(AuditService, mockAuditService()),
+        {
+          provide: EventsGateway,
+          useValue: mockEventsGateway,
+        },
       ],
     }).compile();
 

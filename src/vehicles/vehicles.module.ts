@@ -4,6 +4,7 @@ import { VehiclesController } from './vehicles.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Vehicle, VehicleSchema } from './schema/vehicles.schema';
 import { AuditModule } from '../audit/audit.module';
+import { EventsModule } from '../events/events.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { AuditModule } from '../audit/audit.module';
       { name: Vehicle.name, schema: VehicleSchema }
     ]),
     AuditModule,
+    EventsModule,
   ],
   controllers: [VehiclesController],
   providers: [VehiclesService],
