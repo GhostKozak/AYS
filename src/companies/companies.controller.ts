@@ -13,7 +13,7 @@ import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User, UserRole } from '../users/schemas/user.schema';
 
 @ApiTags('companies')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @Controller('companies')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class CompaniesController {

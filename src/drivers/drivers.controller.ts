@@ -13,7 +13,7 @@ import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User, UserRole } from '../users/schemas/user.schema';
 
 @ApiTags('drivers')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @Controller('drivers')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class DriversController {

@@ -7,7 +7,7 @@ import { UserRole } from '../users/schemas/user.schema';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('audit')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @Controller('audit')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN)

@@ -13,7 +13,7 @@ import { User, UserRole } from '../users/schemas/user.schema';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
 
 @ApiTags('vehicles')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @Controller('vehicles')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class VehiclesController {
