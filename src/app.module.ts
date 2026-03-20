@@ -8,6 +8,7 @@ import { CompaniesModule } from './companies/companies.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { TripsModule } from './trips/trips.module';
 import { ReportsModule } from './reports/reports.module';
+import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { SeedModule } from './seed/seed.module';
@@ -62,6 +63,7 @@ import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
     VehiclesModule,
     TripsModule,
     ReportsModule,
+    HealthModule,
     AuditModule,
   ],
   controllers: [AppController],
