@@ -1,5 +1,8 @@
 export enum UnloadStatus {
     WAITING = 'WAITING',
+    UNLOADING = 'UNLOADING',
     UNLOADED = 'UNLOADED',
-    IN_PROGRESS = 'IN_PROGRESS',
+    COMPLETED = 'COMPLETED',
+    CANCELED = 'CANCELED',
+    UNKNOWN = 'UNKNOWN',
 }
