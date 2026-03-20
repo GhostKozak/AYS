@@ -7,9 +7,10 @@ import { FilterTripDto } from './dto/filter-trip.dto';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole } from '../users/schemas/user.schema';
-import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { GetUser } from '../auth/decorators/get-user.decorator';
+import { User, UserRole } from '../users/schemas/user.schema';
+import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
 
 @ApiTags('trips')
 @ApiBearerAuth()
@@ -26,14 +27,23 @@ export class TripsController {
 
   @Get()
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
-  findAll(@Query() paginationQuery: PaginationQueryDto, @Query() filterTripDto: FilterTripDto) {
-    return this.tripsService.findAll(paginationQuery, filterTripDto);
+  findAll(
+    @Query() paginationQuery: PaginationQueryDto, 
+    @Query() filterTripDto: FilterTripDto,
+    @GetUser() user: User
+  ) {
+    const showDeleted = user.role === UserRole.ADMIN;
+    return this.tripsService.findAll(paginationQuery, filterTripDto, showDeleted);
   }
 
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
-  findOne(@Param('id', ParseMongoIdPipe) id: string) {
-    return this.tripsService.findOne(id);
+  findOne(
+    @Param('id', ParseMongoIdPipe) id: string,
+    @GetUser() user: User
+  ) {
+    const showDeleted = user.role === UserRole.ADMIN;
+    return this.tripsService.findOne(id, showDeleted);
   }
 
   @Patch(':id')

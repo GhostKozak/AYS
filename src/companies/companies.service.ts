@@ -65,10 +65,10 @@ export class CompaniesService {
     return newCompany.save();
   }
 
-  async findAll(paginationQuery: PaginationQueryDto, filterCompanyDto: FilterCompanyDto) {
+  async findAll(paginationQuery: PaginationQueryDto, filterCompanyDto: FilterCompanyDto, showDeleted = false) {
     const { limit, offset } = paginationQuery;
     const { search } = filterCompanyDto;
-    const query: any = { deleted: false };
+    const query: any = {};
 
     if (search) { 
       const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -77,11 +77,12 @@ export class CompaniesService {
 
     const companies = await this.companyModel
       .find(query)
+      .setOptions({ skipSoftDelete: showDeleted })
       .skip(offset ?? 0)
       .limit(limit ?? 10)
       .exec();
 
-    const count = await this.companyModel.countDocuments(query);
+    const count = await this.companyModel.countDocuments(query).setOptions({ skipSoftDelete: showDeleted });
 
     return {
       data: companies,
@@ -89,8 +90,8 @@ export class CompaniesService {
     };
   }
 
-  async findOne(id: string): Promise<Company> {
-    const company = await this.companyModel.findOne({ _id: id, deleted: false }).exec();
+  async findOne(id: string, showDeleted = false): Promise<Company> {
+    const company = await this.companyModel.findById(id).setOptions({ skipSoftDelete: showDeleted }).exec();
     
     if (!company) {
       throw new NotFoundException(
@@ -102,11 +103,11 @@ export class CompaniesService {
   }
 
   async update(id: string, updateCompanyDto: UpdateCompanyDto): Promise<Company> {
-    const updatedCompany = await this.companyModel.findOneAndUpdate(
-      { _id: id, deleted: false }, 
+    const updatedCompany = await this.companyModel.findByIdAndUpdate(
+      id, 
       updateCompanyDto, 
       { new: true }
-    ).exec();
+    ).setOptions({ skipSoftDelete: false }).exec();
 
     if (!updatedCompany) {
       throw new NotFoundException(
@@ -118,8 +119,8 @@ export class CompaniesService {
   }
 
   async remove(id: string): Promise<Company> {
-    const deletedCompany = await this.companyModel.findOneAndUpdate(
-      { _id: id, deleted: false }, 
+    const deletedCompany = await this.companyModel.findByIdAndUpdate(
+      id, 
       { deleted: true }, 
       { new: true }
     ).exec();

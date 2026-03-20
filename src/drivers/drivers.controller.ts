@@ -8,8 +8,9 @@ import { FilterDriverDto } from './dto/filter-driver.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole } from '../users/schemas/user.schema';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { GetUser } from '../auth/decorators/get-user.decorator';
+import { User, UserRole } from '../users/schemas/user.schema';
 
 @ApiTags('drivers')
 @ApiBearerAuth()
@@ -38,14 +39,23 @@ export class DriversController {
 
   @Get()
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
-  findAll(@Query() paginationQuery: PaginationQueryDto, @Query() filterDriverDto: FilterDriverDto) {
-    return this.driversService.findAll(paginationQuery, filterDriverDto);
+  findAll(
+    @Query() paginationQuery: PaginationQueryDto, 
+    @Query() filterDriverDto: FilterDriverDto,
+    @GetUser() user: User
+  ) {
+    const showDeleted = user.role === UserRole.ADMIN;
+    return this.driversService.findAll(paginationQuery, filterDriverDto, showDeleted);
   }
 
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
-  findOne(@Param('id', ParseMongoIdPipe) id: string) {
-    return this.driversService.findOne(id);
+  findOne(
+    @Param('id', ParseMongoIdPipe) id: string,
+    @GetUser() user: User
+  ) {
+    const showDeleted = user.role === UserRole.ADMIN;
+    return this.driversService.findOne(id, showDeleted);
   }
 
   @Patch(':id')

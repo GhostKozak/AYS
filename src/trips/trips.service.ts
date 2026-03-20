@@ -101,11 +101,11 @@ export class TripsService {
     return newTrip.save();
   }
 
-  async findAll(paginationQuery: PaginationQueryDto, filterTripDto: FilterTripDto) {
+  async findAll(paginationQuery: PaginationQueryDto, filterTripDto: FilterTripDto, showDeleted = false) {
     const { limit, offset } = paginationQuery;
     const { companyId, driverId, vehicleId, unload_status, search } = filterTripDto;
 
-    const query: any = { deleted: false };
+    const query: any = {};
 
     if (companyId) query.company = companyId;
     if (driverId) query.driver = driverId;
@@ -124,6 +124,7 @@ export class TripsService {
 
     const trips = await this.tripModel
       .find(query)
+      .setOptions({ skipSoftDelete: showDeleted })
       .skip(offset ?? 0)
       .limit(limit ?? 10)
       .populate('driver', 'full_name phone_number')
@@ -131,7 +132,7 @@ export class TripsService {
       .populate('vehicle', 'licence_plate vehicle_type')
       .exec();
 
-    const count = await this.tripModel.countDocuments(query);
+    const count = await this.tripModel.countDocuments(query).setOptions({ skipSoftDelete: showDeleted });
 
     return {
       data: trips,
@@ -139,9 +140,10 @@ export class TripsService {
     };
   }
 
-  async findOne(id: string): Promise<Trip> {
+  async findOne(id: string, showDeleted = false): Promise<Trip> {
     const trip = await this.tripModel
-      .findOne({ _id: id, deleted: false })
+      .findById(id)
+      .setOptions({ skipSoftDelete: showDeleted })
       .populate('driver', 'full_name phone_number')
       .populate('company')
       .populate('vehicle')
@@ -159,11 +161,11 @@ export class TripsService {
   async update(id: string, updateTripDto: UpdateTripDto): Promise<Trip> {
     await this.findOne(id);
 
-    const updatedTrip = await this.tripModel.findOneAndUpdate(
-      { _id: id, deleted: false },
+    const updatedTrip = await this.tripModel.findByIdAndUpdate(
+      id,
       updateTripDto,
       { new: true },
-    ).exec();
+    ).setOptions({ skipSoftDelete: false }).exec();
     
     if (!updatedTrip) {
       throw new NotFoundException(
@@ -176,8 +178,8 @@ export class TripsService {
 
   async remove(id: string): Promise<Trip> {
 
-    const deletedTrip = await this.tripModel.findOneAndUpdate(
-      { _id: id, deleted: false },
+    const deletedTrip = await this.tripModel.findByIdAndUpdate(
+      id,
       { deleted: true },
       { new: true },
     ).exec();

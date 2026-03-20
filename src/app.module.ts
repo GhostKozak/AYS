@@ -12,19 +12,24 @@ import { AuthModule } from './auth/auth.module';
 import { SeedModule } from './seed/seed.module';
 import { AcceptLanguageResolver, HeaderResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
+import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: process.env.NODE_ENV === 'test' ? 
-        ['.env.test.local'] : 
+      envFilePath: process.env.NODE_ENV === 'test' ?
+        ['.env.test.local'] :
         ['.env', '.env.development.local'],
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         uri: configService.get<string>('MONGODB_URI'),
+        connectionFactory: (connection) => {
+          connection.plugin(SoftDeletePlugin);
+          return connection;
+        },
       }),
       inject: [ConfigService],
     }),
@@ -51,4 +56,4 @@ import * as path from 'path';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

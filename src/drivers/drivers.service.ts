@@ -19,13 +19,11 @@ export class DriversService {
   ) {}
 
   async findByPhone(phone: string): Promise<DriverDocument | null> {
-    return this.driverModel.findOne({ phone_number: phone, deleted: false }).populate('company').exec();
+    return this.driverModel.findOne({ phone_number: phone }).populate('company').exec();
   }
 
   async findDriverByNameOrPhone(query: string): Promise<{data:DriverDocument[]; count: number | null}> {
-    const queryPayload: any = { 
-      deleted: false 
-    };
+    const queryPayload: any = {};
 
     const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     queryPayload.$or = [
@@ -66,10 +64,10 @@ export class DriversService {
     return newDriver.save();
   }
 
-  async findAll(paginationQuery: PaginationQueryDto, filterDriverDto: FilterDriverDto) {
+  async findAll(paginationQuery: PaginationQueryDto, filterDriverDto: FilterDriverDto, showDeleted = false) {
     const { limit, offset } = paginationQuery;
     const { companyId, search } = filterDriverDto;
-    const query: any = { deleted: false };
+    const query: any = {};
 
     if (companyId) {
       query.company = companyId;
@@ -85,12 +83,13 @@ export class DriversService {
 
     const drivers = await this.driverModel
       .find(query)
+      .setOptions({ skipSoftDelete: showDeleted })
       .skip(offset ?? 0)
       .limit(limit ?? 10)
       .populate('company', 'name')
       .exec();
 
-    const count = await this.driverModel.countDocuments(query);
+    const count = await this.driverModel.countDocuments(query).setOptions({ skipSoftDelete: showDeleted });
 
     return {
       data: drivers,
@@ -98,8 +97,8 @@ export class DriversService {
     };
   }
 
-  async findOne(id: string): Promise<DriverDocument> {
-    const driver = await this.driverModel.findOne({ _id: id, deleted: false }).exec();
+  async findOne(id: string, showDeleted = false): Promise<DriverDocument> {
+    const driver = await this.driverModel.findById(id).setOptions({ skipSoftDelete: showDeleted }).exec();
 
     if (!driver) {
       throw new NotFoundException(
@@ -111,11 +110,11 @@ export class DriversService {
   }
 
   async update(id: string, updateDriverDto: UpdateDriverDto): Promise<DriverDocument> {
-    const updatedDriver = await this.driverModel.findOneAndUpdate(
-      { _id: id, deleted: false },
+    const updatedDriver = await this.driverModel.findByIdAndUpdate(
+      id,
       updateDriverDto,
       { new: true }
-    ).exec();
+    ).setOptions({ skipSoftDelete: false }).exec();
 
     if (!updatedDriver) {
       throw new NotFoundException(
@@ -127,8 +126,8 @@ export class DriversService {
   }
 
   async remove(id: string): Promise<Driver> {
-    const deletedDriver = await this.driverModel.findOneAndUpdate(
-      { _id: id, deleted: false },
+    const deletedDriver = await this.driverModel.findByIdAndUpdate(
+      id,
       { deleted: true },
       { new: true }
     ).exec();

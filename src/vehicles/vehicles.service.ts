@@ -57,10 +57,10 @@ export class VehiclesService {
     return newVehicle.save();
   }
 
-  async findAll(paginationQuery: PaginationQueryDto, filterVehicleDto: FilterVehicleDto) {
+  async findAll(paginationQuery: PaginationQueryDto, filterVehicleDto: FilterVehicleDto, showDeleted = false) {
     const { limit, offset } = paginationQuery;
     const { vehicle_type, search } = filterVehicleDto;
-    const query: any = { deleted: false };
+    const query: any = {};
 
     if (vehicle_type) {
       query.vehicle_type = vehicle_type;
@@ -72,11 +72,12 @@ export class VehiclesService {
 
     const vehicles = await this.vehicleModel
       .find(query)
+      .setOptions({ skipSoftDelete: showDeleted })
       .skip(offset ?? 0)
       .limit(limit ?? 10)
       .exec();
 
-    const count = await this.vehicleModel.countDocuments(query);
+    const count = await this.vehicleModel.countDocuments(query).setOptions({ skipSoftDelete: showDeleted });
 
     return {
       data: vehicles,
@@ -84,8 +85,8 @@ export class VehiclesService {
     };
   }
 
-  async findOne(id: string) {
-    const vehicle = await this.vehicleModel.findOne({ _id: id, deleted: false }).exec();
+  async findOne(id: string, showDeleted = false) {
+    const vehicle = await this.vehicleModel.findById(id).setOptions({ skipSoftDelete: showDeleted }).exec();
     
     if (!vehicle) {
       throw new NotFoundException(
@@ -97,11 +98,11 @@ export class VehiclesService {
   }
 
   async update(id: string, updateVehicleDto: UpdateVehicleDto) {
-    const updatedVehicle = await this.vehicleModel.findOneAndUpdate(
-      { _id: id, deleted: false },
+    const updatedVehicle = await this.vehicleModel.findByIdAndUpdate(
+      id,
       updateVehicleDto,
       { new: true }
-    ).exec();
+    ).setOptions({ skipSoftDelete: false }).exec();
 
     if (!updatedVehicle) {
       throw new NotFoundException(
@@ -113,8 +114,8 @@ export class VehiclesService {
   }
 
   async remove(id: string) {
-    const deletedVehicle = await this.vehicleModel.findOneAndUpdate(
-      { _id: id, deleted: false },
+    const deletedVehicle = await this.vehicleModel.findByIdAndUpdate(
+      id,
       { deleted: true },
       { new: true }
     ).exec();
