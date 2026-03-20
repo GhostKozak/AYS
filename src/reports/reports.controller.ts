@@ -2,6 +2,7 @@ import { Controller, Get, Query, UseGuards, UseInterceptors } from '@nestjs/comm
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { ReportsService } from './reports.service';
 import { ReportQueryDto, ReportPeriod } from './dto/report-query.dto';
+import { DashboardSummaryDto } from './dto/dashboard-summary.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -35,7 +36,7 @@ export class ReportsController {
 
   @Get('dashboard-summary')
   @ApiOperation({ summary: 'Get general dashboard summary for today' })
-  @ApiResponse({ status: 200, description: 'Return summary object' })
+  @ApiResponse({ status: 200, description: 'Return summary object', type: DashboardSummaryDto })
   getSummary() {
     return this.reportsService.getDashboardSummary();
   }
