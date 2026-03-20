@@ -1,0 +1,31 @@
+# docker-compose.yml
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/ays
+      - FALLBACK_LANGUAGE=en
+      - JWT_SECRET=your-super-secret-jwt-key
+      - SEED_ADMIN_SECRET=ays-secret-123
+    depends_on:
+      - mongodb
+    networks:
+      - ays-network
+
+  mongodb:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongo_data:/data/db
+    networks:
+      - ays-network
+
+networks:
+  ays-network:
+    driver: bridge
+
+# Deleted named volume for easier debugging
+
