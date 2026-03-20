@@ -37,7 +37,7 @@ export class ReportsController {
   @Get('dashboard-summary')
   @ApiOperation({ summary: 'Get general dashboard summary for today' })
   @ApiResponse({ status: 200, description: 'Return summary object', type: DashboardSummaryDto })
-  getSummary() {
+  getSummary(): Promise<DashboardSummaryDto> {
     return this.reportsService.getDashboardSummary();
   }
 

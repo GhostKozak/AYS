@@ -5,6 +5,7 @@ import { Trip, TripDocument } from '../trips/schema/trips.schema';
 import { Company, CompanyDocument } from '../companies/schemas/company.schema';
 import { Driver, DriverDocument } from '../drivers/schemas/driver.schema';
 import { ReportPeriod } from './dto/report-query.dto';
+import { DashboardSummaryDto } from './dto/dashboard-summary.dto';
 import * as dayjs from 'dayjs';
 import * as ExcelJS from 'exceljs';
 const PDFDocument = require('pdfkit-table');
@@ -93,7 +94,7 @@ export class ReportsService {
     ]);
   }
 
-  async getDashboardSummary() {
+  async getDashboardSummary(): Promise<DashboardSummaryDto> {
     const today = this.getDateRange(ReportPeriod.TODAY);
     
     const [totalToday, waitingToday, topToday, totalCompanies, totalDrivers] = await Promise.all([

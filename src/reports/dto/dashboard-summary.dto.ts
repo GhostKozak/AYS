@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-class CompanyTripCountDto {
+export class CompanyTripCountDto {
   @ApiProperty()
   _id: string;
 
@@ -11,7 +11,7 @@ class CompanyTripCountDto {
   companyName: string;
 }
 
-class TodaySummaryDto {
+export class TodaySummaryDto {
   @ApiProperty()
   totalTrips: number;
 
