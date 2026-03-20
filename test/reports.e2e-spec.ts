@@ -78,6 +78,8 @@ describe('Reports (e2e)', () => {
       expect(response.body.today).toHaveProperty('totalTrips');
       expect(response.body.today).toHaveProperty('waitingToUnload');
       expect(response.body.today).toHaveProperty('topCompanies');
+      expect(response.body).toHaveProperty('totalCompanies');
+      expect(response.body).toHaveProperty('totalDrivers');
     });
   });
 

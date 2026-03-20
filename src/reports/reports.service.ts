@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Trip, TripDocument } from '../trips/schema/trips.schema';
+import { Company, CompanyDocument } from '../companies/schemas/company.schema';
+import { Driver, DriverDocument } from '../drivers/schemas/driver.schema';
 import { ReportPeriod } from './dto/report-query.dto';
 import * as dayjs from 'dayjs';
 import * as ExcelJS from 'exceljs';
@@ -11,6 +13,8 @@ const PDFDocument = require('pdfkit-table');
 export class ReportsService {
   constructor(
     @InjectModel(Trip.name) private tripModel: Model<TripDocument>,
+    @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
+    @InjectModel(Driver.name) private driverModel: Model<DriverDocument>,
   ) {}
 
   async getTopCompanies(period: ReportPeriod) {
@@ -92,7 +96,7 @@ export class ReportsService {
   async getDashboardSummary() {
     const today = this.getDateRange(ReportPeriod.TODAY);
     
-    const [totalToday, waitingToday, topToday] = await Promise.all([
+    const [totalToday, waitingToday, topToday, totalCompanies, totalDrivers] = await Promise.all([
       this.tripModel.countDocuments({ is_trip_canceled: false, ...today }),
       this.tripModel.countDocuments({ 
         is_trip_canceled: false, 
@@ -100,6 +104,8 @@ export class ReportsService {
         ...today 
       }),
       this.getTopCompanies(ReportPeriod.TODAY),
+      this.companyModel.countDocuments({}),
+      this.driverModel.countDocuments({}),
     ]);
 
     return {
@@ -108,6 +114,8 @@ export class ReportsService {
         waitingToUnload: waitingToday,
         topCompanies: topToday.slice(0, 5),
       },
+      totalCompanies,
+      totalDrivers,
     };
   }
 
@@ -226,24 +234,30 @@ export class ReportsService {
 
     const worksheet = workbook.addWorksheet('Trips');
 
-    worksheet.columns = [
-      { header: 'Arrival Time', key: 'arrival', width: 20 },
-      { header: 'Company', key: 'company', width: 25 },
-      { header: 'Plate', key: 'plate', width: 15 },
-      { header: 'Driver', key: 'driver', width: 25 },
-      { header: 'Status', key: 'status', width: 15 },
-      { header: 'Notes', key: 'notes', width: 30 },
-    ];
+    // Add summary information
+    const [totalCompanies, totalDrivers] = await Promise.all([
+      this.companyModel.countDocuments({}),
+      this.driverModel.countDocuments({}),
+    ]);
+
+    // Summary at the top
+    worksheet.addRow(['Report Period', period.toUpperCase()]).commit();
+    worksheet.addRow(['Total Companies', totalCompanies]).commit();
+    worksheet.addRow(['Total Drivers', totalDrivers]).commit();
+    worksheet.addRow([]).commit(); // Empty row
+
+    // Manually add the header row
+    worksheet.addRow(['Arrival Time', 'Company', 'Plate', 'Driver', 'Status', 'Notes']).commit();
 
     for (let trip = await cursor.next(); trip != null; trip = await cursor.next()) {
-      worksheet.addRow({
-        arrival: dayjs(trip.arrival_time).format('YYYY-MM-DD HH:mm'),
-        company: trip.company?.name || 'N/A',
-        plate: trip.vehicle?.licence_plate || 'N/A',
-        driver: trip.driver?.full_name || 'N/A',
-        status: trip.unload_status,
-        notes: trip.notes || '',
-      }).commit();
+      worksheet.addRow([
+        dayjs(trip.arrival_time).format('YYYY-MM-DD HH:mm'),
+        trip.company?.name || 'N/A',
+        trip.vehicle?.licence_plate || 'N/A',
+        trip.driver?.full_name || 'N/A',
+        trip.unload_status,
+        trip.notes || '',
+      ]).commit();
     }
 
     await workbook.commit();
@@ -271,6 +285,15 @@ export class ReportsService {
     try { doc.font(fontPath); } catch (e) {}
 
     doc.font(boldFontPath).text(`Trips Report - ${period.toUpperCase()}`, { align: 'center', size: 18 });
+    doc.moveDown();
+
+    const [totalCompanies, totalDrivers] = await Promise.all([
+      this.companyModel.countDocuments({}),
+      this.driverModel.countDocuments({}),
+    ]);
+
+    doc.font(fontPath).fontSize(12).text(`Total Companies: ${totalCompanies}`);
+    doc.text(`Total Drivers: ${totalDrivers}`);
     doc.moveDown();
 
     const tableRows: any[] = [];

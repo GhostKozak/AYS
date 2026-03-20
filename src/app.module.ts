@@ -61,15 +61,23 @@ import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        store: await redisStore({
-          socket: {
-            host: configService.get('REDIS_HOST', 'localhost'),
-            port: parseInt(configService.get('REDIS_PORT', '6379'), 10),
-          },
-          ttl: parseInt(configService.get('CACHE_TTL', '600000'), 10),
-        }),
-      }),
+      useFactory: async (configService: ConfigService) => {
+        if (process.env.NODE_ENV === 'test') {
+          return {
+            store: 'memory',
+            ttl: parseInt(configService.get('CACHE_TTL', '600000'), 10),
+          };
+        }
+        return {
+          store: await redisStore({
+            socket: {
+              host: configService.get('REDIS_HOST', 'localhost'),
+              port: parseInt(configService.get('REDIS_PORT', '6379'), 10),
+            },
+            ttl: parseInt(configService.get('CACHE_TTL', '600000'), 10),
+          }),
+        };
+      },
       inject: [ConfigService],
     }),
     UsersModule,
