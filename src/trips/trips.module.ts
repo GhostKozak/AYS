@@ -6,6 +6,7 @@ import { Trip, TripSchema } from './schema/trips.schema';
 import { CompaniesModule } from '../companies/companies.module';
 import { DriversModule } from '../drivers/drivers.module';
 import { VehiclesModule } from '../vehicles/vehicles.module';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { VehiclesModule } from '../vehicles/vehicles.module';
     CompaniesModule,
     DriversModule,
     VehiclesModule,
+    AuditModule,
   ],
   controllers: [TripsController],
   providers: [TripsService],

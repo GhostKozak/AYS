@@ -4,6 +4,7 @@ import { DriversController } from './drivers.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Driver, DriverSchema } from './schemas/driver.schema';
 import { CompaniesModule } from '../companies/companies.module';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { CompaniesModule } from '../companies/companies.module';
       { name: Driver.name, schema: DriverSchema },
     ]),
     CompaniesModule,
+    AuditModule,
   ],
   controllers: [DriversController],
   providers: [DriversService],
