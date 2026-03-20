@@ -7,8 +7,14 @@ services:
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/ays
       - FALLBACK_LANGUAGE=en
-      - JWT_SECRET=your-super-secret-jwt-key
-      - SEED_ADMIN_SECRET=ays-secret-123
+      - JWT_SECRET=${JWT_SECRET}
+      - SEED_ADMIN_SECRET=${SEED_ADMIN_SECRET}
+      - INITIAL_ADMIN_PASSWORD=${INITIAL_ADMIN_PASSWORD}
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
     depends_on:
       - mongodb
       - redis
@@ -17,15 +23,11 @@ services:
 
   redis:
     image: docker.io/library/redis:7.2-alpine
-    ports:
-      - "6379:6379"
     networks:
       - ays-network
 
   mongodb:
     image: docker.io/library/mongo:6.0
-    ports:
-      - "27017:27017"
     volumes:
       - ./mongo_data:/data/db
     networks:

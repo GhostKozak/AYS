@@ -42,6 +42,7 @@
     "class-validator": "^0.14.2",
     "dayjs": "^1.11.20",
     "exceljs": "^4.4.0",
+    "helmet": "^8.1.0",
     "mongoose": "^8.16.0",
     "nestjs-i18n": "^10.5.1",
     "passport": "^0.7.0",

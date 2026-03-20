@@ -49,7 +49,7 @@ export class AuditInterceptor implements NestInterceptor {
           action: method === 'DELETE' ? 'DELETE' : (method === 'POST' ? 'CREATE' : 'UPDATE'),
           entity,
           entityId: response?._id || response?.id || 'N/A',
-          newValue: method !== 'DELETE' ? body : null,
+          newValue: method !== 'DELETE' ? this.sanitize(body) : null,
           ipAddress: ip,
           userAgent,
         }).catch(err => console.error('Audit log failed', err));
@@ -60,5 +60,20 @@ export class AuditInterceptor implements NestInterceptor {
   private extractEntity(url: string): string {
     const parts = url.split('/');
     return parts[1] || 'Unknown';
+  }
+
+  private sanitize(data: any): any {
+    if (!data || typeof data !== 'object') return data;
+    const sensitiveFields = ['password', 'token', 'secret', 'key', 'seed'];
+    const sanitized = { ...data };
+
+    for (const key of Object.keys(sanitized)) {
+      if (sensitiveFields.some(f => key.toLowerCase().includes(f))) {
+        sanitized[key] = '[REDACTED]';
+      } else if (typeof sanitized[key] === 'object') {
+        sanitized[key] = this.sanitize(sanitized[key]);
+      }
+    }
+    return sanitized;
   }
 }

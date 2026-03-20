@@ -2,20 +2,41 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcryptjs';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private readonly auditService: AuditService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
+  async validateUser(email: string, password: string, ipAddress?: string): Promise<any> {
     const user = await this.usersService.findForAuth(email);
-    if (user && await bcrypt.compare(password, user.password)) {
+    if (!user) return null;
+
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      throw new UnauthorizedException('Hesabınız çok fazla hatalı giriş nedeniyle kilitlendi. Lütfen daha sonra tekrar deneyin.');
+    }
+
+    if (await bcrypt.compare(password, user.password)) {
+      await this.usersService.resetFailedLogins(user._id as string);
       const { password: userPassword, ...result } = user.toObject();
       return result;
     }
+
+    await this.usersService.incrementFailedLogins(user._id as string);
+    this.auditService.log({
+      user: 'SYSTEM',
+      action: 'LOGIN_FAILED',
+      entity: 'Auth',
+      entityId: user._id as string,
+      oldValue: null,
+      newValue: { email },
+      ipAddress,
+    }).catch(err => console.error('Audit log failed', err));
+
     return null;
   }
 

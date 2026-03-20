@@ -3,12 +3,14 @@ import { AppModule } from './app.module';
 import { MongoExceptionFilter } from './filters/mongo-exception.filter';
 import { I18nService, I18nValidationExceptionFilter, I18nValidationPipe } from 'nestjs-i18n';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const i18nService = app.get(I18nService) as any;
 
-  app.useGlobalPipes(new I18nValidationPipe());
+  app.use(helmet());
+  app.useGlobalPipes(new I18nValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
   app.useGlobalFilters(
     new MongoExceptionFilter(i18nService),
     new I18nValidationExceptionFilter({ detailedErrors: true }),
@@ -40,8 +42,11 @@ async function bootstrap() {
       'access-token',
     )
     .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+
+  if (process.env.NODE_ENV !== 'production') {
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, document);
+  }
 
   await app.listen(process.env.PORT ?? 3000);
 }

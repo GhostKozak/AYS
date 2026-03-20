@@ -25,7 +25,10 @@ export class UsersService {
       ...createUserDto,
       password: hashedPassword,
     });
-    return createdUser.save();
+    const savedUser = await createdUser.save();
+    const userObj = savedUser.toObject() as any;
+    delete userObj.password;
+    return userObj;
   }
 
   async findAll(): Promise<User[]> {
@@ -68,7 +71,7 @@ export class UsersService {
   }
 
   async remove(id: string): Promise<void> {
-    const result = await this.userModel.findByIdAndDelete(id).exec();
+    const result = await this.userModel.findByIdAndUpdate(id, { deleted: true }).exec();
     if (!result) {
       throw new NotFoundException(this.i18n.translate('user.NOT_FOUND'));
     }
@@ -76,5 +79,23 @@ export class UsersService {
 
   async updateLastLogin(id: string): Promise<void> {
     await this.userModel.findByIdAndUpdate(id, { lastLoginAt: new Date() }).exec();
+  }
+
+  async incrementFailedLogins(id: string): Promise<User | null> {
+    const user = await this.userModel.findById(id).exec();
+    if (!user) return null;
+    
+    user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+    if (user.failedLoginAttempts >= 5) {
+      user.lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 dakika kilit
+    }
+    return user.save();
+  }
+
+  async resetFailedLogins(id: string): Promise<void> {
+    await this.userModel.findByIdAndUpdate(id, { 
+      failedLoginAttempts: 0, 
+      $unset: { lockedUntil: 1 } 
+    }).exec();
   }
 } 

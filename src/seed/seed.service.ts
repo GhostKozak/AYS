@@ -12,14 +12,15 @@ export class SeedService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private readonly i18n: I18nService,
-  ) {}
+  ) { }
 
   async seedAdminUser() {
     const existingAdmin = await this.userModel.findOne({ email: 'admin@admin.com' });
-    
+
     if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash('Admin.123.', 10);
-      
+      const initialPassword = process.env.INITIAL_ADMIN_PASSWORD || 'Admin.123.';
+      const hashedPassword = await bcrypt.hash(initialPassword, 10);
+
       const adminUser = new this.userModel({
         email: 'admin@admin.com',
         password: hashedPassword,

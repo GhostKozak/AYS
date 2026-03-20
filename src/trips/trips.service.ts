@@ -133,7 +133,8 @@ export class TripsService {
     if (unload_status) query.unload_status = unload_status;
 
     if (search) {
-      const searchRegex = new RegExp(search, 'i');
+      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchRegex = new RegExp(escapedSearch, 'i');
       query.$or = [
         { 'driver.full_name': searchRegex },
         { 'company.name': searchRegex },

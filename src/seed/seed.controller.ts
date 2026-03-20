@@ -2,6 +2,7 @@ import { Controller, Post, Headers, UnauthorizedException } from '@nestjs/common
 import { SeedService } from './seed.service';
 import { I18nService } from 'nestjs-i18n';
 import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import * as crypto from 'crypto';
 
 @ApiTags('seed')
 @Controller('seed')
@@ -21,7 +22,10 @@ export class SeedController {
   @ApiResponse({ status: 201, description: 'Admin user created successfully' })
   @ApiResponse({ status: 401, description: 'Invalid or missing seed secret' })
   async createAdmin(@Headers('x-seed-secret') secret: string) {
-    if (!process.env.SEED_ADMIN_SECRET || secret !== process.env.SEED_ADMIN_SECRET) {
+    const expectedSecret = process.env.SEED_ADMIN_SECRET || '';
+    
+    if (!secret || !expectedSecret || secret.length !== expectedSecret.length || 
+        !crypto.timingSafeEqual(Buffer.from(secret), Buffer.from(expectedSecret))) {
       throw new UnauthorizedException('Invalid or missing seed secret');
     }
 

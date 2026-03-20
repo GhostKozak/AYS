@@ -10,11 +10,14 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     private authService: AuthService, 
     private readonly i18n: I18nService
   ) {
-    super({ usernameField: 'email' });
+    super({ 
+      usernameField: 'email',
+      passReqToCallback: true 
+    });
   }
 
-  async validate(email: string, password: string): Promise<any> {
-    const user = await this.authService.validateUser(email, password);
+  async validate(req: any, email: string, password: string): Promise<any> {
+    const user = await this.authService.validateUser(email, password, req.ip);
     if (!user) {
       throw new UnauthorizedException(this.i18n.translate('auth.INVALID_CREDENTIALS'));
     }
