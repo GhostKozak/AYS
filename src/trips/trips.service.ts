@@ -144,7 +144,7 @@ export class TripsService {
 
   async findOne(id: string, showDeleted = false): Promise<Trip> {
     const trip = await this.tripModel
-      .findById(id)
+      .findOne({ _id: id })
       .setOptions({ skipSoftDelete: showDeleted })
       .populate('driver', 'full_name phone_number')
       .populate('company')
@@ -177,7 +177,7 @@ export class TripsService {
 
     if (user) {
       this.auditService.log({
-        user: user._id || user.id,
+        user: user._id || user.id || user.userId,
         action: 'UPDATE',
         entity: 'Trip',
         entityId: id,

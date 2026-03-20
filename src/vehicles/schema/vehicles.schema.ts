@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 import { VehicleType } from '../enums/vehicleTypes';
+import { SoftDeletePlugin } from '../../common/plugins/soft-delete.plugin';
 
 export type VehicleDocument = HydratedDocument<Vehicle>;
 
@@ -16,8 +17,8 @@ export class Vehicle {
     @Prop({ enum: VehicleType, default: VehicleType.TRUCK })
     vehicle_type: VehicleType;
 
-    @Prop({ default: false })
-    deleted: boolean;
+    deleted?: boolean;
 }
 
 export const VehicleSchema = SchemaFactory.createForClass(Vehicle);
+VehicleSchema.plugin(SoftDeletePlugin);

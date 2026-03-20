@@ -14,7 +14,7 @@ export function SoftDeletePlugin(schema: Schema) {
     const options = this.getOptions();
 
     // Skip filter if skipSoftDelete is true or if query explicitly looks for 'deleted'
-    if (options.skipSoftDelete === true || query.deleted !== undefined) {
+    if (options.skipSoftDelete === true || (query && query.deleted !== undefined)) {
       return next();
     }
 

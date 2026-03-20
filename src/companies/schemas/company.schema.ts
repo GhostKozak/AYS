@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import { SoftDeletePlugin } from '../../common/plugins/soft-delete.plugin';
 
 export type CompanyDocument = HydratedDocument<Company>;
 
@@ -12,8 +13,8 @@ export class Company {
     @Prop({ required: true, trim: true, unique: true })
     name: string;
 
-    @Prop({ default: false })
-    deleted: boolean;
+    deleted?: boolean;
 }
 
 export const CompanySchema = SchemaFactory.createForClass(Company);
+CompanySchema.plugin(SoftDeletePlugin);

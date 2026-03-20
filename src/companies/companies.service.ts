@@ -93,7 +93,7 @@ export class CompaniesService {
   }
 
   async findOne(id: string, showDeleted = false): Promise<Company> {
-    const company = await this.companyModel.findById(id).setOptions({ skipSoftDelete: showDeleted }).exec();
+    const company = await this.companyModel.findOne({ _id: id }).setOptions({ skipSoftDelete: showDeleted }).exec();
     
     if (!company) {
       throw new NotFoundException(
@@ -107,8 +107,8 @@ export class CompaniesService {
   async update(id: string, updateCompanyDto: UpdateCompanyDto, user?: any): Promise<Company> {
     const oldValue = await this.findOne(id);
 
-    const updatedCompany = await this.companyModel.findByIdAndUpdate(
-      id, 
+    const updatedCompany = await this.companyModel.findOneAndUpdate(
+      { _id: id }, 
       updateCompanyDto, 
       { new: true }
     ).setOptions({ skipSoftDelete: false }).exec();
@@ -121,7 +121,7 @@ export class CompaniesService {
 
     if (user) {
       this.auditService.log({
-        user: user._id || user.id,
+        user: user.userId,
         action: 'UPDATE',
         entity: 'Company',
         entityId: id,
@@ -134,8 +134,8 @@ export class CompaniesService {
   }
 
   async remove(id: string): Promise<Company> {
-    const deletedCompany = await this.companyModel.findByIdAndUpdate(
-      id, 
+    const deletedCompany = await this.companyModel.findOneAndUpdate(
+      { _id: id }, 
       { deleted: true }, 
       { new: true }
     ).exec();

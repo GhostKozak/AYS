@@ -1,26 +1,21 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
-import { AppModule } from '../src/app.module';
-import { getModelToken, getConnectionToken } from '@nestjs/mongoose';
-import { Model, Connection, Types } from 'mongoose';
-import { Company, CompanyDocument } from '../src/companies/schemas/company.schema';
-import { Driver, DriverDocument } from '../src/drivers/schemas/driver.schema';
-import { Vehicle, VehicleDocument } from '../src/vehicles/schema/vehicles.schema';
-import { Trip, TripDocument } from '../src/trips/schema/trips.schema';
-import { CreateTripDto } from 'src/trips/dto/create-trip.dto';
+import { AppModule } from './../src/app.module';
+import { getConnectionToken } from '@nestjs/mongoose';
+import { Connection } from 'mongoose';
 
-describe('TripsController (e2e)', () => {
+import { SeedService } from './../src/seed/seed.service';
+
+describe('Trips (e2e)', () => {
   let app: INestApplication;
-  let companyModel: Model<CompanyDocument>;
-  let driverModel: Model<DriverDocument>;
-  let vehicleModel: Model<VehicleDocument>;
-  let tripModel: Model<TripDocument>;
-  let connection: Connection;
+  let adminToken: string;
+  let editorToken: string;
+  let dbConnection: Connection;
+  let seedService: SeedService;
 
-  let testCompany: CompanyDocument;
-  let testDriver: DriverDocument;
-  let testVehicle: VehicleDocument;
+  // Mock data IDs to be populated during tests
+  let tripId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -31,86 +26,130 @@ describe('TripsController (e2e)', () => {
     app.useGlobalPipes(new ValidationPipe());
     await app.init();
 
-    companyModel = moduleFixture.get(getModelToken(Company.name));
-    driverModel = moduleFixture.get(getModelToken(Driver.name));
-    vehicleModel = moduleFixture.get(getModelToken(Vehicle.name));
-    tripModel = moduleFixture.get(getModelToken(Trip.name));
-    connection = moduleFixture.get(getConnectionToken());
-  });
+    dbConnection = moduleFixture.get(getConnectionToken());
+    seedService = moduleFixture.get(SeedService);
 
-  beforeEach(async () => {
-    testCompany = await companyModel.create({ name: 'E2E Test Company' });
-    testDriver = await driverModel.create({ full_name: 'E2E Test Driver', phone_number: '5559876543', company: testCompany._id });
-    testVehicle = await vehicleModel.create({ licence_plate: '34E2E34' });
-  });
+    // Clean test database for isolation
+    await dbConnection.collection('trips').deleteMany({});
+    await dbConnection.collection('companies').deleteMany({});
+    await dbConnection.collection('drivers').deleteMany({});
+    await dbConnection.collection('vehicles').deleteMany({});
+    await dbConnection.collection('auditlogs').deleteMany({});
+    await dbConnection.collection('users').deleteMany({});
 
-  afterEach(async () => {
-    await connection.collection('trips').deleteMany({});
-    await connection.collection('drivers').deleteMany({});
-    await connection.collection('companies').deleteMany({});
-    await connection.collection('vehicles').deleteMany({});
+    // Ensure admin user exists
+    await seedService.seedAdminUser();
+
+    // Create an Editor user for visibility tests
+    const hashedPassword = await require('bcryptjs').hash('Editor.123.', 10);
+    await dbConnection.collection('users').insertOne({
+      email: 'editor@test.com',
+      password: hashedPassword,
+      firstName: 'Editor',
+      lastName: 'User',
+      role: 'editor',
+      isActive: true,
+    });
+    
+    // Login Admin
+    const adminLogin = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: 'admin@admin.com', password: 'Admin.123.' });
+    adminToken = adminLogin.body.access_token;
+
+    // Login Editor
+    const editorLogin = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: 'editor@test.com', password: 'Editor.123.' });
+    editorToken = editorLogin.body.access_token;
   });
 
   afterAll(async () => {
+    // Optionally clean up test data if needed
+    // await dbConnection.collection('trips').deleteMany({ notes: 'E2E Test Note' });
     await app.close();
   });
 
-  describe('POST /trips', () => {
-    it('should create a new trip with existing relations', async () => {
-      const createTripDto: CreateTripDto = {
-        driver_phone_number: testDriver.phone_number,
-        company_name: testCompany.name,
-        licence_plate: testVehicle.licence_plate,
-        notes: 'Test trip',
-      };
-
-      return request(app.getHttpServer())
+  describe('Full Trip Lifecycle', () => {
+    it('should create a new trip with auto-created entities (POST /trips)', async () => {
+      const response = await request(app.getHttpServer())
         .post('/trips')
-        .send(createTripDto)
-        .expect(201)
-        .then((res) => {
-          expect(res.body).toBeDefined();
-          expect(res.body.driver).toEqual(testDriver._id.toString());
-          expect(res.body.company).toEqual(testCompany._id.toString());
-          expect(res.body.vehicle).toEqual(testVehicle._id.toString());
-          expect(res.body.notes).toEqual('Test trip');
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          company_name: 'E2E Test Company',
+          driver_phone_number: '5550009988',
+          driver_full_name: 'E2E Driver',
+          licence_plate: 'E2E-PLATE-1',
+          vehicle_type: 'TRUCK',
+          notes: 'E2E Test Note',
         });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toHaveProperty('_id');
+      tripId = response.body._id;
     });
 
-    it('should create a new trip and a new driver', async () => {
-        const createTripDto: CreateTripDto = {
-            driver_phone_number: '5550001122',
-            driver_full_name: 'Brand New Driver',
-            company_name: testCompany.name,
-            licence_plate: testVehicle.licence_plate,
-        };
-
-        return request(app.getHttpServer())
+    it('should fail to create a duplicate active trip (POST /trips) - Conflict 409', async () => {
+      const response = await request(app.getHttpServer())
         .post('/trips')
-        .send(createTripDto)
-        .expect(201)
-        .then(async (res) => {
-            const driverInDb = await driverModel.findOne({ phone_number: '5550001122' });
-            expect(driverInDb).not.toBeNull();
-            expect(res.body.driver).toEqual(driverInDb!._id.toString());
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          company_name: 'E2E Test Company',
+          driver_phone_number: '5550009988',
+          licence_plate: 'E2E-PLATE-1',
         });
+
+      expect(response.status).toBe(409);
     });
-  });
 
-  describe('GET /trips/:id', () => {
-      it('should get a trip by id', async () => {
-          const trip = await tripModel.create({
-              driver: testDriver._id,
-              company: testCompany._id,
-              vehicle: testVehicle._id
-          });
+    it('should get trip details (GET /trips/:id)', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/trips/${tripId}`)
+        .set('Authorization', `Bearer ${adminToken}`);
 
-          return request(app.getHttpServer())
-            .get(`/trips/${trip._id}`)
-            .expect(200)
-            .then(res => {
-                expect(res.body._id).toEqual(trip._id.toString());
-            });
-      });
+      expect(response.status).toBe(200);
+      expect(response.body.notes).toBe('E2E Test Note');
+    });
+
+    it('should update trip status to UNLOADED (PATCH /trips/:id)', async () => {
+      const response = await request(app.getHttpServer())
+        .patch(`/trips/${tripId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          unload_status: 'UNLOADED',
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.unload_status).toBe('UNLOADED');
+    });
+
+    it('should allow creating a new trip after the previous one is UNLOADED (POST /trips)', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/trips')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          company_name: 'E2E Test Company',
+          driver_phone_number: '5550009988',
+          licence_plate: 'E2E-PLATE-1',
+          notes: 'Second E2E Trip',
+        });
+
+      expect(response.status).toBe(201);
+    });
+
+    it('should soft-delete the trip (DELETE /trips/:id)', async () => {
+      const response = await request(app.getHttpServer())
+        .delete(`/trips/${tripId}`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(response.status).toBe(200);
+      
+      // Verify it's hidden from normal find (Editor should get 404)
+      const getResponse = await request(app.getHttpServer())
+        .get(`/trips/${tripId}`)
+        .set('Authorization', `Bearer ${editorToken}`);
+      
+      expect(getResponse.status).toBe(404);
+    });
   });
 });

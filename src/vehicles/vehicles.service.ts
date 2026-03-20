@@ -88,7 +88,7 @@ export class VehiclesService {
   }
 
   async findOne(id: string, showDeleted = false) {
-    const vehicle = await this.vehicleModel.findById(id).setOptions({ skipSoftDelete: showDeleted }).exec();
+    const vehicle = await this.vehicleModel.findOne({ _id: id }).setOptions({ skipSoftDelete: showDeleted }).exec();
     
     if (!vehicle) {
       throw new NotFoundException(
@@ -102,8 +102,8 @@ export class VehiclesService {
   async update(id: string, updateVehicleDto: UpdateVehicleDto, user?: any) {
     const oldValue = await this.findOne(id);
     
-    const updatedVehicle = await this.vehicleModel.findByIdAndUpdate(
-      id,
+    const updatedVehicle = await this.vehicleModel.findOneAndUpdate(
+      { _id: id },
       updateVehicleDto,
       { new: true }
     ).setOptions({ skipSoftDelete: false }).exec();
@@ -116,7 +116,7 @@ export class VehiclesService {
 
     if (user) {
       this.auditService.log({
-        user: user._id || user.id,
+        user: user.userId,
         action: 'UPDATE',
         entity: 'Vehicle',
         entityId: id,
@@ -129,8 +129,8 @@ export class VehiclesService {
   }
 
   async remove(id: string) {
-    const deletedVehicle = await this.vehicleModel.findByIdAndUpdate(
-      id,
+    const deletedVehicle = await this.vehicleModel.findOneAndUpdate(
+      { _id: id },
       { deleted: true },
       { new: true }
     ).exec();

@@ -100,7 +100,7 @@ export class DriversService {
   }
 
   async findOne(id: string, showDeleted = false): Promise<DriverDocument> {
-    const driver = await this.driverModel.findById(id).setOptions({ skipSoftDelete: showDeleted }).exec();
+    const driver = await this.driverModel.findOne({ _id: id }).setOptions({ skipSoftDelete: showDeleted }).exec();
 
     if (!driver) {
       throw new NotFoundException(
@@ -114,8 +114,8 @@ export class DriversService {
   async update(id: string, updateDriverDto: UpdateDriverDto, user?: any): Promise<DriverDocument> {
     const oldValue = await this.findOne(id);
 
-    const updatedDriver = await this.driverModel.findByIdAndUpdate(
-      id,
+    const updatedDriver = await this.driverModel.findOneAndUpdate(
+      { _id: id },
       updateDriverDto,
       { new: true }
     ).setOptions({ skipSoftDelete: false }).exec();
@@ -128,7 +128,7 @@ export class DriversService {
 
     if (user) {
       this.auditService.log({
-        user: user._id || user.id,
+        user: user.userId,
         action: 'UPDATE',
         entity: 'Driver',
         entityId: id,
@@ -141,8 +141,8 @@ export class DriversService {
   }
 
   async remove(id: string): Promise<Driver> {
-    const deletedDriver = await this.driverModel.findByIdAndUpdate(
-      id,
+    const deletedDriver = await this.driverModel.findOneAndUpdate(
+      { _id: id },
       { deleted: true },
       { new: true }
     ).exec();

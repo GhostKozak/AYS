@@ -30,7 +30,7 @@ export class AuditInterceptor implements NestInterceptor {
         const entity = this.extractEntity(url);
         
         this.auditService.log({
-          user: user?._id || user?.id,
+          user: user?._id || user?.id || user?.userId,
           action: method === 'DELETE' ? 'DELETE' : (method === 'POST' ? 'CREATE' : 'UPDATE'),
           entity,
           entityId: response?._id || response?.id || 'N/A',

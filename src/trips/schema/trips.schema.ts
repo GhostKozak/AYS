@@ -4,6 +4,7 @@ import { Company } from "../../companies/schemas/company.schema";
 import { Driver } from "../../drivers/schemas/driver.schema";
 import { Vehicle } from "../../vehicles/schema/vehicles.schema";
 import { UnloadStatus } from "../enums/unloadStatus";
+import { SoftDeletePlugin } from "../../common/plugins/soft-delete.plugin";
 
 export type TripDocument = HydratedDocument<Trip>;
 
@@ -48,9 +49,7 @@ export class Trip {
 
     @Prop()
     notes: string;
-
-    @Prop({ default: false })
-    deleted: boolean;
 }
 
 export const TripSchema = SchemaFactory.createForClass(Trip);
+TripSchema.plugin(SoftDeletePlugin);
