@@ -9,6 +9,7 @@ import { VehiclesService } from '../vehicles/vehicles.service';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { EventsGateway } from '../events/events.gateway';
 import { 
   mockI18nService, 
   mockAuditService, 
@@ -43,6 +44,12 @@ const mockCacheManager = {
   del: jest.fn(),
 };
 
+const mockEventsGateway = {
+  emitTripCreated: jest.fn(),
+  emitTripUpdated: jest.fn(),
+  emitTripDeleted: jest.fn(),
+};
+
 describe('TripsService', () => {
   let service: TripsService;
   let tripModel: any;
@@ -74,6 +81,10 @@ describe('TripsService', () => {
         {
           provide: CACHE_MANAGER,
           useValue: mockCacheManager,
+        },
+        {
+          provide: EventsGateway,
+          useValue: mockEventsGateway,
         },
       ],
     }).compile();

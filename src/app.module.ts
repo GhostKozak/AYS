@@ -14,6 +14,7 @@ import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { SeedModule } from './seed/seed.module';
+import { EventsModule } from './events/events.module';
 import { AcceptLanguageResolver, HeaderResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -74,6 +75,7 @@ import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
     UsersModule,
     AuthModule,
     SeedModule,
+    EventsModule,
     DriversModule,
     CompaniesModule,
     VehiclesModule,

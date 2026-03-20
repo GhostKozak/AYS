@@ -7,6 +7,7 @@ import { CompaniesModule } from '../companies/companies.module';
 import { DriversModule } from '../drivers/drivers.module';
 import { VehiclesModule } from '../vehicles/vehicles.module';
 import { AuditModule } from '../audit/audit.module';
+import { EventsModule } from '../events/events.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { AuditModule } from '../audit/audit.module';
     DriversModule,
     VehiclesModule,
     AuditModule,
+    EventsModule,
   ],
   controllers: [TripsController],
   providers: [TripsService],

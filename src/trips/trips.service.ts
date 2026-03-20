@@ -14,6 +14,7 @@ import { UnloadStatus } from './enums/unloadStatus';
 import { AuditService } from '../audit/audit.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class TripsService {
@@ -25,6 +26,7 @@ export class TripsService {
     private readonly i18n: I18nService,
     private readonly auditService: AuditService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly eventsGateway: EventsGateway,
   ) {}
 
   async create(createTripDto: CreateTripDto): Promise<Trip> {
@@ -112,6 +114,10 @@ export class TripsService {
 
     const savedTrip = await newTrip.save();
     await this.cacheManager.clear();
+    
+    // Broadcast real-time event
+    this.eventsGateway.emitTripCreated(savedTrip);
+
     return savedTrip;
   }
 
@@ -199,6 +205,10 @@ export class TripsService {
     }
 
     await this.cacheManager.clear();
+    
+    // Broadcast real-time event
+    this.eventsGateway.emitTripUpdated(updatedTrip);
+
     return updatedTrip;
   }
 
@@ -217,6 +227,10 @@ export class TripsService {
     }
 
     await this.cacheManager.clear();
+    
+    // Broadcast real-time event
+    this.eventsGateway.emitTripDeleted(id);
+
     return deletedTrip;
   }
 }
