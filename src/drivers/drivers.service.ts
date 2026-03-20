@@ -19,7 +19,7 @@ export class DriversService {
   ) {}
 
   async findByPhone(phone: string): Promise<DriverDocument | null> {
-    return this.driverModel.findOne({ phone_number: phone }).populate('company').exec();
+    return this.driverModel.findOne({ phone_number: phone, deleted: false }).populate('company').exec();
   }
 
   async findDriverByNameOrPhone(query: string): Promise<{data:DriverDocument[]; count: number | null}> {
@@ -27,9 +27,10 @@ export class DriversService {
       deleted: false 
     };
 
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     queryPayload.$or = [
-      { full_name: new RegExp(query, 'i') },
-      { phone_number: new RegExp(query, 'i') }
+      { full_name: new RegExp(escapedQuery, 'i') },
+      { phone_number: new RegExp(escapedQuery, 'i') }
     ];
 
     const drivers = await this.driverModel.find(queryPayload).populate('company').exec();
@@ -48,9 +49,8 @@ export class DriversService {
 
     if (existingDriver) {
       if (existingDriver.deleted) {
-        return this.update(existingDriver._id.toString(), {
-          deleted: false
-        });
+        existingDriver.deleted = false;
+        return existingDriver.save();
       }
 
       throw new ConflictException(
@@ -76,9 +76,10 @@ export class DriversService {
     }
 
     if (search) {
+      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       query.$or = [
-        { full_name: { $regex: search, $options: 'i' } },
-        { phone_number: { $regex: search, $options: 'i' } }
+        { full_name: { $regex: escapedSearch, $options: 'i' } },
+        { phone_number: { $regex: escapedSearch, $options: 'i' } }
       ];
     }
 
@@ -98,7 +99,7 @@ export class DriversService {
   }
 
   async findOne(id: string): Promise<DriverDocument> {
-    const driver = await this.driverModel.findById(id).exec();
+    const driver = await this.driverModel.findOne({ _id: id, deleted: false }).exec();
 
     if (!driver) {
       throw new NotFoundException(
@@ -110,8 +111,8 @@ export class DriversService {
   }
 
   async update(id: string, updateDriverDto: UpdateDriverDto): Promise<DriverDocument> {
-    const updatedDriver = await this.driverModel.findByIdAndUpdate(
-      id,
+    const updatedDriver = await this.driverModel.findOneAndUpdate(
+      { _id: id, deleted: false },
       updateDriverDto,
       { new: true }
     ).exec();
@@ -126,8 +127,8 @@ export class DriversService {
   }
 
   async remove(id: string): Promise<Driver> {
-    const deletedDriver = await this.driverModel.findByIdAndUpdate(
-      id,
+    const deletedDriver = await this.driverModel.findOneAndUpdate(
+      { _id: id, deleted: false },
       { deleted: true },
       { new: true }
     ).exec();

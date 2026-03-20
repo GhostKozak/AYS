@@ -8,6 +8,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/schemas/user.schema';
+import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
 
 @Controller('vehicles')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -28,19 +29,19 @@ export class VehiclesController {
 
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseMongoIdPipe) id: string) {
     return this.vehiclesService.findOne(id);
   }
 
   @Patch(':id')
   @Roles(UserRole.ADMIN, UserRole.EDITOR)
-  update(@Param('id') id: string, @Body() updateVehicleDto: UpdateVehicleDto) {
+  update(@Param('id', ParseMongoIdPipe) id: string, @Body() updateVehicleDto: UpdateVehicleDto) {
     return this.vehiclesService.update(id, updateVehicleDto);
   }
 
   @Delete(':id')
   @Roles(UserRole.ADMIN)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseMongoIdPipe) id: string) {
     return this.vehiclesService.remove(id);
   }
 }

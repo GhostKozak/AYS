@@ -41,6 +41,10 @@ export class VehiclesService {
     
     if (existingVehicle) {
       this.logger.log(`Existing vehicle found: ${normalizedPlate}`);
+      if (existingVehicle.deleted) {
+        existingVehicle.deleted = false;
+        return existingVehicle.save();
+      }
       return existingVehicle;
     }
 
@@ -81,7 +85,7 @@ export class VehiclesService {
   }
 
   async findOne(id: string) {
-    const vehicle = await this.vehicleModel.findById(id).exec();
+    const vehicle = await this.vehicleModel.findOne({ _id: id, deleted: false }).exec();
     
     if (!vehicle) {
       throw new NotFoundException(
@@ -93,8 +97,8 @@ export class VehiclesService {
   }
 
   async update(id: string, updateVehicleDto: UpdateVehicleDto) {
-    const updatedVehicle = await this.vehicleModel.findByIdAndUpdate(
-      id,
+    const updatedVehicle = await this.vehicleModel.findOneAndUpdate(
+      { _id: id, deleted: false },
       updateVehicleDto,
       { new: true }
     ).exec();
@@ -109,8 +113,8 @@ export class VehiclesService {
   }
 
   async remove(id: string) {
-    const deletedVehicle = await this.vehicleModel.findByIdAndUpdate(
-      id,
+    const deletedVehicle = await this.vehicleModel.findOneAndUpdate(
+      { _id: id, deleted: false },
       { deleted: true },
       { new: true }
     ).exec();

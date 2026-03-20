@@ -7,7 +7,6 @@ import { Company, CompanyDocument } from './schemas/company.schema';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { FilterCompanyDto } from './dto/filter-company.dto';
 import { I18nService } from 'nestjs-i18n';
-import { UpdateDriverDto } from 'src/drivers/dto/update-driver.dto';
 
 @Injectable()
 export class CompaniesService {
@@ -18,8 +17,9 @@ export class CompaniesService {
   ) {}
 
   async searchByName(name: string) {
+    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const query = { 
-      name: new RegExp(name, 'i'),
+      name: new RegExp(escapedName, 'i'),
       deleted: false 
     };
 
@@ -50,9 +50,8 @@ export class CompaniesService {
 
     if (existingCompany) {
       if (existingCompany.deleted) {
-        return this.update(existingCompany._id.toString(), {
-          deleted: false
-        })
+        existingCompany.deleted = false;
+        return existingCompany.save();
       }
 
       throw new ConflictException(
@@ -72,7 +71,8 @@ export class CompaniesService {
     const query: any = { deleted: false };
 
     if (search) { 
-      query.name = { $regex: search, $options: 'i' };
+      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.name = { $regex: escapedSearch, $options: 'i' };
     }
 
     const companies = await this.companyModel
@@ -90,7 +90,7 @@ export class CompaniesService {
   }
 
   async findOne(id: string): Promise<Company> {
-    const company = await this.companyModel.findById(id).exec();
+    const company = await this.companyModel.findOne({ _id: id, deleted: false }).exec();
     
     if (!company) {
       throw new NotFoundException(
@@ -102,8 +102,8 @@ export class CompaniesService {
   }
 
   async update(id: string, updateCompanyDto: UpdateCompanyDto): Promise<Company> {
-    const updatedCompany = await this.companyModel.findByIdAndUpdate(
-      id, 
+    const updatedCompany = await this.companyModel.findOneAndUpdate(
+      { _id: id, deleted: false }, 
       updateCompanyDto, 
       { new: true }
     ).exec();
@@ -118,8 +118,8 @@ export class CompaniesService {
   }
 
   async remove(id: string): Promise<Company> {
-    const deletedCompany = await this.companyModel.findByIdAndUpdate(
-      id, 
+    const deletedCompany = await this.companyModel.findOneAndUpdate(
+      { _id: id, deleted: false }, 
       { deleted: true }, 
       { new: true }
     ).exec();

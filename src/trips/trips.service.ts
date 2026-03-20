@@ -141,13 +141,13 @@ export class TripsService {
 
   async findOne(id: string): Promise<Trip> {
     const trip = await this.tripModel
-      .findById(id)
+      .findOne({ _id: id, deleted: false })
       .populate('driver', 'full_name phone_number')
       .populate('company')
       .populate('vehicle')
       .exec();
 
-    if (!trip || trip.deleted) {
+    if (!trip) {
       throw new NotFoundException(
         await this.i18n.translate('trip.NOT_FOUND', { args: { id } })
       );
@@ -159,8 +159,8 @@ export class TripsService {
   async update(id: string, updateTripDto: UpdateTripDto): Promise<Trip> {
     await this.findOne(id);
 
-    const updatedTrip = await this.tripModel.findByIdAndUpdate(
-      id,
+    const updatedTrip = await this.tripModel.findOneAndUpdate(
+      { _id: id, deleted: false },
       updateTripDto,
       { new: true },
     ).exec();
@@ -176,8 +176,8 @@ export class TripsService {
 
   async remove(id: string): Promise<Trip> {
 
-    const deletedTrip = await this.tripModel.findByIdAndUpdate(
-      id,
+    const deletedTrip = await this.tripModel.findOneAndUpdate(
+      { _id: id, deleted: false },
       { deleted: true },
       { new: true },
     ).exec();

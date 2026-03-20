@@ -1,4 +1,4 @@
-import { Controller, Post } from '@nestjs/common';
+import { Controller, Post, Headers, UnauthorizedException } from '@nestjs/common';
 import { SeedService } from './seed.service';
 import { I18nService } from 'nestjs-i18n';
 
@@ -10,7 +10,11 @@ export class SeedController {
   ) {}
 
   @Post('admin')
-  async createAdmin() {
+  async createAdmin(@Headers('x-seed-secret') secret: string) {
+    if (!process.env.SEED_ADMIN_SECRET || secret !== process.env.SEED_ADMIN_SECRET) {
+      throw new UnauthorizedException('Invalid or missing seed secret');
+    }
+
     await this.seedService.seedAdminUser();
     return { message: this.i18n.translate('seed.ADMIN_USER_CREATED') };
   }

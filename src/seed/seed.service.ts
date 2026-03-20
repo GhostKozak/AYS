@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserRole } from '../users/schemas/user.schema';
@@ -7,6 +7,8 @@ import { I18nService } from 'nestjs-i18n';
 
 @Injectable()
 export class SeedService {
+  private readonly logger = new Logger(SeedService.name);
+
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private readonly i18n: I18nService,
@@ -28,9 +30,9 @@ export class SeedService {
       });
 
       await adminUser.save();
-      console.log(this.i18n.translate('seed.ADMIN_USER_CREATED'));
+      this.logger.log(this.i18n.translate('seed.ADMIN_USER_CREATED'));
     } else {
-      console.log(this.i18n.translate('seed.ADMIN_USER_ALREADY_EXISTS'));
+      this.logger.log(this.i18n.translate('seed.ADMIN_USER_ALREADY_EXISTS'));
     }
   }
 } 
