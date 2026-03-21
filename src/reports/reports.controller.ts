@@ -45,7 +45,10 @@ export class ReportsController {
   @ApiOperation({ summary: 'Get distribution of trip statuses and parking lot occupancy' })
   @ApiResponse({ status: 200, description: 'Return status counts' })
   getStatusDistribution(@Query() query: ReportQueryDto) {
-    return this.reportsService.getStatusDistribution(query.period || ReportPeriod.MONTH);
+    return this.reportsService.getStatusDistribution(
+      query.period || ReportPeriod.MONTH, 
+      query.excludeStatus
+    );
   }
 
   @Get('average-turnaround')

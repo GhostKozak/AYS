@@ -13,4 +13,8 @@ export class ReportQueryDto {
   @IsEnum(ReportPeriod)
   @IsOptional()
   period?: ReportPeriod = ReportPeriod.MONTH;
+
+  @ApiPropertyOptional({ type: [String], description: 'Statuses to exclude' })
+  @IsOptional()
+  excludeStatus?: string | string[];
 }

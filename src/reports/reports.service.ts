@@ -119,12 +119,11 @@ export class ReportsService {
   async getDashboardSummary(): Promise<DashboardSummaryDto> {
     const today = this.getDateRange(ReportPeriod.TODAY);
     
-    const [totalToday, waitingToday, topToday, totalCompanies, totalDrivers] = await Promise.all([
+    const [totalToday, waitingAll, topToday, totalCompanies, totalDrivers] = await Promise.all([
       this.tripModel.countDocuments({ is_trip_canceled: false, ...today }),
       this.tripModel.countDocuments({ 
         is_trip_canceled: false, 
-        unload_status: { $ne: 'CANCELED' },
-        ...today 
+        unload_status: { $nin: ['UNLOADED', 'CANCELED', 'COMPLETED'] }
       }),
       this.getTopCompanies(ReportPeriod.TODAY),
       this.companyModel.countDocuments({}),
@@ -134,7 +133,7 @@ export class ReportsService {
     return {
       today: {
         totalTrips: totalToday,
-        waitingToUnload: waitingToday,
+        waitingToUnload: waitingAll,
         topCompanies: topToday.slice(0, 5),
       },
       totalCompanies,
@@ -142,16 +141,20 @@ export class ReportsService {
     };
   }
 
-  async getStatusDistribution(period: ReportPeriod) {
+  async getStatusDistribution(period: ReportPeriod, excludeStatus?: string | string[]) {
     const dateQuery = this.getDateRange(period);
+    const excludeQuery: any = {};
+    if (excludeStatus) {
+      excludeQuery.unload_status = { $nin: Array.isArray(excludeStatus) ? excludeStatus : [excludeStatus] };
+    }
 
     const [statusDistribution, parkingLotStats, canceledStats] = await Promise.all([
       this.tripModel.aggregate([
-        { $match: { is_trip_canceled: false, ...dateQuery } },
+        { $match: { is_trip_canceled: false, ...dateQuery, ...excludeQuery } },
         { $group: { _id: '$unload_status', count: { $sum: 1 } } }
       ]),
-      this.tripModel.countDocuments({ is_trip_canceled: false, is_in_parking_lot: true, ...dateQuery }),
-      this.tripModel.countDocuments({ is_trip_canceled: true, ...dateQuery }),
+      this.tripModel.countDocuments({ is_trip_canceled: false, is_in_parking_lot: true, ...dateQuery, ...excludeQuery }),
+      this.tripModel.countDocuments({ is_trip_canceled: true, ...dateQuery, ...excludeQuery }),
     ]);
 
     const formattedDistribution = statusDistribution.reduce((acc, curr) => {
