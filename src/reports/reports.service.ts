@@ -18,10 +18,19 @@ export class ReportsService {
     @InjectModel(Driver.name) private driverModel: Model<DriverDocument>,
   ) {}
 
-  async getTopCompanies(period: ReportPeriod) {
+  async getTopCompanies(period: ReportPeriod, limit: number = 10, sortBy: string = 'tripCount') {
     const dateQuery = this.getDateRange(period);
     
-    return this.tripModel.aggregate([
+    const sortStage: any = {};
+    if (sortBy === 'revenue') {
+      sortStage.totalRevenue = -1;
+    } else if (sortBy === 'avgTurnaround') {
+      sortStage.avgTurnaroundMs = -1;
+    } else {
+      sortStage.tripCount = -1;
+    }
+
+    const pipeline: any[] = [
       {
         $match: {
           is_trip_canceled: false,
@@ -43,12 +52,22 @@ export class ReportsService {
         $group: {
           _id: '$companyId',
           tripCount: { $sum: 1 },
+          totalRevenue: { $sum: 0 }, // Placeholder for future revenue field
+          avgTurnaroundMs: {
+            $avg: {
+              $cond: [
+                { $and: [{ $ne: ['$departure_time', null] }, { $ne: ['$arrival_time', null] }] },
+                { $subtract: ['$departure_time', '$arrival_time'] },
+                null,
+              ],
+            },
+          },
         },
       },
       {
-        $sort: { tripCount: -1 },
+        $sort: sortStage,
       },
-      { $limit: 10 },
+      { $limit: limit },
       {
         $lookup: {
           from: 'companies',
@@ -63,13 +82,20 @@ export class ReportsService {
           _id: 1,
           tripCount: 1,
           companyName: { $ifNull: ['$company.name', { $toString: '$_id' }] },
+          avgTurnaroundMinutes: { $round: [{ $divide: ['$avgTurnaroundMs', 1000 * 60] }, 2] },
         },
       },
-    ]);
+    ];
+
+    return this.tripModel.aggregate(pipeline);
   }
 
-  async getUnloadWaitingStats(period: ReportPeriod) {
+  async getUnloadWaitingStats(period: ReportPeriod, groupBy: string = 'company') {
     const dateQuery = this.getDateRange(period);
+    
+    const groupField = groupBy === 'driver' ? '$driver' : groupBy === 'vehicle' ? '$vehicle' : '$company';
+    const collectionName = groupBy === 'driver' ? 'drivers' : groupBy === 'vehicle' ? 'vehicles' : 'companies';
+    const nameField = groupBy === 'driver' ? 'full_name' : groupBy === 'vehicle' ? 'licence_plate' : 'name';
 
     return this.tripModel.aggregate([
       {
@@ -81,60 +107,61 @@ export class ReportsService {
       },
       {
         $addFields: {
-          companyId: {
+          entityId: {
             $cond: {
-              if: { $eq: [{ $type: '$company' }, 'string'] },
-              then: { $toObjectId: '$company' },
-              else: '$company',
+              if: { $eq: [{ $type: groupField }, 'string'] },
+              then: { $toObjectId: groupField },
+              else: groupField,
             },
           },
         },
       },
       {
         $group: {
-          _id: '$companyId',
+          _id: '$entityId',
           waitingCount: { $sum: 1 },
         },
       },
       {
         $lookup: {
-          from: 'companies',
+          from: collectionName,
           localField: '_id',
           foreignField: '_id',
-          as: 'company',
+          as: 'entity',
         },
       },
-      { $unwind: { path: '$company', preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: '$entity', preserveNullAndEmptyArrays: true } },
       {
         $project: {
           _id: 1,
           waitingCount: 1,
-          companyName: { $ifNull: ['$company.name', { $toString: '$_id' }] },
+          entityName: { $ifNull: [`$entity.${nameField}`, { $toString: '$_id' }] },
         },
       },
       { $sort: { waitingCount: -1 } },
     ]);
   }
 
-  async getDashboardSummary(): Promise<DashboardSummaryDto> {
-    const today = this.getDateRange(ReportPeriod.TODAY);
+  async getDashboardSummary(period: ReportPeriod = ReportPeriod.TODAY): Promise<DashboardSummaryDto> {
+    const dateQuery = this.getDateRange(period);
     
-    const [totalToday, waitingAll, topToday, totalCompanies, totalDrivers] = await Promise.all([
-      this.tripModel.countDocuments({ is_trip_canceled: false, ...today }),
+    const [totalTrips, waitingAll, topCompanies, totalCompanies, totalDrivers] = await Promise.all([
+      this.tripModel.countDocuments({ is_trip_canceled: false, ...dateQuery }),
       this.tripModel.countDocuments({ 
         is_trip_canceled: false, 
-        unload_status: { $nin: ['UNLOADED', 'CANCELED', 'COMPLETED'] }
+        unload_status: { $nin: ['UNLOADED', 'CANCELED', 'COMPLETED'] },
+        ...dateQuery
       }),
-      this.getTopCompanies(ReportPeriod.TODAY),
+      this.getTopCompanies(period, 5),
       this.companyModel.countDocuments({}),
       this.driverModel.countDocuments({}),
     ]);
 
     return {
       today: {
-        totalTrips: totalToday,
+        totalTrips,
         waitingToUnload: waitingAll,
-        topCompanies: topToday.slice(0, 5),
+        topCompanies: topCompanies.slice(0, 5),
       },
       totalCompanies,
       totalDrivers,
@@ -169,17 +196,22 @@ export class ReportsService {
     };
   }
 
-  async getAverageTurnaround(period: ReportPeriod) {
+  async getAverageTurnaround(period: ReportPeriod, companyId?: string) {
     const dateQuery = this.getDateRange(period);
+    const matchQuery: any = {
+      is_trip_canceled: false,
+      departure_time: { $ne: null },
+      arrival_time: { $ne: null },
+      ...dateQuery,
+    };
+
+    if (companyId) {
+      matchQuery.company = companyId;
+    }
 
     const result = await this.tripModel.aggregate([
       {
-        $match: {
-          is_trip_canceled: false,
-          departure_time: { $ne: null },
-          arrival_time: { $ne: null },
-          ...dateQuery,
-        },
+        $match: matchQuery,
       },
       {
         $project: {
@@ -189,7 +221,7 @@ export class ReportsService {
       },
       {
         $group: {
-          _id: 'Average',
+          _id: companyId ? '$company' : 'Average',
           averageDurationMs: { $avg: '$durationMs' },
           tripCount: { $sum: 1 },
         },
@@ -204,8 +236,16 @@ export class ReportsService {
     };
   }
 
-  async getTrend(period: ReportPeriod) {
+  async getTrend(period: ReportPeriod, companyId?: string) {
     const dateQuery = this.getDateRange(period);
+    const matchQuery: any = {
+      is_trip_canceled: false,
+      ...dateQuery,
+    };
+
+    if (companyId) {
+      matchQuery.company = companyId;
+    }
     
     // Determine the grouping format based on the period
     let format = '%Y-%m-%d'; // Default to daily
@@ -217,10 +257,7 @@ export class ReportsService {
 
     return this.tripModel.aggregate([
       {
-        $match: {
-          is_trip_canceled: false,
-          ...dateQuery,
-        },
+        $match: matchQuery,
       },
       {
         $group: {
@@ -239,11 +276,15 @@ export class ReportsService {
     ]);
   }
 
-  async exportTripsToExcel(period: ReportPeriod, response: any): Promise<void> {
+  async exportTripsToExcel(period: ReportPeriod, response: any, excludeStatus?: string | string[]): Promise<void> {
     const dateQuery = this.getDateRange(period);
+    const excludeQuery: any = {};
+    if (excludeStatus) {
+      excludeQuery.unload_status = { $nin: Array.isArray(excludeStatus) ? excludeStatus : [excludeStatus] };
+    }
     
     // Create cursor for streaming
-    const cursor = this.tripModel.find({ is_trip_canceled: false, ...dateQuery })
+    const cursor = this.tripModel.find({ is_trip_canceled: false, ...dateQuery, ...excludeQuery })
       .select('arrival_time unload_status company driver vehicle')
       .populate('company', 'name')
       .populate('driver', 'full_name')
@@ -289,11 +330,15 @@ export class ReportsService {
     await workbook.commit();
   }
 
-  async exportTripsToPdf(period: ReportPeriod, response: any): Promise<void> {
+  async exportTripsToPdf(period: ReportPeriod, response: any, excludeStatus?: string | string[]): Promise<void> {
     const dateQuery = this.getDateRange(period);
+    const excludeQuery: any = {};
+    if (excludeStatus) {
+      excludeQuery.unload_status = { $nin: Array.isArray(excludeStatus) ? excludeStatus : [excludeStatus] };
+    }
     
     // Create cursor for streaming
-    const cursor = this.tripModel.find({ is_trip_canceled: false, ...dateQuery })
+    const cursor = this.tripModel.find({ is_trip_canceled: false, ...dateQuery, ...excludeQuery })
       .select('arrival_time unload_status company driver vehicle')
       .populate('company', 'name')
       .populate('driver', 'full_name')
