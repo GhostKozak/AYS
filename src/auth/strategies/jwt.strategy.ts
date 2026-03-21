@@ -24,6 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Hesabınız aktif değil veya silinmiş.');
     }
 
-    return { userId: payload.sub, email: payload.email, role: payload.role };
+    // Always return current role from database, not from token
+    return { userId: payload.sub, email: payload.email, role: user.role };
   }
 } 
