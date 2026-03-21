@@ -26,7 +26,7 @@ export class AuditService {
   async findAll(query: any = {}) {
     return this.auditLogModel
       .find(query)
-      .populate('user', 'full_name email role')
+      .populate('user', 'firstName lastName email role')
       .sort({ createdAt: -1 })
       .limit(100)
       .exec();
