@@ -29,8 +29,19 @@ export class ReportsService {
         },
       },
       {
+        $addFields: {
+          companyId: {
+            $cond: {
+              if: { $eq: [{ $type: '$company' }, 'string'] },
+              then: { $toObjectId: '$company' },
+              else: '$company',
+            },
+          },
+        },
+      },
+      {
         $group: {
-          _id: '$company',
+          _id: '$companyId',
           tripCount: { $sum: 1 },
         },
       },
@@ -46,12 +57,12 @@ export class ReportsService {
           as: 'company',
         },
       },
-      { $unwind: '$company' },
+      { $unwind: { path: '$company', preserveNullAndEmptyArrays: true } },
       {
         $project: {
           _id: 1,
           tripCount: 1,
-          companyName: '$company.name',
+          companyName: { $ifNull: ['$company.name', { $toString: '$_id' }] },
         },
       },
     ]);
@@ -64,13 +75,24 @@ export class ReportsService {
       {
         $match: {
           is_trip_canceled: false,
-          unload_status: { $ne: 'UNLOADED' }, // Assuming 'UNLOADED' is the string value
+          unload_status: { $ne: 'CANCELED' },
           ...dateQuery,
         },
       },
       {
+        $addFields: {
+          companyId: {
+            $cond: {
+              if: { $eq: [{ $type: '$company' }, 'string'] },
+              then: { $toObjectId: '$company' },
+              else: '$company',
+            },
+          },
+        },
+      },
+      {
         $group: {
-          _id: '$company',
+          _id: '$companyId',
           waitingCount: { $sum: 1 },
         },
       },
@@ -82,12 +104,12 @@ export class ReportsService {
           as: 'company',
         },
       },
-      { $unwind: '$company' },
+      { $unwind: { path: '$company', preserveNullAndEmptyArrays: true } },
       {
         $project: {
           _id: 1,
           waitingCount: 1,
-          companyName: '$company.name',
+          companyName: { $ifNull: ['$company.name', { $toString: '$_id' }] },
         },
       },
       { $sort: { waitingCount: -1 } },
@@ -101,7 +123,7 @@ export class ReportsService {
       this.tripModel.countDocuments({ is_trip_canceled: false, ...today }),
       this.tripModel.countDocuments({ 
         is_trip_canceled: false, 
-        unload_status: { $ne: 'UNLOADED' },
+        unload_status: { $ne: 'CANCELED' },
         ...today 
       }),
       this.getTopCompanies(ReportPeriod.TODAY),
