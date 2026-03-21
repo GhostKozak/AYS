@@ -44,12 +44,13 @@ export class CompaniesController {
   @ApiOperation({ summary: 'Get all companies (paged)' })
   @ApiResponse({ status: 200, description: 'Return paged companies' })
   findAll(
-    @Query() paginationQuery: PaginationQueryDto, 
     @Query() filterCompanyDto: FilterCompanyDto,
     @GetUser() user: User
   ) {
+    const { limit, offset, ...filters } = filterCompanyDto;
+    const paginationQuery = { limit, offset };
     const showDeleted = user.role === UserRole.ADMIN;
-    return this.companiesService.findAll(paginationQuery, filterCompanyDto, showDeleted);
+    return this.companiesService.findAll(paginationQuery, filters, showDeleted);
   }
 
   @Get(':id')

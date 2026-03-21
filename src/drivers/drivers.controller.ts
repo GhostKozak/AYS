@@ -54,12 +54,13 @@ export class DriversController {
   @ApiOperation({ summary: 'Get all drivers (paged)' })
   @ApiResponse({ status: 200, description: 'Return paged drivers' })
   findAll(
-    @Query() paginationQuery: PaginationQueryDto, 
     @Query() filterDriverDto: FilterDriverDto,
     @GetUser() user: User
   ) {
+    const { limit, offset, ...filters } = filterDriverDto;
+    const paginationQuery = { limit, offset };
     const showDeleted = user.role === UserRole.ADMIN;
-    return this.driversService.findAll(paginationQuery, filterDriverDto, showDeleted);
+    return this.driversService.findAll(paginationQuery, filters, showDeleted);
   }
 
   @Get(':id')

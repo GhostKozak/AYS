@@ -92,13 +92,12 @@ describe('DriversController', () => {
       };
       service.findAll.mockResolvedValueOnce(mockedResult as any);
       
-      const paginationQuery: PaginationQueryDto = {};
       const filterDriverDto: FilterDriverDto = {};
 
-      const result = await controller.findAll(paginationQuery, filterDriverDto, mockUser);
+      const result = await controller.findAll(filterDriverDto, mockUser);
 
       expect(result).toEqual(mockedResult);
-      expect(service.findAll).toHaveBeenCalledWith(paginationQuery, filterDriverDto, true);
+      expect(service.findAll).toHaveBeenCalledWith({}, {}, true);
     });
   });
 

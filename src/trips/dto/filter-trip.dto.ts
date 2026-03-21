@@ -1,8 +1,21 @@
-import { IsOptional, IsString, IsMongoId, IsEnum } from 'class-validator';
+import { IsOptional, IsString, IsMongoId, IsEnum, IsPositive, Min } from 'class-validator';
 import { UnloadStatus } from '../enums/unloadStatus';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class FilterTripDto {
+  @ApiPropertyOptional({ description: 'Number of items to return', example: 10 })
+  @IsOptional()
+  @IsPositive({ message: 'validation.IS_POSITIVE' })
+  @Type(() => Number)
+  limit?: number;
+
+  @ApiPropertyOptional({ description: 'Number of items to skip', example: 0 })
+  @IsOptional()
+  @Min(0, { message: 'validation.MIN' })
+  @Type(() => Number)
+  offset?: number;
+
   @ApiPropertyOptional({ description: 'Filter by company ID' })
   @IsOptional()
   @IsMongoId({ message: 'validation.IS_MONGOID' })

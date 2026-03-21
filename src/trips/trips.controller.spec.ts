@@ -74,14 +74,13 @@ describe('TripsController', () => {
 
   describe('findAll', () => {
     it('should return an array of trips', async () => {
-        const paginationQuery: PaginationQueryDto = { limit: 10, offset: 0 };
-        const filterTripDto: FilterTripDto = {};
+        const filterTripDto: FilterTripDto = { limit: 10, offset: 0 };
       const expectedTrips = [{ _id: new Types.ObjectId(), licence_plate: '34XYZ789', deleted: false }];
       service.findAll.mockResolvedValue(expectedTrips as any);
 
-      const result = await controller.findAll(paginationQuery, filterTripDto, mockUser);
+      const result = await controller.findAll(filterTripDto, mockUser);
       expect(result).toEqual(expectedTrips);
-      expect(service.findAll).toHaveBeenCalledWith(paginationQuery, filterTripDto, true);
+      expect(service.findAll).toHaveBeenCalledWith({ limit: 10, offset: 0 }, {}, true);
     });
   });
 

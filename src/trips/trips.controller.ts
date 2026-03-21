@@ -35,12 +35,13 @@ export class TripsController {
   @ApiOperation({ summary: 'Get all trips (paged)' })
   @ApiResponse({ status: 200, description: 'Return paged trips' })
   findAll(
-    @Query() paginationQuery: PaginationQueryDto, 
     @Query() filterTripDto: FilterTripDto,
     @GetUser() user: User
   ) {
+    const { limit, offset, ...filters } = filterTripDto;
+    const paginationQuery = { limit, offset };
     const showDeleted = user.role === UserRole.ADMIN;
-    return this.tripsService.findAll(paginationQuery, filterTripDto, showDeleted);
+    return this.tripsService.findAll(paginationQuery, filters, showDeleted);
   }
 
   @Get(':id')

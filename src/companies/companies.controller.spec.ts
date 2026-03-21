@@ -72,12 +72,11 @@ describe('CompaniesController', () => {
       };
       service.findAll.mockResolvedValueOnce(mockedResult as any);
 
-      const paginationQuery: PaginationQueryDto = {};
       const filterCompanyDto: FilterCompanyDto = {};
-      const result = await controller.findAll(paginationQuery, filterCompanyDto, mockUser);
+      const result = await controller.findAll(filterCompanyDto, mockUser);
 
       expect(result).toEqual(mockedResult);
-      expect(service.findAll).toHaveBeenCalledWith(paginationQuery, filterCompanyDto, true);
+      expect(service.findAll).toHaveBeenCalledWith({}, {}, true);
     });
   });
 

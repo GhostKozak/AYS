@@ -35,12 +35,13 @@ export class VehiclesController {
   @ApiOperation({ summary: 'Get all vehicles (paged)' })
   @ApiResponse({ status: 200, description: 'Return paged vehicles' })
   findAll(
-    @Query() paginationQuery: PaginationQueryDto, 
     @Query() filterVehicleDto: FilterVehicleDto,
     @GetUser() user: User
   ) {
+    const { limit, offset, ...filters } = filterVehicleDto;
+    const paginationQuery = { limit, offset };
     const showDeleted = user.role === UserRole.ADMIN;
-    return this.vehiclesService.findAll(paginationQuery, filterVehicleDto, showDeleted);
+    return this.vehiclesService.findAll(paginationQuery, filters, showDeleted);
   }
 
   @Get(':id')

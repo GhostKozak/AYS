@@ -12,8 +12,8 @@ import { FilterTripDto } from './dto/filter-trip.dto';
 import { I18nService } from 'nestjs-i18n';
 import { UnloadStatus } from './enums/unloadStatus';
 import { AuditService } from '../audit/audit.service';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+// import { CACHE_MANAGER } from '@nestjs/cache-manager';
+// import { Cache } from 'cache-manager';
 import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
@@ -25,7 +25,7 @@ export class TripsService {
     private readonly vehiclesService: VehiclesService,
     private readonly i18n: I18nService,
     private readonly auditService: AuditService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    // @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly eventsGateway: EventsGateway,
   ) {}
 
@@ -113,7 +113,7 @@ export class TripsService {
     });
 
     const savedTrip = await newTrip.save();
-    await this.cacheManager.clear();
+    // await this.cacheManager.clear();
     
     // Broadcast real-time event
     this.eventsGateway.emitTripCreated(savedTrip);
@@ -228,7 +228,7 @@ export class TripsService {
       });
     }
 
-    await this.cacheManager.clear();
+    // await this.cacheManager.clear();
     this.eventsGateway.emitTripUpdated(updatedTrip as any);
 
     return updatedTrip as any;
@@ -248,7 +248,7 @@ export class TripsService {
       );
     }
 
-    await this.cacheManager.clear();
+    // await this.cacheManager.clear();
     
     // Broadcast real-time event
     this.eventsGateway.emitTripDeleted(id);

@@ -72,15 +72,14 @@ describe('VehiclesController', () => {
 
   describe('findAll', () => {
     it('should return an array of vehicles', async () => {
-      const paginationQuery: PaginationQueryDto = { limit: 10, offset: 0 };
-      const filterVehicleDto: FilterVehicleDto = { vehicle_type: VehicleType.VAN };
+      const filterVehicleDto: FilterVehicleDto = { limit: 10, offset: 0, vehicle_type: VehicleType.VAN };
       const expectedVehicles = [{ _id: new Types.ObjectId(), licence_plate: '34DEF456', deleted: false }];
       service.findAll.mockResolvedValue(expectedVehicles as any);
 
-      const result = await controller.findAll(paginationQuery, filterVehicleDto, mockUser);
+      const result = await controller.findAll(filterVehicleDto, mockUser);
 
       expect(result).toEqual(expectedVehicles);
-      expect(service.findAll).toHaveBeenCalledWith(paginationQuery, filterVehicleDto, true);
+      expect(service.findAll).toHaveBeenCalledWith({ limit: 10, offset: 0 }, { vehicle_type: VehicleType.VAN }, true);
     });
   });
 

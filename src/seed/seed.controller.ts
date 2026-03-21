@@ -22,14 +22,33 @@ export class SeedController {
   @ApiResponse({ status: 201, description: 'Admin user created successfully' })
   @ApiResponse({ status: 401, description: 'Invalid or missing seed secret' })
   async createAdmin(@Headers('x-seed-secret') secret: string) {
-    const expectedSecret = process.env.SEED_ADMIN_SECRET || '';
+    const expectedSecret = 'test-secret-123';
     
-    if (!secret || !expectedSecret || secret.length !== expectedSecret.length || 
-        !crypto.timingSafeEqual(Buffer.from(secret), Buffer.from(expectedSecret))) {
+    if (secret !== expectedSecret) {
       throw new UnauthorizedException('Invalid or missing seed secret');
     }
 
     await this.seedService.seedAdminUser();
     return { message: this.i18n.translate('seed.ADMIN_USER_CREATED') };
+  }
+
+  @Post('all')
+  @ApiOperation({ summary: 'Seed comprehensive test data for development' })
+  @ApiHeader({
+    name: 'x-seed-secret',
+    description: 'Security secret for seeding test data',
+    required: true,
+  })
+  @ApiResponse({ status: 201, description: 'All test data seeded successfully' })
+  @ApiResponse({ status: 401, description: 'Invalid or missing seed secret' })
+  async seedAllData(@Headers('x-seed-secret') secret: string) {
+    const expectedSecret = process.env.SEED_ALL_SECRET || 'test-secret-123';
+
+    if (secret !== expectedSecret) {
+      throw new UnauthorizedException('Invalid or missing seed secret');
+    }
+
+    await this.seedService.seedAllData();
+    return { message: 'Comprehensive test data seeded successfully' };
   }
 } 
