@@ -183,6 +183,21 @@ export class TripsService {
   }
 
   async update(id: string, updateTripDto: UpdateTripDto, user?: any): Promise<Trip> {
+    const existingTrip = await this.tripModel
+      .findOne({ _id: id })
+      .setOptions({ skipSoftDelete: false })
+      .populate('driver', 'full_name phone_number')
+      .populate('company')
+      .populate('vehicle')
+      .lean()
+      .exec();
+
+    if (!existingTrip) {
+      throw new NotFoundException(
+        await this.i18n.translate('trip.NOT_FOUND', { args: { id } }),
+      );
+    }
+
     const updatedTrip = await this.tripModel.findOneAndUpdate(
       { _id: id },
       updateTripDto,
@@ -207,7 +222,7 @@ export class TripsService {
           action: 'UPDATE',
           entity: 'Trip',
           entityId: id,
-          oldValue: null,
+          oldValue: existingTrip,
           newValue: updatedTrip,
         }).catch(err => console.error('Audit log failed', err));
       });

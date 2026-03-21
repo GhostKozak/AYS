@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -33,6 +33,24 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Return all users' })
   findAll() {
     return this.usersService.findAll();
+  }
+
+  @Get('me')
+  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiResponse({ status: 200, description: 'Return current user details' })
+  findMe(@Req() req: any) {
+    return this.usersService.findOne(req.user.userId);
+  }
+
+  @Patch('me')
+  @SkipAudit()
+  @ApiOperation({ summary: 'Update current user details' })
+  @ApiResponse({ status: 200, description: 'Current user updated successfully' })
+  updateMe(@Req() req: any, @Body() updateUserDto: UpdateUserDto) {
+    // Güvenlik: Admin olmayan profilin rolünü veya yetkisini kendi kendine değiştirememesi için kısıtla
+    delete updateUserDto.role;
+    delete updateUserDto.isActive;
+    return this.usersService.update(req.user.userId, updateUserDto);
   }
 
   @Get(':id')

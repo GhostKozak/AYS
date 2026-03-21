@@ -108,6 +108,14 @@ export class CompaniesService {
   }
 
   async update(id: string, updateCompanyDto: UpdateCompanyDto, user?: any): Promise<Company> {
+    const existingCompany = await this.companyModel.findOne({ _id: id }).setOptions({ skipSoftDelete: false }).lean().exec();
+
+    if (!existingCompany) {
+      throw new NotFoundException(
+        await this.i18n.translate('company.NOT_FOUND', { args: { id } }),
+      );
+    }
+
     const updatedCompany = await this.companyModel.findOneAndUpdate(
       { _id: id }, 
       updateCompanyDto, 
@@ -127,7 +135,7 @@ export class CompaniesService {
           action: 'UPDATE',
           entity: 'Company',
           entityId: id,
-          oldValue: null,
+          oldValue: existingCompany,
           newValue: updatedCompany,
         }).catch(err => console.error('Audit log failed', err));
       });

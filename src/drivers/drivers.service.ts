@@ -130,6 +130,14 @@ export class DriversService {
       updateDriverDto.phone_number = updateDriverDto.phone_number.replace(/[^\d+]/g, '');
     }
 
+    const existingDriver = await this.driverModel.findOne({ _id: id }).setOptions({ skipSoftDelete: false }).lean().exec();
+
+    if (!existingDriver) {
+      throw new NotFoundException(
+        await this.i18n.translate('driver.NOT_FOUND', { args: { id } }),
+      );
+    }
+
     const updatedDriver = await this.driverModel.findOneAndUpdate(
       { _id: id },
       updateDriverDto,
@@ -149,7 +157,7 @@ export class DriversService {
           action: 'UPDATE',
           entity: 'Driver',
           entityId: id,
-          oldValue: null,
+          oldValue: existingDriver,
           newValue: updatedDriver,
         }).catch(err => console.error('Audit log failed', err));
       });

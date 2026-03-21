@@ -103,6 +103,14 @@ export class VehiclesService {
   }
 
   async update(id: string, updateVehicleDto: UpdateVehicleDto, user?: any) {
+    const existingVehicle = await this.vehicleModel.findOne({ _id: id }).setOptions({ skipSoftDelete: false }).lean().exec();
+
+    if (!existingVehicle) {
+      throw new NotFoundException(
+        await this.i18n.translate('vehicle.NOT_FOUND', { args: { id } }),
+      );
+    }
+
     const updatedVehicle = await this.vehicleModel.findOneAndUpdate(
       { _id: id },
       updateVehicleDto,
@@ -122,7 +130,7 @@ export class VehiclesService {
           action: 'UPDATE',
           entity: 'Vehicle',
           entityId: id,
-          oldValue: null,
+          oldValue: existingVehicle,
           newValue: updatedVehicle,
         }).catch(err => this.logger.error('Audit log failed', err));
       });
