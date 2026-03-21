@@ -5,6 +5,7 @@ import { I18nService, I18nValidationExceptionFilter, I18nValidationPipe } from '
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import * as compression from 'compression';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -12,6 +13,13 @@ async function bootstrap() {
 
   app.use(helmet());
   app.use(compression());
+  app.use(cookieParser());
+  
+  app.enableCors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    credentials: true,
+  });
+
   app.useGlobalPipes(new I18nValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
   app.useGlobalFilters(
     new MongoExceptionFilter(i18nService),
