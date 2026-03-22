@@ -9,7 +9,6 @@ import { UserRole } from './schemas/user.schema';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiParam, ApiForbiddenResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
-import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 
 @ApiTags('users')
 @ApiBearerAuth('access-token')
@@ -17,7 +16,6 @@ import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 @ApiForbiddenResponse({ description: 'Forbidden - Insufficient permissions' })
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@UseInterceptors(CacheInterceptor)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -33,7 +31,6 @@ export class UsersController {
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({ status: 200, description: 'Return all users' })
-  @CacheTTL(1800) // 30 dakika cache
   findAll() {
     return this.usersService.findAll();
   }

@@ -57,7 +57,8 @@ export class DriversService {
     if (existingDriver) {
       if (existingDriver.deleted) {
         existingDriver.deleted = false;
-        return existingDriver.save();
+        const savedDriver = await existingDriver.save();
+        return savedDriver;
       }
 
       throw new ConflictException(
@@ -73,7 +74,8 @@ export class DriversService {
       ...createDriverDto,
       phone_number: normalizedPhone,
     });
-    return newDriver.save();
+    const savedDriver = await newDriver.save();
+    return savedDriver;
   }
 
   async findAll(paginationQuery: PaginationQueryDto, filterDriverDto: FilterDriverDto, showDeleted = false) {
@@ -164,7 +166,6 @@ export class DriversService {
     }
 
     this.eventsGateway.emitDriverUpdated(updatedDriver);
-
     return updatedDriver;
   }
 

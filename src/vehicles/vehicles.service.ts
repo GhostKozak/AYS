@@ -22,7 +22,7 @@ export class VehiclesService {
     private readonly eventsGateway: EventsGateway,
   ) {}
 
-  create(createVehicleDto: CreateVehicleDto) {
+  async create(createVehicleDto: CreateVehicleDto) {
     const normalizedPlate = createVehicleDto.licence_plate.replace(/\s+/g, '').toUpperCase();
 
     const vehicleToCreate = {
@@ -31,7 +31,8 @@ export class VehiclesService {
     };
     
     const createdVehicle = new this.vehicleModel(vehicleToCreate);
-    return createdVehicle.save();
+    const savedVehicle = await createdVehicle.save();
+    return savedVehicle;
   }
 
   async findOrCreateByPlate(
@@ -47,7 +48,8 @@ export class VehiclesService {
       this.logger.log(`Existing vehicle found: ${normalizedPlate}`);
       if (existingVehicle.deleted) {
         existingVehicle.deleted = false;
-        return existingVehicle.save();
+        const savedVehicle = await existingVehicle.save();
+        return savedVehicle;
       }
       return existingVehicle;
     }
@@ -58,7 +60,8 @@ export class VehiclesService {
       type: type || VehicleType.TRUCK,
     });
 
-    return newVehicle.save();
+    const savedVehicle = await newVehicle.save();
+    return savedVehicle;
   }
 
   async findAll(paginationQuery: PaginationQueryDto, filterVehicleDto: FilterVehicleDto, showDeleted = false) {
@@ -137,7 +140,6 @@ export class VehiclesService {
     }
 
     this.eventsGateway.emitVehicleUpdated(updatedVehicle);
-
     return updatedVehicle;
   }
 

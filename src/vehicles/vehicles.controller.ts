@@ -12,7 +12,6 @@ import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User, UserRole } from '../users/schemas/user.schema';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
-import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 
 @ApiTags('vehicles')
 @ApiBearerAuth('access-token')
@@ -20,7 +19,6 @@ import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 @ApiForbiddenResponse({ description: 'Forbidden - Insufficient permissions' })
 @Controller('vehicles')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@UseInterceptors(CacheInterceptor)
 export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
 
@@ -36,7 +34,6 @@ export class VehiclesController {
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
   @ApiOperation({ summary: 'Get all vehicles (paged)' })
   @ApiResponse({ status: 200, description: 'Return paged vehicles' })
-  @CacheTTL(900) // 15 dakika cache
   findAll(
     @Query() filterVehicleDto: FilterVehicleDto,
     @GetUser() user: User
@@ -53,7 +50,6 @@ export class VehiclesController {
   @ApiParam({ name: 'id', description: 'Vehicle MongoDB ID' })
   @ApiResponse({ status: 200, description: 'Return vehicle details' })
   @ApiResponse({ status: 404, description: 'Vehicle not found' })
-  @CacheTTL(1800) // 30 dakika cache
   findOne(
     @Param('id', ParseMongoIdPipe) id: string,
     @GetUser() user: User

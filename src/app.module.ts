@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
-import { redisStore } from 'cache-manager-redis-yet';
+import { createKeyv } from '@keyv/redis';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -69,13 +69,9 @@ import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
           };
         }
         return {
-          store: await redisStore({
-            socket: {
-              host: configService.get('REDIS_HOST', 'localhost'),
-              port: parseInt(configService.get('REDIS_PORT', '6379'), 10),
-            },
-            ttl: parseInt(configService.get('CACHE_TTL', '600000'), 10),
-          }),
+          stores: [
+            createKeyv(`redis://${configService.get('REDIS_HOST', 'localhost')}:${configService.get('REDIS_PORT', '6379')}`),
+          ],
         };
       },
       inject: [ConfigService],

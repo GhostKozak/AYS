@@ -55,7 +55,8 @@ export class CompaniesService {
     if (existingCompany) {
       if (existingCompany.deleted) {
         existingCompany.deleted = false;
-        return existingCompany.save();
+        const savedCompany = await existingCompany.save();
+        return savedCompany;
       }
 
       throw new ConflictException(
@@ -66,7 +67,8 @@ export class CompaniesService {
     }
 
     const newCompany = new this.companyModel(createCompanyDto);
-    return newCompany.save();
+    const savedCompany = await newCompany.save();
+    return savedCompany;
   }
 
   async findAll(paginationQuery: PaginationQueryDto, filterCompanyDto: FilterCompanyDto, showDeleted = false) {
@@ -142,7 +144,6 @@ export class CompaniesService {
     }
 
     this.eventsGateway.emitCompanyUpdated(updatedCompany);
-
     return updatedCompany;
   }
 

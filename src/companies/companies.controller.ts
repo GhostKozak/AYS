@@ -12,7 +12,6 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiParam, ApiQuery, 
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User, UserRole } from '../users/schemas/user.schema';
 import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
-import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 
 @ApiTags('companies')
 @ApiBearerAuth('access-token')
@@ -20,7 +19,6 @@ import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 @ApiForbiddenResponse({ description: 'Forbidden - Insufficient permissions' })
 @Controller('companies')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@UseInterceptors(CacheInterceptor)
 export class CompaniesController {
   constructor(private readonly companiesService: CompaniesService) {}
 
@@ -29,7 +27,6 @@ export class CompaniesController {
   @ApiOperation({ summary: 'Search companies by name' })
   @ApiQuery({ name: 'name', description: 'Company name search term' })
   @ApiResponse({ status: 200, description: 'Return matching companies' })
-  @CacheTTL(600) // 10 dakika cache
   searchCompanies(@Query('name') name: string) {
     return this.companiesService.searchByName(name);
   }
@@ -46,7 +43,6 @@ export class CompaniesController {
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
   @ApiOperation({ summary: 'Get all companies (paged)' })
   @ApiResponse({ status: 200, description: 'Return paged companies' })
-  @CacheTTL(900) // 15 dakika cache
   findAll(
     @Query() filterCompanyDto: FilterCompanyDto,
     @GetUser() user: User
@@ -63,7 +59,6 @@ export class CompaniesController {
   @ApiParam({ name: 'id', description: 'Company MongoDB ID' })
   @ApiResponse({ status: 200, description: 'Return company details' })
   @ApiResponse({ status: 404, description: 'Company not found' })
-  @CacheTTL(1800) // 30 dakika cache
   findOne(
     @Param('id', ParseMongoIdPipe) id: string,
     @GetUser() user: User

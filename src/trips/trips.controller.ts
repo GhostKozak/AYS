@@ -12,7 +12,6 @@ import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User, UserRole } from '../users/schemas/user.schema';
 import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
-import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 
 @ApiTags('trips')
 @ApiBearerAuth('access-token')
@@ -20,7 +19,6 @@ import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 @ApiForbiddenResponse({ description: 'Forbidden - Insufficient permissions' })
 @Controller('trips')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@UseInterceptors(CacheInterceptor)
 export class TripsController {
   constructor(private readonly tripsService: TripsService) {}
 
@@ -36,7 +34,6 @@ export class TripsController {
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
   @ApiOperation({ summary: 'Get all trips (paged)' })
   @ApiResponse({ status: 200, description: 'Return paged trips' })
-  @CacheTTL(300) // 5 dakika cache
   findAll(
     @Query() filterTripDto: FilterTripDto,
     @GetUser() user: User
@@ -53,7 +50,6 @@ export class TripsController {
   @ApiParam({ name: 'id', description: 'Trip MongoDB ID' })
   @ApiResponse({ status: 200, description: 'Return trip details' })
   @ApiResponse({ status: 404, description: 'Trip not found' })
-  @CacheTTL(600) // 10 dakika cache
   findOne(
     @Param('id', ParseMongoIdPipe) id: string,
     @GetUser() user: User
