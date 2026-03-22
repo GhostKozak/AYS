@@ -1,10 +1,11 @@
-import { Controller, Get, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, UseGuards, Query, UseInterceptors } from '@nestjs/common';
 import { AuditService } from './audit.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/schemas/user.schema';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiQuery, ApiUnauthorizedResponse, ApiForbiddenResponse } from '@nestjs/swagger';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 
 @ApiTags('audit')
 @ApiBearerAuth('access-token')
@@ -13,6 +14,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiQuery, ApiUnautho
 @Controller('audit')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN)
+@UseInterceptors(CacheInterceptor)
 export class AuditController {
   constructor(private readonly auditService: AuditService) {}
 
@@ -21,6 +23,7 @@ export class AuditController {
   @ApiQuery({ name: 'entity', description: 'Filter by entity type (e.g., User, Company)', required: false })
   @ApiQuery({ name: 'entityId', description: 'Filter by specific entity ID', required: false })
   @ApiResponse({ status: 200, description: 'Return all audit logs matching criteria' })
+  @CacheTTL(3600) // 1 saat cache
   findAll(@Query('entity') entity?: string, @Query('entityId') entityId?: string) {
     const query: any = {};
     if (entity) query.entity = entity;

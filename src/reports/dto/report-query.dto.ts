@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, Min } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export enum ReportPeriod {
   TODAY = 'today',
@@ -13,6 +14,13 @@ export class ReportQueryDto {
   @IsEnum(ReportPeriod)
   @IsOptional()
   period?: ReportPeriod = ReportPeriod.MONTH;
+
+  @ApiPropertyOptional({ type: Number, description: 'Year for period=YEAR' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1900)
+  year?: number;
 
   @ApiPropertyOptional({ type: [String], description: 'Statuses to exclude' })
   @IsOptional()

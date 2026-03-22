@@ -3,6 +3,7 @@ import { CacheInterceptor } from '@nestjs/cache-manager';
 import { ReportsService } from './reports.service';
 import { ReportQueryDto, ReportPeriod } from './dto/report-query.dto';
 import { DashboardSummaryDto } from './dto/dashboard-summary.dto';
+import { ParkingLotDashboardDto } from './dto/parking-lot-dashboard.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -47,6 +48,14 @@ export class ReportsController {
     return this.reportsService.getDashboardSummary(query.period || ReportPeriod.TODAY);
   }
 
+  @Get('parking-lot-dashboard')
+  @ApiOperation({ summary: 'Get parking lot vehicle status breakdown for dashboard widget' })
+  @ApiQuery({ name: 'totalCapacity', type: Number, required: false, description: 'Total parking lot capacity (optional, for occupancy percentage)' })
+  @ApiResponse({ status: 200, description: 'Return parking lot dashboard data', type: ParkingLotDashboardDto })
+  getParkingLotDashboard(@Query('totalCapacity') totalCapacity?: number): Promise<ParkingLotDashboardDto> {
+    return this.reportsService.getParkingLotDashboard(totalCapacity);
+  }
+
   @Get('status-distribution')
   @ApiOperation({ summary: 'Get distribution of trip statuses and parking lot occupancy' })
   @ApiQuery({ name: 'period', enum: ReportPeriod, required: false, description: 'Report period (TODAY, MONTH, YEAR, ALL)' })
@@ -71,10 +80,11 @@ export class ReportsController {
   @Get('trend')
   @ApiOperation({ summary: 'Get time-series trend of trips' })
   @ApiQuery({ name: 'period', enum: ReportPeriod, required: false, description: 'Report period (TODAY, MONTH, YEAR, ALL)' })
+  @ApiQuery({ name: 'year', type: Number, required: false, description: 'Specific year to query when period=YEAR' })
   @ApiQuery({ name: 'companyId', type: String, required: false, description: 'Filter by specific company ID' })
   @ApiResponse({ status: 200, description: 'Return chronological trip counts' })
   getTrend(@Query() query: ReportQueryDto, @Query('companyId') companyId?: string) {
-    return this.reportsService.getTrend(query.period || ReportPeriod.MONTH, companyId);
+    return this.reportsService.getTrend(query.period || ReportPeriod.MONTH, query.year, companyId);
   }
 
   @Get('export/excel')

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { DriversService } from './drivers.service';
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverDto } from './dto/update-driver.dto';
@@ -12,6 +12,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiParam, ApiQuery, 
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User, UserRole } from '../users/schemas/user.schema';
 import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 
 @ApiTags('drivers')
 @ApiBearerAuth('access-token')
@@ -19,6 +20,7 @@ import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
 @ApiForbiddenResponse({ description: 'Forbidden - Insufficient permissions' })
 @Controller('drivers')
 @UseGuards(JwtAuthGuard, RolesGuard)
+@UseInterceptors(CacheInterceptor)
 export class DriversController {
   constructor(private readonly driversService: DriversService) {}
 
@@ -28,6 +30,7 @@ export class DriversController {
   @ApiParam({ name: 'phone', description: 'Driver phone number' })
   @ApiResponse({ status: 200, description: 'Return driver details' })
   @ApiResponse({ status: 404, description: 'Driver not found' })
+  @CacheTTL(600) // 10 dakika cache
   findDriverByPhone(@Param('phone') phone: string) {
     return this.driversService.findByPhone(phone);
   }
@@ -37,6 +40,7 @@ export class DriversController {
   @ApiOperation({ summary: 'Search drivers by name or phone' })
   @ApiQuery({ name: 'query', description: 'Search term' })
   @ApiResponse({ status: 200, description: 'Return matching drivers' })
+  @CacheTTL(600) // 10 dakika cache
   findDriverByNameOrPhone(@Query('query') query: string) {
     return this.driversService.findDriverByNameOrPhone(query);
   }
@@ -53,6 +57,7 @@ export class DriversController {
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
   @ApiOperation({ summary: 'Get all drivers (paged)' })
   @ApiResponse({ status: 200, description: 'Return paged drivers' })
+  @CacheTTL(900) // 15 dakika cache
   findAll(
     @Query() filterDriverDto: FilterDriverDto,
     @GetUser() user: User
@@ -69,6 +74,7 @@ export class DriversController {
   @ApiParam({ name: 'id', description: 'Driver MongoDB ID' })
   @ApiResponse({ status: 200, description: 'Return driver details' })
   @ApiResponse({ status: 404, description: 'Driver not found' })
+  @CacheTTL(1800) // 30 dakika cache
   findOne(
     @Param('id', ParseMongoIdPipe) id: string,
     @GetUser() user: User

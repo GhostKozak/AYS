@@ -236,8 +236,8 @@ export class ReportsService {
     };
   }
 
-  async getTrend(period: ReportPeriod, companyId?: string) {
-    const dateQuery = this.getDateRange(period);
+  async getTrend(period: ReportPeriod, year?: number, companyId?: string) {
+    const dateQuery = this.getDateRange(period, year);
     const matchQuery: any = {
       is_trip_canceled: false,
       ...dateQuery,
@@ -392,27 +392,89 @@ export class ReportsService {
     doc.end();
   }
 
-  private getDateRange(period: ReportPeriod) {
+  async getParkingLotDashboard(totalCapacity?: number) {
+    // Get total count of vehicles in parking lot
+    const currentCount = await this.tripModel.countDocuments({
+      is_in_parking_lot: true,
+    });
+
+    // Get breakdown by unload status
+    const statusBreakdown = await this.tripModel.aggregate([
+      {
+        $match: {
+          is_in_parking_lot: true,
+        },
+      },
+      {
+        $group: {
+          _id: '$unload_status',
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Format the breakdown
+    const breakdown = {
+      WAITING: 0,
+      UNLOADING: 0,
+      UNLOADED: 0,
+      COMPLETED: 0,
+      CANCELED: 0,
+      UNKNOWN: 0,
+    };
+
+    statusBreakdown.forEach((item) => {
+      if (item._id in breakdown) {
+        breakdown[item._id] = item.count;
+      }
+    });
+
+    // Calculate occupancy percentage if capacity is provided
+    const occupancyPercentage = totalCapacity ? Math.round((currentCount / totalCapacity) * 100) : undefined;
+
+    return {
+      totalCapacity,
+      currentCount,
+      breakdown,
+      occupancyPercentage,
+    };
+  }
+
+  private getDateRange(period: ReportPeriod, year?: number) {
     const now = dayjs();
-    let startDate: Date;
+    let startDate: dayjs.Dayjs;
+    let endDate: dayjs.Dayjs | undefined;
 
     switch (period) {
       case ReportPeriod.TODAY:
-        startDate = now.startOf('day').toDate();
+        startDate = now.startOf('day');
+        endDate = now.endOf('day');
         break;
       case ReportPeriod.MONTH:
-        startDate = now.startOf('month').toDate();
+        startDate = now.startOf('month');
+        endDate = now.endOf('month');
         break;
       case ReportPeriod.YEAR:
-        startDate = now.startOf('year').toDate();
+        if (year && Number.isInteger(year) && year > 0) {
+          startDate = dayjs().year(year).startOf('year');
+          endDate = dayjs().year(year).endOf('year');
+        } else {
+          startDate = now.startOf('year');
+          endDate = now.endOf('year');
+        }
         break;
       case ReportPeriod.ALL:
       default:
         return {};
     }
 
+    const range: any = { $gte: startDate.toDate() };
+    if (endDate) {
+      range.$lte = endDate.toDate();
+    }
+
     return {
-      arrival_time: { $gte: startDate },
+      arrival_time: range,
     };
   }
 }
