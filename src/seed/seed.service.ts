@@ -139,6 +139,39 @@ export class SeedService {
     return createdCompanies;
   }
 
+  private readonly COUNTRIES = [
+    { name: 'TURKEY', value: '+90', code: 'TR' },
+    { name: 'ALBANIA', value: '+355', code: 'AL' },
+    { name: 'ARMENIA', value: '+374', code: 'AM' },
+    { name: 'AZERBAIJAN', value: '+994', code: 'AZ' },
+    { name: 'BULGARIA', value: '+359', code: 'BG' },
+    { name: 'CYPRUS', value: '+357', code: 'CY' },
+    { name: 'EGYPT', value: '+20', code: 'EG' },
+    { name: 'FRANCE', value: '+33', code: 'FR' },
+    { name: 'GEORGIA', value: '+995', code: 'GE' },
+    { name: 'GERMANY', value: '+49', code: 'DE' },
+    { name: 'GREECE', value: '+30', code: 'GR' },
+    { name: 'IRAN', value: '+98', code: 'IR' },
+    { name: 'IRAQ', value: '+964', code: 'IQ' },
+    { name: 'ISRAEL', value: '+972', code: 'IL' },
+    { name: 'JORDAN', value: '+962', code: 'JO' },
+    { name: 'KAZAKHSTAN', value: '+7', code: 'KZ' },
+    { name: 'KYRGYZSTAN', value: '+996', code: 'KG' },
+    { name: 'LEBANON', value: '+961', code: 'LB' },
+    { name: 'NETHERLANDS', value: '+31', code: 'NL' },
+    { name: 'NORTH_MACEDONIA', value: '+389', code: 'MK' },
+    { name: 'ROMANIA', value: '+40', code: 'RO' },
+    { name: 'RUSSIA', value: '+7', code: 'RU' },
+    { name: 'SERBIA', value: '+381', code: 'RS' },
+    { name: 'SYRIA', value: '+963', code: 'SY' },
+    { name: 'TAJIKISTAN', value: '+992', code: 'TJ' },
+    { name: 'TURKMENISTAN', value: '+993', code: 'TM' },
+    { name: 'UKRAINE', value: '+380', code: 'UA' },
+    { name: 'UNITED_KINGDOM', value: '+44', code: 'GB' },
+    { name: 'USA', value: '+1', code: 'US' },
+    { name: 'UZBEKISTAN', value: '+998', code: 'UZ' },
+  ];
+
   private async seedDrivers(companies: any[]) {
     const driverNames = [
       'Ahmet Yılmaz',
@@ -196,13 +229,32 @@ export class SeedService {
         i++
       ) {
         const isDeleted = company.deleted || Math.random() < 0.1; // %10 silinmiş sürücü
+
+        // Bias towards Turkey (e.g., 70% chance)
+        let country;
+        if (Math.random() < 0.7) {
+          country = this.COUNTRIES.find((c) => c.code === 'TR');
+        } else {
+          country =
+            this.COUNTRIES[Math.floor(Math.random() * this.COUNTRIES.length)];
+        }
+
+        // Generate 10 random digits
+        let randomDigits = '';
+        if (country.code === 'TR') {
+          // Turkish mobile numbers usually start with 5
+          randomDigits = '5' + Math.floor(Math.random() * 1000000000).toString().padStart(9, '0');
+        } else {
+          randomDigits = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+        }
+
         drivers.push({
           full_name:
             driverNames[driverIndex % driverNames.length] +
             (driverIndex >= driverNames.length
               ? ` ${Math.floor(driverIndex / driverNames.length) + 1}`
               : ''),
-          phone_number: `+90555${String(Math.floor(Math.random() * 900000) + 100000).padStart(6, '0')}`,
+          phone_number: `${country.value}${randomDigits}`,
           company: company._id,
           ...(isDeleted && { deleted: true }),
         });
