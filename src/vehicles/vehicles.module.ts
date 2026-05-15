@@ -8,14 +8,12 @@ import { EventsModule } from '../events/events.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Vehicle.name, schema: VehicleSchema }
-    ]),
+    MongooseModule.forFeature([{ name: Vehicle.name, schema: VehicleSchema }]),
     AuditModule,
     EventsModule,
   ],
   controllers: [VehiclesController],
   providers: [VehiclesService],
-  exports: [VehiclesService]
+  exports: [VehiclesService],
 })
 export class VehiclesModule {}

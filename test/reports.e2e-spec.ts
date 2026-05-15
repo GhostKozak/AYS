@@ -30,7 +30,7 @@ describe('Reports (e2e)', () => {
     // Clean up and seed
     await connection.collection('users').deleteMany({});
     await seedService.seedAdminUser();
-    
+
     const loginResponse = await request(app.getHttpServer())
       .post('/auth/login')
       .send({
@@ -130,8 +130,12 @@ describe('Reports (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      expect(response.header['content-type']).toBe('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      expect(response.header['content-disposition']).toContain('attachment; filename=trips-report.xlsx');
+      expect(response.header['content-type']).toBe(
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+      expect(response.header['content-disposition']).toContain(
+        'attachment; filename=trips-report.xlsx',
+      );
       expect(response.body).toBeDefined();
     });
   });
@@ -144,7 +148,9 @@ describe('Reports (e2e)', () => {
         .expect(200);
 
       expect(response.header['content-type']).toBe('application/pdf');
-      expect(response.header['content-disposition']).toContain('attachment; filename=trips-report.pdf');
+      expect(response.header['content-disposition']).toContain(
+        'attachment; filename=trips-report.pdf',
+      );
       expect(response.body).toBeDefined();
     });
   });

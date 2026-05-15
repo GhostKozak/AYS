@@ -25,7 +25,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: Socket) {
     try {
-      const token = client.handshake.auth?.token || client.handshake.headers?.authorization?.split(' ')[1];
+      const token =
+        (client.handshake.auth?.token as string) ||
+        (client.handshake.headers?.authorization?.split(' ')[1] as string);
       if (!token) {
         this.logger.warn(`Client ${client.id} disconnected: No token provided`);
         client.disconnect();
@@ -34,7 +36,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       await this.jwtService.verifyAsync(token);
       this.logger.log(`Client connected: ${client.id}`);
-    } catch (error) {
+    } catch {
       this.logger.warn(`Client ${client.id} disconnected: Invalid token`);
       client.disconnect();
     }

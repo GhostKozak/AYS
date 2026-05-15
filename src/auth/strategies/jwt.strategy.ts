@@ -1,4 +1,5 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Request } from 'express';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -13,10 +14,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         ExtractJwt.fromAuthHeaderAsBearerToken(),
-        (req: any) => {
-          let token = null;
+        (req: Request) => {
+          let token: string | null = null;
           if (req && req.cookies) {
-            token = req.cookies['access_token'];
+            token = (req.cookies as Record<string, string>)['access_token'];
           }
           return token;
         },
@@ -26,9 +27,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any) {
+  async validate(payload: { sub: string; email: string }) {
     const user = await this.usersService.findOne(payload.sub);
-    
+
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Hesabınız aktif değil veya silinmiş.');
     }
@@ -36,4 +37,4 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // Always return current role from database, not from token
     return { userId: payload.sub, email: payload.email, role: user.role };
   }
-} 
+}

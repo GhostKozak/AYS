@@ -1,7 +1,13 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException, Inject } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
-import { Model } from 'mongoose';
+import { Model, FilterQuery } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Trip, TripDocument } from './schema/trips.schema';
 import { CompaniesService } from '../companies/companies.service';
@@ -29,67 +35,81 @@ export class TripsService {
   async create(createTripDto: CreateTripDto): Promise<Trip> {
     // Normalize identifiers
     if (createTripDto.licence_plate) {
-      createTripDto.licence_plate = createTripDto.licence_plate.replace(/\s+/g, '').toUpperCase();
+      createTripDto.licence_plate = createTripDto.licence_plate
+        .replace(/\s+/g, '')
+        .toUpperCase();
     }
     if (createTripDto.driver_phone_number) {
-      createTripDto.driver_phone_number = createTripDto.driver_phone_number.replace(/[^\d+]/g, '');
+      createTripDto.driver_phone_number =
+        createTripDto.driver_phone_number.replace(/[^\d+]/g, '');
     }
 
-    let company;
+    let company: { _id: any } | null = null;
     if (createTripDto.company) {
-      company = await this.companiesService.findOne(createTripDto.company);
+      company = (await this.companiesService.findOne(
+        createTripDto.company,
+      )) as any;
     } else {
       if (!createTripDto.company_name) {
         throw new BadRequestException(
-          await this.i18n.translate('validation.COMPANY_NAME_REQUIRED'),
+          this.i18n.translate('validation.COMPANY_NAME_REQUIRED'),
         );
       }
-      company = await this.companiesService.findOrCreateByName(createTripDto.company_name);
+      company = (await this.companiesService.findOrCreateByName(
+        createTripDto.company_name,
+      )) as any;
     }
 
-    let driver;
+    let driver: { _id: any } | null = null;
     if (createTripDto.driver) {
-      driver = await this.driversService.findOne(createTripDto.driver);
+      driver = (await this.driversService.findOne(createTripDto.driver)) as any;
     } else {
       if (!createTripDto.driver_phone_number) {
         throw new BadRequestException(
-          await this.i18n.translate('validation.DRIVER_PHONE_NUMBER_REQUIRED'),
+          this.i18n.translate('validation.DRIVER_PHONE_NUMBER_REQUIRED'),
         );
       }
-      driver = await this.driversService.findByPhone(createTripDto.driver_phone_number);
+      driver = (await this.driversService.findByPhone(
+        createTripDto.driver_phone_number,
+      )) as any;
       if (!driver) {
         if (!createTripDto.driver_full_name) {
           throw new BadRequestException(
-            await this.i18n.translate('validation.NEW_DRIVER_NAME_REQUIRED'),
+            this.i18n.translate('validation.NEW_DRIVER_NAME_REQUIRED'),
           );
         }
-        driver = await this.driversService.create({
+        driver = (await this.driversService.create({
           full_name: createTripDto.driver_full_name,
           phone_number: createTripDto.driver_phone_number,
-          company: company._id.toString(),
-        });
+          company: company!._id.toString(),
+        })) as any;
       }
     }
 
-    let vehicle;
+    let vehicle: { _id: any } | null = null;
     if (createTripDto.vehicle) {
-      vehicle = await this.vehiclesService.findOne(createTripDto.vehicle);
+      vehicle = (await this.vehiclesService.findOne(
+        createTripDto.vehicle,
+      )) as any;
     } else if (createTripDto.licence_plate) {
-      vehicle = await this.vehiclesService.findOrCreateByPlate(
+      vehicle = (await this.vehiclesService.findOrCreateByPlate(
         createTripDto.licence_plate,
         createTripDto.vehicle_type,
-      );
+      )) as any;
     }
 
     const twoWeeksAgo = new Date();
     twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
 
-    const existingTrip = await this.tripModel.findOne({
-      vehicle: vehicle._id,
-      driver: driver._id,
-      company: company._id,
-      arrival_time: { $gte: twoWeeksAgo }
-    }).sort({ arrival_time: -1 }).lean();
+    const existingTrip = await this.tripModel
+      .findOne({
+        vehicle: vehicle?._id,
+        driver: driver?._id,
+        company: company?._id,
+        arrival_time: { $gte: twoWeeksAgo },
+      })
+      .sort({ arrival_time: -1 })
+      .lean();
 
     if (existingTrip) {
       if (
@@ -97,33 +117,43 @@ export class TripsService {
         existingTrip.unload_status !== UnloadStatus.UNLOADED
       ) {
         throw new ConflictException(
-          await this.i18n.translate('trip.CONFLICT_TRIP', { args: { unload_status: existingTrip.unload_status } }),
+          this.i18n.translate('trip.CONFLICT_TRIP', {
+            args: { unload_status: existingTrip.unload_status },
+          }),
         );
       }
     }
 
     const newTrip = new this.tripModel({
-      ...createTripDto, 
-      driver: driver._id,
-      company: company._id,
-      vehicle: vehicle._id,
+      ...createTripDto,
+      driver: driver?._id,
+      company: company?._id,
+      vehicle: vehicle?._id,
       // Set is_in_parking_lot based on initial status
-      is_in_parking_lot: this.isVehicleInParkingLot(createTripDto.unload_status, createTripDto.is_trip_canceled),
+      is_in_parking_lot: this.isVehicleInParkingLot(
+        createTripDto.unload_status,
+        createTripDto.is_trip_canceled,
+      ),
     });
 
     const savedTrip = await newTrip.save();
-    
+
     // Broadcast real-time event
     this.eventsGateway.emitTripCreated(savedTrip);
 
     return savedTrip;
   }
 
-  async findAll(paginationQuery: PaginationQueryDto, filterTripDto: FilterTripDto, showDeleted = false) {
+  async findAll(
+    paginationQuery: PaginationQueryDto,
+    filterTripDto: FilterTripDto,
+    showDeleted = false,
+  ) {
     const { limit, offset } = paginationQuery;
-    const { companyId, driverId, vehicleId, unload_status, search } = filterTripDto;
+    const { companyId, driverId, vehicleId, unload_status, search } =
+      filterTripDto;
 
-    const query: any = {};
+    const query: FilterQuery<TripDocument> = {};
 
     if (companyId) query.company = companyId;
     if (driverId) query.driver = driverId;
@@ -133,10 +163,22 @@ export class TripsService {
     if (search) {
       const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const searchRegex = new RegExp(escapedSearch, 'i');
+
+      const [matchingDrivers, matchingCompanies, matchingVehicles] =
+        await Promise.all([
+          this.driversService.findDriverByNameOrPhone(search),
+          this.companiesService.searchByName(search),
+          this.vehiclesService.findAll({ limit: 100 }, { search }),
+        ]);
+
+      const driverIds = matchingDrivers.data.map((d) => d._id);
+      const companyIds = matchingCompanies.data.map((c) => c._id);
+      const vehicleIds = matchingVehicles.data.map((v) => v._id);
+
       query.$or = [
-        { 'driver.full_name': searchRegex },
-        { 'company.name': searchRegex },
-        { 'vehicle.licence_plate': searchRegex },
+        { driver: { $in: driverIds } },
+        { company: { $in: companyIds } },
+        { vehicle: { $in: vehicleIds } },
         { notes: searchRegex },
       ];
     }
@@ -144,7 +186,9 @@ export class TripsService {
     const trips = await this.tripModel
       .find(query)
       .setOptions({ skipSoftDelete: showDeleted })
-      .select('arrival_time departure_time unload_status is_in_parking_lot notes company driver vehicle')
+      .select(
+        'arrival_time departure_time unload_status is_in_parking_lot notes company driver vehicle',
+      )
       .skip(offset ?? 0)
       .limit(limit ?? 10)
       .populate('driver', 'full_name phone_number')
@@ -153,7 +197,9 @@ export class TripsService {
       .lean()
       .exec();
 
-    const count = await this.tripModel.countDocuments(query).setOptions({ skipSoftDelete: showDeleted });
+    const count = await this.tripModel
+      .countDocuments(query)
+      .setOptions({ skipSoftDelete: showDeleted });
 
     return {
       data: trips,
@@ -173,14 +219,18 @@ export class TripsService {
 
     if (!trip) {
       throw new NotFoundException(
-        await this.i18n.translate('trip.NOT_FOUND', { args: { id } })
+        this.i18n.translate('trip.NOT_FOUND', { args: { id } }),
       );
     }
 
     return trip;
   }
 
-  async update(id: string, updateTripDto: UpdateTripDto, user?: any): Promise<Trip> {
+  async update(
+    id: string,
+    updateTripDto: UpdateTripDto,
+    user?: { userId?: string; _id?: string },
+  ): Promise<Trip> {
     const existingTrip = await this.tripModel
       .findOne({ _id: id })
       .setOptions({ skipSoftDelete: false })
@@ -192,66 +242,69 @@ export class TripsService {
 
     if (!existingTrip) {
       throw new NotFoundException(
-        await this.i18n.translate('trip.NOT_FOUND', { args: { id } }),
+        this.i18n.translate('trip.NOT_FOUND', { args: { id } }),
       );
     }
 
-    const updatedTrip = await this.tripModel.findOneAndUpdate(
-      { _id: id },
-      {
-        ...updateTripDto,
-        // Update is_in_parking_lot based on status changes
-        is_in_parking_lot: this.isVehicleInParkingLot(
-          updateTripDto.unload_status || existingTrip.unload_status,
-          updateTripDto.is_trip_canceled !== undefined ? updateTripDto.is_trip_canceled : existingTrip.is_trip_canceled
-        ),
-      },
-      { new: true, returnDocument: 'after', skipSoftDelete: false }
-    ).setOptions({ skipSoftDelete: false })
-     .populate('driver', 'full_name phone_number')
-     .populate('company')
-     .populate('vehicle')
-     .lean()
-     .exec();
+    const updatedTrip = await this.tripModel
+      .findOneAndUpdate(
+        { _id: id },
+        {
+          ...updateTripDto,
+          // Update is_in_parking_lot based on status changes
+          is_in_parking_lot: this.isVehicleInParkingLot(
+            updateTripDto.unload_status || existingTrip.unload_status,
+            updateTripDto.is_trip_canceled !== undefined
+              ? updateTripDto.is_trip_canceled
+              : existingTrip.is_trip_canceled,
+          ),
+        },
+        { new: true, returnDocument: 'after', skipSoftDelete: false },
+      )
+      .setOptions({ skipSoftDelete: false })
+      .populate('driver', 'full_name phone_number')
+      .populate('company')
+      .populate('vehicle')
+      .lean()
+      .exec();
 
     if (!updatedTrip) {
       throw new NotFoundException(
-        await this.i18n.translate('trip.NOT_FOUND', { args: { id } }),
+        this.i18n.translate('trip.NOT_FOUND', { args: { id } }),
       );
     }
 
     if (user) {
       setImmediate(() => {
-        this.auditService.log({
-          user: user.userId,
-          action: 'UPDATE',
-          entity: 'Trip',
-          entityId: id,
-          oldValue: existingTrip,
-          newValue: updatedTrip,
-        }).catch(err => console.error('Audit log failed', err));
+        this.auditService
+          .log({
+            user: user.userId || user._id || 'SYSTEM',
+            action: 'UPDATE',
+            entity: 'Trip',
+            entityId: id,
+            oldValue: existingTrip,
+            newValue: updatedTrip,
+          })
+          .catch((err) => console.error('Audit log failed', err));
       });
     }
 
-    this.eventsGateway.emitTripUpdated(updatedTrip as any);
+    this.eventsGateway.emitTripUpdated(updatedTrip as unknown as Trip);
 
-    return updatedTrip as any;
+    return updatedTrip as unknown as Trip;
   }
 
   async remove(id: string): Promise<Trip> {
-
-    const deletedTrip = await this.tripModel.findByIdAndUpdate(
-      id,
-      { deleted: true },
-      { new: true },
-    ).exec();
+    const deletedTrip = await this.tripModel
+      .findByIdAndUpdate(id, { deleted: true }, { new: true })
+      .exec();
 
     if (!deletedTrip) {
       throw new NotFoundException(
-        await this.i18n.translate('trip.NOT_FOUND', { args: { id } })
+        this.i18n.translate('trip.NOT_FOUND', { args: { id } }),
       );
     }
-    
+
     // Broadcast real-time event
     this.eventsGateway.emitTripDeleted(id);
 
@@ -264,7 +317,10 @@ export class TripsService {
    * - Trip is not canceled AND status is WAITING, UNLOADING, or UNLOADED
    * - Trip is canceled AND vehicle hasn't left yet
    */
-  private isVehicleInParkingLot(unloadStatus: UnloadStatus | string | undefined, isTripCanceled?: boolean): boolean {
+  private isVehicleInParkingLot(
+    unloadStatus: UnloadStatus | string | undefined,
+    isTripCanceled?: boolean,
+  ): boolean {
     if (isTripCanceled) {
       return true; // Canceled vehicles are still in parking lot until removed
     }
@@ -273,7 +329,11 @@ export class TripsService {
       return true; // Default to true if no status provided (vehicle just arrived)
     }
 
-    const parkingStatuses = [UnloadStatus.WAITING, UnloadStatus.UNLOADING, UnloadStatus.UNLOADED];
+    const parkingStatuses = [
+      UnloadStatus.WAITING,
+      UnloadStatus.UNLOADING,
+      UnloadStatus.UNLOADED,
+    ];
     return parkingStatuses.includes(unloadStatus as UnloadStatus);
   }
 }

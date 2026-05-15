@@ -1,4 +1,9 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './schemas/user.schema';
@@ -15,9 +20,13 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const existingUser = await this.userModel.findOne({ email: createUserDto.email }).lean();
+    const existingUser = await this.userModel
+      .findOne({ email: createUserDto.email })
+      .lean();
     if (existingUser) {
-      throw new ConflictException(this.i18n.translate('user.EMAIL_ALREADY_EXISTS'));
+      throw new ConflictException(
+        this.i18n.translate('user.EMAIL_ALREADY_EXISTS'),
+      );
     }
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
@@ -26,8 +35,8 @@ export class UsersService {
       password: hashedPassword,
     });
     const savedUser = await createdUser.save();
-    const userObj = savedUser.toObject() as any;
-    delete userObj.password;
+    const userObj = savedUser.toObject() as unknown as User;
+    delete (userObj as any).password;
     return userObj;
   }
 
@@ -36,7 +45,10 @@ export class UsersService {
   }
 
   async findOne(id: string): Promise<User> {
-    const user = await this.userModel.findById(id, { password: 0 }).lean().exec();
+    const user = await this.userModel
+      .findById(id, { password: 0 })
+      .lean()
+      .exec();
     if (!user) {
       throw new NotFoundException(this.i18n.translate('user.NOT_FOUND'));
     }
@@ -59,11 +71,11 @@ export class UsersService {
     if (updateUserDto.password) {
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
     }
-    
+
     const updatedUser = await this.userModel
       .findByIdAndUpdate(id, updateUserDto, { new: true, select: '-password' })
       .exec();
-    
+
     if (!updatedUser) {
       throw new NotFoundException(this.i18n.translate('user.NOT_FOUND'));
     }
@@ -71,20 +83,24 @@ export class UsersService {
   }
 
   async remove(id: string): Promise<void> {
-    const result = await this.userModel.findByIdAndUpdate(id, { deleted: true }).exec();
+    const result = await this.userModel
+      .findByIdAndUpdate(id, { deleted: true })
+      .exec();
     if (!result) {
       throw new NotFoundException(this.i18n.translate('user.NOT_FOUND'));
     }
   }
 
   async updateLastLogin(id: string): Promise<void> {
-    await this.userModel.findByIdAndUpdate(id, { lastLoginAt: new Date() }).exec();
+    await this.userModel
+      .findByIdAndUpdate(id, { lastLoginAt: new Date() })
+      .exec();
   }
 
   async incrementFailedLogins(id: string): Promise<User | null> {
     const user = await this.userModel.findById(id).exec();
     if (!user) return null;
-    
+
     user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
     if (user.failedLoginAttempts >= 5) {
       user.lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 dakika kilit
@@ -93,9 +109,11 @@ export class UsersService {
   }
 
   async resetFailedLogins(id: string): Promise<void> {
-    await this.userModel.findByIdAndUpdate(id, { 
-      failedLoginAttempts: 0, 
-      $unset: { lockedUntil: 1 } 
-    }).exec();
+    await this.userModel
+      .findByIdAndUpdate(id, {
+        failedLoginAttempts: 0,
+        $unset: { lockedUntil: 1 },
+      })
+      .exec();
   }
-} 
+}

@@ -29,7 +29,7 @@ export const mockQuery = (resolvedValue: any = []) => {
     },
     finally(onFinally: any) {
       return this.exec().finally(onFinally);
-    }
+    },
   };
   return query;
 };
@@ -48,7 +48,7 @@ export const mockModel = () => {
   model.findOneAndUpdate = jest.fn().mockReturnValue(mockQuery(null));
   model.countDocuments = jest.fn().mockReturnValue(mockQuery(0));
   model.create = jest.fn().mockResolvedValue({});
-  
+
   return model;
 };
 

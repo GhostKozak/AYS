@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, UseInterceptors } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -7,12 +17,22 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from './schemas/user.schema';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiParam, ApiForbiddenResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiParam,
+  ApiForbiddenResponse,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
 
 @ApiTags('users')
 @ApiBearerAuth('access-token')
-@ApiUnauthorizedResponse({ description: 'Unauthorized - Invalid or missing token' })
+@ApiUnauthorizedResponse({
+  description: 'Unauthorized - Invalid or missing token',
+})
 @ApiForbiddenResponse({ description: 'Forbidden - Insufficient permissions' })
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -38,15 +58,21 @@ export class UsersController {
   @Get('me')
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'Return current user details' })
-  findMe(@Req() req: any) {
+  findMe(@Req() req: import('express').Request & { user: { userId: string } }) {
     return this.usersService.findOne(req.user.userId);
   }
 
   @Patch('me')
   @SkipAudit()
   @ApiOperation({ summary: 'Update current user details' })
-  @ApiResponse({ status: 200, description: 'Current user updated successfully' })
-  updateMe(@Req() req: any, @Body() updateUserDto: UpdateUserDto) {
+  @ApiResponse({
+    status: 200,
+    description: 'Current user updated successfully',
+  })
+  updateMe(
+    @Req() req: import('express').Request & { user: { userId: string } },
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
     // Güvenlik: Admin olmayan profilin rolünü veya yetkisini kendi kendine değiştirememesi için kısıtla
     delete updateUserDto.role;
     delete updateUserDto.isActive;
@@ -69,7 +95,10 @@ export class UsersController {
   @ApiOperation({ summary: 'Update user details (Admin only)' })
   @ApiParam({ name: 'id', description: 'User MongoDB ID' })
   @ApiResponse({ status: 200, description: 'User updated successfully' })
-  update(@Param('id', ParseMongoIdPipe) id: string, @Body() updateUserDto: UpdateUserDto) {
+  update(
+    @Param('id', ParseMongoIdPipe) id: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
     return this.usersService.update(id, updateUserDto);
   }
 
@@ -81,4 +110,4 @@ export class UsersController {
   remove(@Param('id', ParseMongoIdPipe) id: string) {
     return this.usersService.remove(id);
   }
-} 
+}

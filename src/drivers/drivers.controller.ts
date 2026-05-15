@@ -1,21 +1,42 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, UseInterceptors } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { DriversService } from './drivers.service';
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverDto } from './dto/update-driver.dto';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
-import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { FilterDriverDto } from './dto/filter-driver.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiParam, ApiQuery, ApiUnauthorizedResponse, ApiForbiddenResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiParam,
+  ApiQuery,
+  ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
+} from '@nestjs/swagger';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User, UserRole } from '../users/schemas/user.schema';
 import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
 
 @ApiTags('drivers')
 @ApiBearerAuth('access-token')
-@ApiUnauthorizedResponse({ description: 'Unauthorized - Invalid or missing token' })
+@ApiUnauthorizedResponse({
+  description: 'Unauthorized - Invalid or missing token',
+})
 @ApiForbiddenResponse({ description: 'Forbidden - Insufficient permissions' })
 @Controller('drivers')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -53,10 +74,7 @@ export class DriversController {
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
   @ApiOperation({ summary: 'Get all drivers (paged)' })
   @ApiResponse({ status: 200, description: 'Return paged drivers' })
-  findAll(
-    @Query() filterDriverDto: FilterDriverDto,
-    @GetUser() user: User
-  ) {
+  findAll(@Query() filterDriverDto: FilterDriverDto, @GetUser() user: User) {
     const { limit, offset, ...filters } = filterDriverDto;
     const paginationQuery = { limit, offset };
     const showDeleted = user.role === UserRole.ADMIN;
@@ -69,10 +87,7 @@ export class DriversController {
   @ApiParam({ name: 'id', description: 'Driver MongoDB ID' })
   @ApiResponse({ status: 200, description: 'Return driver details' })
   @ApiResponse({ status: 404, description: 'Driver not found' })
-  findOne(
-    @Param('id', ParseMongoIdPipe) id: string,
-    @GetUser() user: User
-  ) {
+  findOne(@Param('id', ParseMongoIdPipe) id: string, @GetUser() user: User) {
     const showDeleted = user.role === UserRole.ADMIN;
     return this.driversService.findOne(id, showDeleted);
   }
@@ -84,11 +99,11 @@ export class DriversController {
   @ApiParam({ name: 'id', description: 'Driver MongoDB ID' })
   @ApiResponse({ status: 200, description: 'Driver updated successfully' })
   update(
-    @Param('id', ParseMongoIdPipe) id: string, 
+    @Param('id', ParseMongoIdPipe) id: string,
     @Body() updateDriverDto: UpdateDriverDto,
-    @GetUser() user: User
+    @GetUser() user: User,
   ) {
-    return this.driversService.update(id, updateDriverDto, user);
+    return this.driversService.update(id, updateDriverDto, user as any);
   }
 
   @Delete(':id')

@@ -8,10 +8,7 @@ import { FilterCompanyDto } from './dto/filter-company.dto';
 
 import { User, UserRole } from '../users/schemas/user.schema';
 
-import { 
-  mockI18nService, 
-  getMockProvider 
-} from '../common/test/test-utils';
+import { mockI18nService, getMockProvider } from '../common/test/test-utils';
 import { I18nService } from 'nestjs-i18n';
 
 const mockUser: User = {
@@ -83,7 +80,11 @@ describe('CompaniesController', () => {
   describe('findOne', () => {
     it('should return a single company', async () => {
       const companyId = new Types.ObjectId().toString();
-      const expectedCompany = { _id: companyId, name: 'Company #1', deleted: false };
+      const expectedCompany = {
+        _id: companyId,
+        name: 'Company #1',
+        deleted: false,
+      };
       service.findOne.mockResolvedValue(expectedCompany as any);
 
       const result = await controller.findOne(companyId, mockUser);
@@ -97,12 +98,24 @@ describe('CompaniesController', () => {
     it('should update a company', async () => {
       const companyId = new Types.ObjectId().toString();
       const updateCompanyDto = { name: 'Updated Company' };
-      const expectedCompany = { _id: companyId, ...updateCompanyDto, deleted: false };
+      const expectedCompany = {
+        _id: companyId,
+        ...updateCompanyDto,
+        deleted: false,
+      };
       service.update.mockResolvedValue(expectedCompany as any);
 
-      const result = await controller.update(companyId, updateCompanyDto, mockUser);
+      const result = await controller.update(
+        companyId,
+        updateCompanyDto,
+        mockUser,
+      );
       expect(result).toEqual(expectedCompany);
-      expect(service.update).toHaveBeenCalledWith(companyId, updateCompanyDto, mockUser);
+      expect(service.update).toHaveBeenCalledWith(
+        companyId,
+        updateCompanyDto,
+        mockUser,
+      );
     });
   });
 });

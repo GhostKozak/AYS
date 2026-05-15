@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, FilterQuery } from 'mongoose';
 import { AuditLog, AuditLogDocument } from './schemas/audit-log.schema';
 
 @Injectable()
@@ -10,12 +10,12 @@ export class AuditService {
   ) {}
 
   async log(data: {
-    user: any;
+    user: string | Record<string, unknown>;
     action: string;
     entity: string;
     entityId: string;
-    oldValue?: any;
-    newValue?: any;
+    oldValue?: unknown;
+    newValue?: unknown;
     ipAddress?: string;
     userAgent?: string;
   }) {
@@ -23,7 +23,7 @@ export class AuditService {
     return log.save();
   }
 
-  async findAll(query: any = {}) {
+  async findAll(query: FilterQuery<AuditLogDocument> = {}) {
     return this.auditLogModel
       .find(query)
       .populate('user', 'firstName lastName email role')

@@ -9,15 +9,13 @@ import { EventsModule } from '../events/events.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Driver.name, schema: DriverSchema },
-    ]),
+    MongooseModule.forFeature([{ name: Driver.name, schema: DriverSchema }]),
     CompaniesModule,
     AuditModule,
     EventsModule,
   ],
   controllers: [DriversController],
   providers: [DriversService],
-  exports: [DriversService]
+  exports: [DriversService],
 })
 export class DriversModule {}

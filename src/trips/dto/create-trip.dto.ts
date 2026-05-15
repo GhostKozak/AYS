@@ -1,17 +1,33 @@
-import { IsBoolean, IsDateString, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString, MinLength, ValidateIf } from 'class-validator';
+import {
+  IsBoolean,
+  IsDateString,
+  IsEnum,
+  IsMongoId,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength,
+  ValidateIf,
+} from 'class-validator';
 import { VehicleType } from '../../vehicles/enums/vehicleTypes';
 import { UnloadStatus } from '../enums/unloadStatus';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateTripDto {
   // --- DRIVER ---
-  @ApiPropertyOptional({ description: 'Driver ID', example: '507f1f77bcf86cd799439011' })
+  @ApiPropertyOptional({
+    description: 'Driver ID',
+    example: '507f1f77bcf86cd799439011',
+  })
   @IsOptional()
   @IsMongoId({ message: 'validation.IS_MONGOID' })
   driver?: string;
 
-  @ApiPropertyOptional({ description: 'Driver phone number (required if driver ID is missing)', example: '+905551234567' })
-  @ValidateIf((o) => !o.driver)
+  @ApiPropertyOptional({
+    description: 'Driver phone number (required if driver ID is missing)',
+    example: '+905551234567',
+  })
+  @ValidateIf((o: CreateTripDto) => !o.driver)
   @IsString({ message: 'validation.IS_STRING' })
   @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
   driver_phone_number?: string;
@@ -23,25 +39,37 @@ export class CreateTripDto {
 
   // --- COMPANY ---
 
-  @ApiPropertyOptional({ description: 'Company ID', example: '507f1f77bcf86cd799439011' })
+  @ApiPropertyOptional({
+    description: 'Company ID',
+    example: '507f1f77bcf86cd799439011',
+  })
   @IsOptional()
   @IsMongoId({ message: 'validation.IS_MONGOID' })
   company?: string;
 
-  @ApiPropertyOptional({ description: 'Company name (required if company ID is missing)', example: 'Example Logistics' })
-  @ValidateIf((o) => !o.company)
+  @ApiPropertyOptional({
+    description: 'Company name (required if company ID is missing)',
+    example: 'Example Logistics',
+  })
+  @ValidateIf((o: CreateTripDto) => !o.company)
   @IsString({ message: 'validation.IS_STRING' })
   @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
   company_name?: string;
 
   // --- Vehicle ---
-  @ApiPropertyOptional({ description: 'Vehicle ID', example: '507f1f77bcf86cd799439011' })
+  @ApiPropertyOptional({
+    description: 'Vehicle ID',
+    example: '507f1f77bcf86cd799439011',
+  })
   @IsOptional()
   @IsMongoId({ message: 'validation.IS_MONGOID' })
   vehicle?: string;
 
-  @ApiPropertyOptional({ description: 'Licence plate (required if vehicle ID is missing)', example: '34ABC123' })
-  @ValidateIf((o) => !o.vehicle)
+  @ApiPropertyOptional({
+    description: 'Licence plate (required if vehicle ID is missing)',
+    example: '34ABC123',
+  })
+  @ValidateIf((o: CreateTripDto) => !o.vehicle)
   @IsString({ message: 'validation.IS_STRING' })
   @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
   @MinLength(4, { message: 'validation.MIN_LENGTH' })
@@ -59,12 +87,18 @@ export class CreateTripDto {
   @IsString({ message: 'validation.IS_STRING' })
   notes?: string;
 
-  @ApiPropertyOptional({ description: 'Departure time', example: '2024-03-20T10:00:00Z' })
+  @ApiPropertyOptional({
+    description: 'Departure time',
+    example: '2024-03-20T10:00:00Z',
+  })
   @IsOptional()
   @IsDateString()
   departure_time?: string;
 
-  @ApiPropertyOptional({ description: 'Arrival time', example: '2024-03-20T18:00:00Z' })
+  @ApiPropertyOptional({
+    description: 'Arrival time',
+    example: '2024-03-20T18:00:00Z',
+  })
   @IsOptional()
   @IsDateString()
   arrival_time?: string;

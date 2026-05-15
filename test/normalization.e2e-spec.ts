@@ -4,9 +4,15 @@ import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { getConnectionToken, getModelToken } from '@nestjs/mongoose';
 import { Connection, Model } from 'mongoose';
-import { Company, CompanyDocument } from '../src/companies/schemas/company.schema';
+import {
+  Company,
+  CompanyDocument,
+} from '../src/companies/schemas/company.schema';
 import { Driver, DriverDocument } from '../src/drivers/schemas/driver.schema';
-import { Vehicle, VehicleDocument } from '../src/vehicles/schema/vehicles.schema';
+import {
+  Vehicle,
+  VehicleDocument,
+} from '../src/vehicles/schema/vehicles.schema';
 
 describe('Data Normalization (e2e)', () => {
   let app: INestApplication;
@@ -28,7 +34,9 @@ describe('Data Normalization (e2e)', () => {
     app.useGlobalPipes(new ValidationPipe());
     await app.init();
 
-    const seedService = moduleFixture.get(require('../src/seed/seed.service').SeedService);
+    const seedService = moduleFixture.get(
+      require('../src/seed/seed.service').SeedService,
+    );
     await seedService.seedAdminUser();
 
     const loginResponse = await request(app.getHttpServer())
@@ -58,51 +66,55 @@ describe('Data Normalization (e2e)', () => {
 
   describe('Trip Creation Normalization', () => {
     it('should use same vehicle and driver regardless of formatting', async () => {
-        const companyName = 'Norm Co';
-        
-        // Create trip 1 with complex formatting
-        const tripResponse = await request(app.getHttpServer())
-          .post('/trips')
-          .set('Authorization', `Bearer ${adminToken}`)
-          .send({
-            company_name: companyName,
-            licence_plate: '34 ABC 12',
-            driver_phone_number: '+1 (555) 111-2233',
-            driver_full_name: 'Norm User',
-            arrival_time: new Date(),
-          })
-          .expect(201);
+      const companyName = 'Norm Co';
 
-        const tripId = tripResponse.body._id;
+      // Create trip 1 with complex formatting
+      const tripResponse = await request(app.getHttpServer())
+        .post('/trips')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          company_name: companyName,
+          licence_plate: '34 ABC 12',
+          driver_phone_number: '+1 (555) 111-2233',
+          driver_full_name: 'Norm User',
+          arrival_time: new Date(),
+        })
+        .expect(201);
 
-        // "Unload" the trip so trip 2 can be created without conflict
-        await request(app.getHttpServer())
-          .patch(`/trips/${tripId}`)
-          .set('Authorization', `Bearer ${adminToken}`)
-          .send({ unload_status: 'UNLOADED' })
-          .expect(200);
+      const tripId = tripResponse.body._id;
 
-        // Create trip 2 with minimal formatting
-        await request(app.getHttpServer())
-          .post('/trips')
-          .set('Authorization', `Bearer ${adminToken}`)
-          .send({
-            company_name: companyName,
-            licence_plate: '34abc12',
-            driver_phone_number: '+15551112233',
-            arrival_time: new Date(),
-          })
-          .expect(201);
+      // "Unload" the trip so trip 2 can be created without conflict
+      await request(app.getHttpServer())
+        .patch(`/trips/${tripId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ unload_status: 'UNLOADED' })
+        .expect(200);
 
-        // Verify counts
-        const vehicleModel = app.get<Model<VehicleDocument>>(getModelToken(Vehicle.name));
-        const driverModel = app.get<Model<DriverDocument>>(getModelToken(Driver.name));
+      // Create trip 2 with minimal formatting
+      await request(app.getHttpServer())
+        .post('/trips')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          company_name: companyName,
+          licence_plate: '34abc12',
+          driver_phone_number: '+15551112233',
+          arrival_time: new Date(),
+        })
+        .expect(201);
 
-        const vehicleCount = await vehicleModel.countDocuments();
-        const driverCount = await driverModel.countDocuments();
+      // Verify counts
+      const vehicleModel = app.get<Model<VehicleDocument>>(
+        getModelToken(Vehicle.name),
+      );
+      const driverModel = app.get<Model<DriverDocument>>(
+        getModelToken(Driver.name),
+      );
 
-        expect(vehicleCount).toBe(1);
-        expect(driverCount).toBe(1);
+      const vehicleCount = await vehicleModel.countDocuments();
+      const driverCount = await driverModel.countDocuments();
+
+      expect(vehicleCount).toBe(1);
+      expect(driverCount).toBe(1);
     });
   });
 });

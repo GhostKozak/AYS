@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -22,13 +23,16 @@ export class SeedService {
     @InjectModel(Vehicle.name) private vehicleModel: Model<Vehicle>,
     @InjectModel(Trip.name) private tripModel: Model<Trip>,
     private readonly i18n: I18nService,
-  ) { }
+  ) {}
 
   async seedAdminUser() {
-    const existingAdmin = await this.userModel.findOne({ email: 'admin@admin.com' });
+    const existingAdmin = await this.userModel.findOne({
+      email: 'admin@admin.com',
+    });
 
     if (!existingAdmin) {
-      const initialPassword = process.env.INITIAL_ADMIN_PASSWORD || 'Admin.123.';
+      const initialPassword =
+        process.env.INITIAL_ADMIN_PASSWORD || 'Admin.123.';
       const hashedPassword = await bcrypt.hash(initialPassword, 10);
 
       const adminUser = new this.userModel({
@@ -137,30 +141,70 @@ export class SeedService {
 
   private async seedDrivers(companies: any[]) {
     const driverNames = [
-      'Ahmet Yılmaz', 'Mehmet Kaya', 'Ali Demir', 'Ayşe Yıldız', 'Fatma Çelik',
-      'Hasan Öztürk', 'Emine Şahin', 'Mustafa Aydın', 'Zeynep Kara', 'Hüseyin Yıldırım',
-      'Elif Demir', 'İbrahim Çelik', 'Sevgi Aydın', 'Osman Yıldız', 'Gülşen Kaya',
-      'Ramazan Öztürk', 'Hatice Şahin', 'Yusuf Kara', 'Merve Yıldırım', 'Halil Demir',
-      'Sultan Çelik', 'Recep Aydın', 'Nur Yıldız', 'Salih Kaya', 'Zehra Öztürk',
-      'Kemal Şahin', 'Filiz Kara', 'İsmail Yıldırım', 'Hacer Demir', 'Fatih Çelik',
-      'Dilek Aydın', 'Orhan Yıldız', 'Gizem Kaya', 'Burak Öztürk', 'Esra Şahin'
+      'Ahmet Yılmaz',
+      'Mehmet Kaya',
+      'Ali Demir',
+      'Ayşe Yıldız',
+      'Fatma Çelik',
+      'Hasan Öztürk',
+      'Emine Şahin',
+      'Mustafa Aydın',
+      'Zeynep Kara',
+      'Hüseyin Yıldırım',
+      'Elif Demir',
+      'İbrahim Çelik',
+      'Sevgi Aydın',
+      'Osman Yıldız',
+      'Gülşen Kaya',
+      'Ramazan Öztürk',
+      'Hatice Şahin',
+      'Yusuf Kara',
+      'Merve Yıldırım',
+      'Halil Demir',
+      'Sultan Çelik',
+      'Recep Aydın',
+      'Nur Yıldız',
+      'Salih Kaya',
+      'Zehra Öztürk',
+      'Kemal Şahin',
+      'Filiz Kara',
+      'İsmail Yıldırım',
+      'Hacer Demir',
+      'Fatih Çelik',
+      'Dilek Aydın',
+      'Orhan Yıldız',
+      'Gizem Kaya',
+      'Burak Öztürk',
+      'Esra Şahin',
     ];
 
     const drivers: any[] = [];
     let driverIndex = 0;
 
     // Her firma için 15-30 sürücü
-    for (let companyIndex = 0; companyIndex < companies.length; companyIndex++) {
+    for (
+      let companyIndex = 0;
+      companyIndex < companies.length;
+      companyIndex++
+    ) {
       const company = companies[companyIndex];
       const driverCount = Math.floor(Math.random() * 16) + 15; // 15-30 arası
 
-      for (let i = 0; i < driverCount && driverIndex < driverNames.length * 3; i++) {
-        const isDeleted = company.deleted || (Math.random() < 0.1); // %10 silinmiş sürücü
+      for (
+        let i = 0;
+        i < driverCount && driverIndex < driverNames.length * 3;
+        i++
+      ) {
+        const isDeleted = company.deleted || Math.random() < 0.1; // %10 silinmiş sürücü
         drivers.push({
-          full_name: driverNames[driverIndex % driverNames.length] + (driverIndex >= driverNames.length ? ` ${Math.floor(driverIndex / driverNames.length) + 1}` : ''),
+          full_name:
+            driverNames[driverIndex % driverNames.length] +
+            (driverIndex >= driverNames.length
+              ? ` ${Math.floor(driverIndex / driverNames.length) + 1}`
+              : ''),
           phone_number: `+90555${String(Math.floor(Math.random() * 900000) + 100000).padStart(6, '0')}`,
           company: company._id,
-          ...(isDeleted && { deleted: true })
+          ...(isDeleted && { deleted: true }),
         });
         driverIndex++;
       }
@@ -182,7 +226,11 @@ export class SeedService {
     const vehicles: any[] = [];
 
     // Her firma için 5-15 araç
-    for (let companyIndex = 0; companyIndex < companies.length; companyIndex++) {
+    for (
+      let companyIndex = 0;
+      companyIndex < companies.length;
+      companyIndex++
+    ) {
       const company = companies[companyIndex];
       const vehicleCount = Math.floor(Math.random() * 11) + 5; // 5-15 arası
 
@@ -191,10 +239,14 @@ export class SeedService {
         const letter1 = letters[Math.floor(Math.random() * letters.length)];
         const letter2 = letters[Math.floor(Math.random() * letters.length)];
         const letter3 = letters[Math.floor(Math.random() * letters.length)];
-        const number = String(Math.floor(Math.random() * 900) + 100).padStart(3, '0');
+        const number = String(Math.floor(Math.random() * 900) + 100).padStart(
+          3,
+          '0',
+        );
 
         const licencePlate = `${city}${letter1}${letter2}${letter3}${number}`;
-        const vehicleType = Math.random() < 0.7 ? VehicleType.TRUCK : VehicleType.VAN;
+        const vehicleType =
+          Math.random() < 0.7 ? VehicleType.TRUCK : VehicleType.VAN;
 
         vehicles.push({
           licence_plate: licencePlate,
@@ -219,11 +271,14 @@ export class SeedService {
 
     // 2025 yılı için aylık dağılım
     for (let month = 0; month < 12; month++) {
-      const monthDate = new Date(2025, month, 1);
       const daysInMonth = new Date(2025, month + 1, 0).getDate();
 
       // Her ay için rastgele günler
-      for (let day = 1; day <= daysInMonth; day += Math.floor(Math.random() * 3) + 1) {
+      for (
+        let day = 1;
+        day <= daysInMonth;
+        day += Math.floor(Math.random() * 3) + 1
+      ) {
         const tripDate = new Date(2025, month, day);
 
         // Günlük 10-30 sefer arası
@@ -231,14 +286,19 @@ export class SeedService {
 
         for (let i = 0; i < dailyTrips; i++) {
           // Rastgele sürücü ve araç seç (aktif olanlardan)
-          const activeDrivers = drivers.filter(d => !d.deleted);
-          const activeVehicles = vehicles.filter(v => !v.deleted);
+          const activeDrivers = drivers.filter((d) => !d.deleted);
+          const activeVehicles = vehicles.filter((v) => !v.deleted);
 
-          if (activeDrivers.length === 0 || activeVehicles.length === 0) continue;
+          if (activeDrivers.length === 0 || activeVehicles.length === 0)
+            continue;
 
-          const driver = activeDrivers[Math.floor(Math.random() * activeDrivers.length)];
-          const vehicle = activeVehicles[Math.floor(Math.random() * activeVehicles.length)];
-          const company = companies.find(c => c._id.toString() === driver.company.toString());
+          const driver =
+            activeDrivers[Math.floor(Math.random() * activeDrivers.length)];
+          const vehicle =
+            activeVehicles[Math.floor(Math.random() * activeVehicles.length)];
+          const company = companies.find(
+            (c) => c._id.toString() === driver.company.toString(),
+          );
 
           if (!company) continue;
 
@@ -266,7 +326,9 @@ export class SeedService {
             unloadStatus = UnloadStatus.UNLOADED;
             isInParkingLot = false;
             const unloadDuration = Math.floor(Math.random() * 8) + 1; // 1-8 saat
-            departureTime = new Date(arrivalTime.getTime() + unloadDuration * 60 * 60 * 1000);
+            departureTime = new Date(
+              arrivalTime.getTime() + unloadDuration * 60 * 60 * 1000,
+            );
             notes = `Boşaltıldı - ${unloadDuration} saat sürdü`;
           } else {
             // İptal edildi
@@ -302,20 +364,25 @@ export class SeedService {
 
     // Ek olarak bugün ve dün için daha fazla sefer
     const today = new Date();
-    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
 
     for (let dayOffset = 0; dayOffset < 2; dayOffset++) {
-      const targetDate = new Date(today.getTime() - dayOffset * 24 * 60 * 60 * 1000);
+      const targetDate = new Date(
+        today.getTime() - dayOffset * 24 * 60 * 60 * 1000,
+      );
 
       for (let i = 0; i < 20; i++) {
-        const activeDrivers = drivers.filter(d => !d.deleted);
-        const activeVehicles = vehicles.filter(v => !v.deleted);
+        const activeDrivers = drivers.filter((d) => !d.deleted);
+        const activeVehicles = vehicles.filter((v) => !v.deleted);
 
         if (activeDrivers.length === 0 || activeVehicles.length === 0) continue;
 
-        const driver = activeDrivers[Math.floor(Math.random() * activeDrivers.length)];
-        const vehicle = activeVehicles[Math.floor(Math.random() * activeVehicles.length)];
-        const company = companies.find(c => c._id.toString() === driver.company.toString());
+        const driver =
+          activeDrivers[Math.floor(Math.random() * activeDrivers.length)];
+        const vehicle =
+          activeVehicles[Math.floor(Math.random() * activeVehicles.length)];
+        const company = companies.find(
+          (c) => c._id.toString() === driver.company.toString(),
+        );
 
         if (!company) continue;
 
@@ -340,7 +407,9 @@ export class SeedService {
           unloadStatus = UnloadStatus.UNLOADED;
           isInParkingLot = false;
           const unloadDuration = Math.floor(Math.random() * 6) + 1;
-          departureTime = new Date(arrivalTime.getTime() + unloadDuration * 60 * 60 * 1000);
+          departureTime = new Date(
+            arrivalTime.getTime() + unloadDuration * 60 * 60 * 1000,
+          );
           notes = `Tamamlandı - ${unloadDuration} saat`;
         } else {
           unloadStatus = UnloadStatus.CANCELED;
@@ -369,4 +438,4 @@ export class SeedService {
     }
     this.logger.log(`Trips seeded: ${trips.length}`);
   }
-} 
+}

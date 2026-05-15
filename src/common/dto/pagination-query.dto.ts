@@ -3,7 +3,10 @@ import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class PaginationQueryDto {
-  @ApiPropertyOptional({ description: 'Number of items to return', example: 10 })
+  @ApiPropertyOptional({
+    description: 'Number of items to return',
+    example: 10,
+  })
   @IsOptional()
   @IsPositive({ message: 'validation.IS_POSITIVE' })
   @Type(() => Number)

@@ -4,7 +4,10 @@ import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { getModelToken, getConnectionToken } from '@nestjs/mongoose';
 import { Model, Connection, Types } from 'mongoose';
-import { Vehicle, VehicleDocument } from '../src/vehicles/schema/vehicles.schema';
+import {
+  Vehicle,
+  VehicleDocument,
+} from '../src/vehicles/schema/vehicles.schema';
 import { VehicleType } from '../src/vehicles/enums/vehicleTypes';
 
 describe('VehiclesController (e2e)', () => {
@@ -28,7 +31,9 @@ describe('VehiclesController (e2e)', () => {
 
     vehicleModel = moduleFixture.get(getModelToken(Vehicle.name));
 
-    const seedService = moduleFixture.get(require('../src/seed/seed.service').SeedService);
+    const seedService = moduleFixture.get(
+      require('../src/seed/seed.service').SeedService,
+    );
     await seedService.seedAdminUser();
 
     const loginResponse = await request(app.getHttpServer())
@@ -81,43 +86,43 @@ describe('VehiclesController (e2e)', () => {
     });
 
     it('should return 400 for missing licence_plate', () => {
-        return request(app.getHttpServer())
-          .post('/vehicles')
-          .set('Authorization', `Bearer ${adminToken}`)
-          .send({ vehicle_type: VehicleType.TRUCK })
-          .expect(400);
-      });
+      return request(app.getHttpServer())
+        .post('/vehicles')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ vehicle_type: VehicleType.TRUCK })
+        .expect(400);
+    });
   });
 
   describe('GET /vehicles', () => {
-      it('should return a list of vehicles', async () => {
-          await vehicleModel.create({ licence_plate: '34LIST01' });
-          await vehicleModel.create({ licence_plate: '34LIST02' });
+    it('should return a list of vehicles', async () => {
+      await vehicleModel.create({ licence_plate: '34LIST01' });
+      await vehicleModel.create({ licence_plate: '34LIST02' });
 
-          return request(app.getHttpServer())
-            .get('/vehicles')
-            .set('Authorization', `Bearer ${adminToken}`)
-            .expect(200)
-            .then(res => {
-                expect(res.body.data.length).toBe(2);
-            })
-      });
+      return request(app.getHttpServer())
+        .get('/vehicles')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200)
+        .then((res) => {
+          expect(res.body.data.length).toBe(2);
+        });
+    });
   });
 
   describe('DELETE /vehicles/:id', () => {
-      it('should soft-delete a vehicle', async () => {
-          const vehicle = await vehicleModel.create({ licence_plate: '34DEL01' });
+    it('should soft-delete a vehicle', async () => {
+      const vehicle = await vehicleModel.create({ licence_plate: '34DEL01' });
 
-          await request(app.getHttpServer())
-            .delete(`/vehicles/${vehicle._id}`)
-            .set('Authorization', `Bearer ${adminToken}`)
-            .expect(200);
+      await request(app.getHttpServer())
+        .delete(`/vehicles/${vehicle._id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
 
-            // Verify it's hidden from normal find (Editor should get 404)
-            await request(app.getHttpServer())
-              .get(`/vehicles/${vehicle._id}`)
-              .set('Authorization', `Bearer ${editorToken}`)
-              .expect(404);
-      })
-  })
+      // Verify it's hidden from normal find (Editor should get 404)
+      await request(app.getHttpServer())
+        .get(`/vehicles/${vehicle._id}`)
+        .set('Authorization', `Bearer ${editorToken}`)
+        .expect(404);
+    });
+  });
 });

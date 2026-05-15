@@ -22,4 +22,4 @@ import { Trip, TripSchema } from '../trips/schema/trips.schema';
   providers: [SeedService],
   exports: [SeedService],
 })
-export class SeedModule {} 
+export class SeedModule {}

@@ -11,9 +11,7 @@ import { EventsModule } from '../events/events.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Trip.name, schema: TripSchema }
-    ]),
+    MongooseModule.forFeature([{ name: Trip.name, schema: TripSchema }]),
     CompaniesModule,
     DriversModule,
     VehiclesModule,

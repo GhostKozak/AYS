@@ -9,10 +9,7 @@ import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { FilterVehicleDto } from './dto/filter-vehicle.dto';
 import { User, UserRole } from '../users/schemas/user.schema';
 
-import { 
-  mockI18nService, 
-  getMockProvider 
-} from '../common/test/test-utils';
+import { mockI18nService, getMockProvider } from '../common/test/test-utils';
 import { I18nService } from 'nestjs-i18n';
 
 const mockUser: User = {
@@ -60,7 +57,11 @@ describe('VehiclesController', () => {
         licence_plate: '34ABC123',
         vehicle_type: VehicleType.TRUCK,
       };
-      const expectedVehicle = { _id: new Types.ObjectId(), ...createVehicleDto, deleted: false };
+      const expectedVehicle = {
+        _id: new Types.ObjectId(),
+        ...createVehicleDto,
+        deleted: false,
+      };
       service.create.mockResolvedValue(expectedVehicle as any);
 
       const result = await controller.create(createVehicleDto);
@@ -72,21 +73,39 @@ describe('VehiclesController', () => {
 
   describe('findAll', () => {
     it('should return an array of vehicles', async () => {
-      const filterVehicleDto: FilterVehicleDto = { limit: 10, offset: 0, vehicle_type: VehicleType.VAN };
-      const expectedVehicles = [{ _id: new Types.ObjectId(), licence_plate: '34DEF456', deleted: false }];
+      const filterVehicleDto: FilterVehicleDto = {
+        limit: 10,
+        offset: 0,
+        vehicle_type: VehicleType.VAN,
+      };
+      const expectedVehicles = [
+        {
+          _id: new Types.ObjectId(),
+          licence_plate: '34DEF456',
+          deleted: false,
+        },
+      ];
       service.findAll.mockResolvedValue(expectedVehicles as any);
 
       const result = await controller.findAll(filterVehicleDto, mockUser);
 
       expect(result).toEqual(expectedVehicles);
-      expect(service.findAll).toHaveBeenCalledWith({ limit: 10, offset: 0 }, { vehicle_type: VehicleType.VAN }, true);
+      expect(service.findAll).toHaveBeenCalledWith(
+        { limit: 10, offset: 0 },
+        { vehicle_type: VehicleType.VAN },
+        true,
+      );
     });
   });
 
   describe('findOne', () => {
     it('should return a single vehicle', async () => {
       const vehicleId = new Types.ObjectId().toString();
-      const expectedVehicle = { _id: vehicleId, licence_plate: '34GHI789', deleted: false };
+      const expectedVehicle = {
+        _id: vehicleId,
+        licence_plate: '34GHI789',
+        deleted: false,
+      };
       service.findOne.mockResolvedValue(expectedVehicle as any);
 
       const result = await controller.findOne(vehicleId, mockUser);
@@ -99,20 +118,38 @@ describe('VehiclesController', () => {
   describe('update', () => {
     it('should update a vehicle', async () => {
       const vehicleId = new Types.ObjectId().toString();
-      const updateVehicleDto: UpdateVehicleDto = { vehicle_type: VehicleType.LORRY };
-      const expectedVehicle = { _id: vehicleId, ...updateVehicleDto, deleted: false };
+      const updateVehicleDto: UpdateVehicleDto = {
+        vehicle_type: VehicleType.LORRY,
+      };
+      const expectedVehicle = {
+        _id: vehicleId,
+        ...updateVehicleDto,
+        deleted: false,
+      };
       service.update.mockResolvedValue(expectedVehicle as any);
 
-      const result = await controller.update(vehicleId, updateVehicleDto, mockUser);
+      const result = await controller.update(
+        vehicleId,
+        updateVehicleDto,
+        mockUser,
+      );
       expect(result).toEqual(expectedVehicle);
-      expect(service.update).toHaveBeenCalledWith(vehicleId, updateVehicleDto, mockUser);
+      expect(service.update).toHaveBeenCalledWith(
+        vehicleId,
+        updateVehicleDto,
+        mockUser,
+      );
     });
   });
 
   describe('remove', () => {
     it('should soft delete a vehicle', async () => {
       const vehicleId = new Types.ObjectId().toString();
-      const expectedVehicle = { _id: vehicleId, licence_plate: '34JKL012', deleted: true };
+      const expectedVehicle = {
+        _id: vehicleId,
+        licence_plate: '34JKL012',
+        deleted: true,
+      };
       service.remove.mockResolvedValue(expectedVehicle as any);
 
       const result = await controller.remove(vehicleId);

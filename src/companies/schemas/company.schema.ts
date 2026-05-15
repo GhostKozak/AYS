@@ -5,15 +5,14 @@ import { SoftDeletePlugin } from '../../common/plugins/soft-delete.plugin';
 export type CompanyDocument = HydratedDocument<Company>;
 
 @Schema({
-    collection: 'companies',
-    timestamps: true,
+  collection: 'companies',
+  timestamps: true,
 })
-
 export class Company {
-    @Prop({ required: true, trim: true, unique: true })
-    name: string;
+  @Prop({ required: true, trim: true, unique: true })
+  name: string;
 
-    deleted?: boolean;
+  deleted?: boolean;
 }
 
 export const CompanySchema = SchemaFactory.createForClass(Company);

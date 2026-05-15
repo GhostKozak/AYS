@@ -15,7 +15,7 @@ import { AuditModule } from '../audit/audit.module';
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET')!,
         signOptions: { expiresIn: '24h' },
       }),
@@ -27,4 +27,4 @@ import { AuditModule } from '../audit/audit.module';
   providers: [AuthService, JwtStrategy, LocalStrategy],
   exports: [AuthService, JwtModule],
 })
-export class AuthModule {} 
+export class AuthModule {}

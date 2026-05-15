@@ -5,7 +5,10 @@ import { AppModule } from '../src/app.module';
 import { getModelToken, getConnectionToken } from '@nestjs/mongoose';
 import { Model, Connection, Types } from 'mongoose';
 import { Driver, DriverDocument } from '../src/drivers/schemas/driver.schema';
-import { Company, CompanyDocument } from '../src/companies/schemas/company.schema';
+import {
+  Company,
+  CompanyDocument,
+} from '../src/companies/schemas/company.schema';
 import { MongoExceptionFilter } from '../src/filters/mongo-exception.filter';
 
 describe('DriversController (e2e)', () => {
@@ -32,10 +35,16 @@ describe('DriversController (e2e)', () => {
     app.useGlobalFilters(new MongoExceptionFilter(i18n));
     await app.init();
 
-    companyModel = moduleFixture.get<Model<CompanyDocument>>(getModelToken(Company.name));
-    driverModel = moduleFixture.get<Model<DriverDocument>>(getModelToken(Driver.name));
+    companyModel = moduleFixture.get<Model<CompanyDocument>>(
+      getModelToken(Company.name),
+    );
+    driverModel = moduleFixture.get<Model<DriverDocument>>(
+      getModelToken(Driver.name),
+    );
 
-    const seedService = moduleFixture.get(require('../src/seed/seed.service').SeedService);
+    const seedService = moduleFixture.get(
+      require('../src/seed/seed.service').SeedService,
+    );
     await seedService.seedAdminUser();
 
     const loginResponse = await request(app.getHttpServer())
@@ -88,7 +97,9 @@ describe('DriversController (e2e)', () => {
         .expect(201);
 
       expect(response.body.full_name).toEqual(createDriverDto.full_name);
-      expect(response.body.company).toEqual((testCompany as any)._id.toString());
+      expect(response.body.company).toEqual(
+        (testCompany as any)._id.toString(),
+      );
     });
 
     it('should fail to create a driver with a non-existent company ID', async () => {
@@ -109,7 +120,10 @@ describe('DriversController (e2e)', () => {
 
   describe('GET /drivers', () => {
     it('should return an array of drivers', async () => {
-      await driverModel.create({ full_name: 'Test Driver', company: (testCompany as any)._id });
+      await driverModel.create({
+        full_name: 'Test Driver',
+        company: (testCompany as any)._id,
+      });
       const response = await request(app.getHttpServer())
         .get('/drivers')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -119,20 +133,27 @@ describe('DriversController (e2e)', () => {
       expect(response.body.data.length).toBeGreaterThanOrEqual(1);
     });
   });
-  
-  
+
   describe('Soft deleted drivers', () => {
     let deletedDriver: DriverDocument;
     beforeEach(async () => {
-      deletedDriver = await driverModel.create({ full_name: 'Deleted Driver', company: (testCompany as any)._id, deleted: true });
+      deletedDriver = await driverModel.create({
+        full_name: 'Deleted Driver',
+        company: (testCompany as any)._id,
+        deleted: true,
+      });
     });
     it('should not list soft deleted drivers', async () => {
       const response = await request(app.getHttpServer())
         .get('/drivers')
         .set('Authorization', `Bearer ${editorToken}`)
         .expect(200);
-      
-      expect(response.body.data.find((d: any) => d._id === (deletedDriver as any)._id.toString())).toBeUndefined();
+
+      expect(
+        response.body.data.find(
+          (d: any) => d._id === (deletedDriver as any)._id.toString(),
+        ),
+      ).toBeUndefined();
     });
   });
 });

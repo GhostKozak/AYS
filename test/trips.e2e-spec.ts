@@ -50,7 +50,7 @@ describe('Trips (e2e)', () => {
       role: 'editor',
       isActive: true,
     });
-    
+
     // Login Admin
     const adminLogin = await request(app.getHttpServer())
       .post('/auth/login')
@@ -143,12 +143,12 @@ describe('Trips (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
-      
+
       // Verify it's hidden from normal find (Editor should get 404)
       const getResponse = await request(app.getHttpServer())
         .get(`/trips/${tripId}`)
         .set('Authorization', `Bearer ${editorToken}`);
-      
+
       expect(getResponse.status).toBe(404);
     });
   });

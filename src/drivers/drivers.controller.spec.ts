@@ -8,10 +8,7 @@ import { FilterDriverDto } from './dto/filter-driver.dto';
 
 import { User, UserRole } from '../users/schemas/user.schema';
 
-import { 
-  mockI18nService, 
-  getMockProvider 
-} from '../common/test/test-utils';
+import { mockI18nService, getMockProvider } from '../common/test/test-utils';
 import { I18nService } from 'nestjs-i18n';
 
 const mockUser: User = {
@@ -59,7 +56,11 @@ describe('DriversController', () => {
 
   describe('create', () => {
     it('should create a new driver', async () => {
-      const mockedCompany = { _id: new Types.ObjectId().toString(), name: 'Test Company', deleted: false };
+      const mockedCompany = {
+        _id: new Types.ObjectId().toString(),
+        name: 'Test Company',
+        deleted: false,
+      };
       const mockedDriver = {
         company: mockedCompany,
         full_name: 'Driver #1',
@@ -82,16 +83,30 @@ describe('DriversController', () => {
 
   describe('findAll', () => {
     it('should return all drivers', async () => {
-      const mockedCompany = { _id: new Types.ObjectId().toString(), name: 'Test Company', deleted: false };
+      const mockedCompany = {
+        _id: new Types.ObjectId().toString(),
+        name: 'Test Company',
+        deleted: false,
+      };
       const mockedResult = {
-          data: [
-            { company: mockedCompany, full_name: 'Driver #1', phone_number: '5551111111', deleted: false },
-            { company: mockedCompany, full_name: 'Driver #2', phone_number: '5552222222', deleted: false },
-          ],
-          count: 2
+        data: [
+          {
+            company: mockedCompany,
+            full_name: 'Driver #1',
+            phone_number: '5551111111',
+            deleted: false,
+          },
+          {
+            company: mockedCompany,
+            full_name: 'Driver #2',
+            phone_number: '5552222222',
+            deleted: false,
+          },
+        ],
+        count: 2,
       };
       service.findAll.mockResolvedValueOnce(mockedResult as any);
-      
+
       const filterDriverDto: FilterDriverDto = {};
 
       const result = await controller.findAll(filterDriverDto, mockUser);
@@ -104,7 +119,11 @@ describe('DriversController', () => {
   describe('findOne', () => {
     it('should return a single driver', async () => {
       const driverId = new Types.ObjectId().toString();
-      const expectedDriver = { _id: driverId, full_name: 'Driver #1', deleted: false };
+      const expectedDriver = {
+        _id: driverId,
+        full_name: 'Driver #1',
+        deleted: false,
+      };
       service.findOne.mockResolvedValue(expectedDriver as any);
 
       const result = await controller.findOne(driverId, mockUser);
@@ -118,12 +137,24 @@ describe('DriversController', () => {
     it('should update a driver', async () => {
       const driverId = new Types.ObjectId().toString();
       const updateDriverDto = { full_name: 'Updated Driver' };
-      const expectedDriver = { _id: driverId, ...updateDriverDto, deleted: false };
+      const expectedDriver = {
+        _id: driverId,
+        ...updateDriverDto,
+        deleted: false,
+      };
       service.update.mockResolvedValue(expectedDriver as any);
 
-      const result = await controller.update(driverId, updateDriverDto, mockUser);
+      const result = await controller.update(
+        driverId,
+        updateDriverDto,
+        mockUser,
+      );
       expect(result).toEqual(expectedDriver);
-      expect(service.update).toHaveBeenCalledWith(driverId, updateDriverDto, mockUser);
+      expect(service.update).toHaveBeenCalledWith(
+        driverId,
+        updateDriverDto,
+        mockUser,
+      );
     });
   });
 });

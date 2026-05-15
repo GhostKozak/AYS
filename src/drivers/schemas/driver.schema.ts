@@ -6,22 +6,20 @@ import { SoftDeletePlugin } from '../../common/plugins/soft-delete.plugin';
 export type DriverDocument = HydratedDocument<Driver>;
 
 @Schema({
-    collection: 'drivers',
-    timestamps: true,
+  collection: 'drivers',
+  timestamps: true,
 })
-
 export class Driver {
+  @Prop({ type: Types.ObjectId, ref: Company.name, required: true })
+  company: Company;
 
-    @Prop({ type: Types.ObjectId, ref: Company.name, required: true })
-    company: Company;
+  @Prop({ required: true, trim: true })
+  full_name: string;
 
-    @Prop({ required: true, trim: true })
-    full_name: string;
+  @Prop({ trim: true, unique: true, sparse: true })
+  phone_number: string;
 
-    @Prop({ trim: true, unique: true, sparse: true })
-    phone_number: string;
-
-    deleted?: boolean;
+  deleted?: boolean;
 }
 
 export const DriverSchema = SchemaFactory.createForClass(Driver);

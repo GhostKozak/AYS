@@ -3,7 +3,10 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export class FilterCompanyDto {
-  @ApiPropertyOptional({ description: 'Number of items to return', example: 10 })
+  @ApiPropertyOptional({
+    description: 'Number of items to return',
+    example: 10,
+  })
   @IsOptional()
   @IsPositive({ message: 'validation.IS_POSITIVE' })
   @Type(() => Number)

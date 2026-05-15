@@ -6,18 +6,17 @@ import { SoftDeletePlugin } from '../../common/plugins/soft-delete.plugin';
 export type VehicleDocument = HydratedDocument<Vehicle>;
 
 @Schema({
-    collection: 'vehicles',
-    timestamps: true,
+  collection: 'vehicles',
+  timestamps: true,
 })
-
 export class Vehicle {
-    @Prop({ unique: true, trim: true })
-    licence_plate: string;
+  @Prop({ unique: true, trim: true })
+  licence_plate: string;
 
-    @Prop({ enum: VehicleType, default: VehicleType.TRUCK })
-    vehicle_type: VehicleType;
+  @Prop({ enum: VehicleType, default: VehicleType.TRUCK })
+  vehicle_type: VehicleType;
 
-    deleted?: boolean;
+  deleted?: boolean;
 }
 
 export const VehicleSchema = SchemaFactory.createForClass(Vehicle);

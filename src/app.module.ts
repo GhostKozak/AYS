@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
 import { createKeyv } from '@keyv/redis';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
+import { Connection } from 'mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DriversModule } from './drivers/drivers.module';
 import { CompaniesModule } from './companies/companies.module';
@@ -15,7 +17,12 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { SeedModule } from './seed/seed.module';
 import { EventsModule } from './events/events.module';
-import { AcceptLanguageResolver, HeaderResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
+import {
+  AcceptLanguageResolver,
+  HeaderResolver,
+  I18nModule,
+  QueryResolver,
+} from 'nestjs-i18n';
 import * as path from 'path';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
@@ -27,15 +34,16 @@ import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: process.env.NODE_ENV === 'test' ?
-        ['.env.test.local'] :
-        ['.env', '.env.development.local'],
+      envFilePath:
+        process.env.NODE_ENV === 'test'
+          ? ['.env.test.local']
+          : ['.env', '.env.development.local'],
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('MONGODB_URI'),
-        connectionFactory: (connection) => {
+        connectionFactory: (connection: Connection) => {
           connection.plugin(SoftDeletePlugin);
           return connection;
         },
@@ -54,14 +62,16 @@ import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
         new HeaderResolver(['x-lang']),
       ],
     }),
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 10,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 10,
+      },
+    ]),
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => {
+      useFactory: (configService: ConfigService) => {
         if (process.env.NODE_ENV === 'test') {
           return {
             store: 'memory',
@@ -70,9 +80,11 @@ import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
         }
         return {
           stores: [
-            createKeyv(`redis://${configService.get('REDIS_HOST', 'localhost')}:${configService.get('REDIS_PORT', '6379')}`),
+            createKeyv(
+              `redis://${configService.get('REDIS_HOST', 'localhost')}:${configService.get('REDIS_PORT', '6379')}`,
+            ),
           ],
-        };
+        } as any;
       },
       inject: [ConfigService],
     }),
@@ -101,4 +113,4 @@ import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

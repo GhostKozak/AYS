@@ -28,9 +28,13 @@ describe('CompaniesController (e2e)', () => {
     app.useGlobalFilters(new MongoExceptionFilter(i18n));
     await app.init();
 
-    companyModel = moduleFixture.get<Model<CompanyDocument>>(getModelToken('Company'));
+    companyModel = moduleFixture.get<Model<CompanyDocument>>(
+      getModelToken('Company'),
+    );
 
-    const seedService = moduleFixture.get(require('../src/seed/seed.service').SeedService);
+    const seedService = moduleFixture.get(
+      require('../src/seed/seed.service').SeedService,
+    );
     await seedService.seedAdminUser();
 
     const loginResponse = await request(app.getHttpServer())
@@ -81,7 +85,9 @@ describe('CompaniesController (e2e)', () => {
     let company: CompanyDocument;
 
     beforeEach(async () => {
-      company = await companyModel.create({ name: 'Existing Company' }) as any;
+      company = (await companyModel.create({
+        name: 'Existing Company',
+      })) as any;
     });
 
     it('GET /companies - lists companies', async () => {
@@ -89,7 +95,7 @@ describe('CompaniesController (e2e)', () => {
         .get('/companies')
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
-        
+
       expect(Array.isArray(response.body.data)).toBe(true);
       expect(response.body.data.length).toBe(1);
       expect(response.body.data[0].name).toEqual(company.name);
@@ -113,12 +119,15 @@ describe('CompaniesController (e2e)', () => {
       expect(response.body.name).toEqual(updateDto.name);
     });
   });
-  
+
   describe('Soft deleted companies', () => {
     let deletedCompany: CompanyDocument;
     beforeEach(async () => {
       await companyModel.create({ name: 'Active Company' });
-      deletedCompany = await companyModel.create({ name: 'Deleted Company', deleted: true }) as any;
+      deletedCompany = (await companyModel.create({
+        name: 'Deleted Company',
+        deleted: true,
+      })) as any;
     });
 
     it('soft deleted company should not be in the list', async () => {
@@ -128,7 +137,11 @@ describe('CompaniesController (e2e)', () => {
         .expect(200);
 
       expect(response.body.data.length).toBe(1);
-      expect(response.body.data.find((c: any) => c._id === (deletedCompany as any)._id.toString())).toBeUndefined();
+      expect(
+        response.body.data.find(
+          (c: any) => c._id === (deletedCompany as any)._id.toString(),
+        ),
+      ).toBeUndefined();
     });
   });
 });

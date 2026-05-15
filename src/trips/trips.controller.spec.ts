@@ -9,10 +9,7 @@ import { FilterTripDto } from './dto/filter-trip.dto';
 
 import { User, UserRole } from '../users/schemas/user.schema';
 
-import { 
-  mockI18nService, 
-  getMockProvider 
-} from '../common/test/test-utils';
+import { mockI18nService, getMockProvider } from '../common/test/test-utils';
 import { I18nService } from 'nestjs-i18n';
 
 const mockUser: User = {
@@ -63,7 +60,11 @@ describe('TripsController', () => {
         company_name: 'Test Company',
         licence_plate: '34ABC123',
       };
-      const expectedTrip = { _id: new Types.ObjectId(), ...createTripDto, deleted: false };
+      const expectedTrip = {
+        _id: new Types.ObjectId(),
+        ...createTripDto,
+        deleted: false,
+      };
       service.create.mockResolvedValue(expectedTrip as any);
 
       const result = await controller.create(createTripDto);
@@ -74,20 +75,34 @@ describe('TripsController', () => {
 
   describe('findAll', () => {
     it('should return an array of trips', async () => {
-        const filterTripDto: FilterTripDto = { limit: 10, offset: 0 };
-      const expectedTrips = [{ _id: new Types.ObjectId(), licence_plate: '34XYZ789', deleted: false }];
+      const filterTripDto: FilterTripDto = { limit: 10, offset: 0 };
+      const expectedTrips = [
+        {
+          _id: new Types.ObjectId(),
+          licence_plate: '34XYZ789',
+          deleted: false,
+        },
+      ];
       service.findAll.mockResolvedValue(expectedTrips as any);
 
       const result = await controller.findAll(filterTripDto, mockUser);
       expect(result).toEqual(expectedTrips);
-      expect(service.findAll).toHaveBeenCalledWith({ limit: 10, offset: 0 }, {}, true);
+      expect(service.findAll).toHaveBeenCalledWith(
+        { limit: 10, offset: 0 },
+        {},
+        true,
+      );
     });
   });
 
   describe('findOne', () => {
     it('should return a single trip', async () => {
       const tripId = new Types.ObjectId().toString();
-      const expectedTrip = { _id: tripId, licence_plate: '34ABC123', deleted: false };
+      const expectedTrip = {
+        _id: tripId,
+        licence_plate: '34ABC123',
+        deleted: false,
+      };
       service.findOne.mockResolvedValue(expectedTrip as any);
 
       const result = await controller.findOne(tripId, mockUser);
@@ -105,14 +120,22 @@ describe('TripsController', () => {
 
       const result = await controller.update(tripId, updateTripDto, mockUser);
       expect(result).toEqual(expectedTrip);
-      expect(service.update).toHaveBeenCalledWith(tripId, updateTripDto, mockUser);
+      expect(service.update).toHaveBeenCalledWith(
+        tripId,
+        updateTripDto,
+        mockUser,
+      );
     });
   });
 
   describe('remove', () => {
     it('should soft delete a trip', async () => {
       const tripId = new Types.ObjectId().toString();
-      const expectedTrip = { _id: tripId, licence_plate: '34GHI456', deleted: true };
+      const expectedTrip = {
+        _id: tripId,
+        licence_plate: '34GHI456',
+        deleted: true,
+      };
       service.remove.mockResolvedValue(expectedTrip as any);
 
       const result = await controller.remove(tripId);

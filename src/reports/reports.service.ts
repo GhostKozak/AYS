@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, PipelineStage, FilterQuery } from 'mongoose';
 import { Trip, TripDocument } from '../trips/schema/trips.schema';
 import { Company, CompanyDocument } from '../companies/schemas/company.schema';
 import { Driver, DriverDocument } from '../drivers/schemas/driver.schema';
@@ -8,7 +9,7 @@ import { ReportPeriod } from './dto/report-query.dto';
 import { DashboardSummaryDto } from './dto/dashboard-summary.dto';
 import * as dayjs from 'dayjs';
 import * as ExcelJS from 'exceljs';
-const PDFDocument = require('pdfkit-table');
+import PDFDocument from 'pdfkit-table';
 
 @Injectable()
 export class ReportsService {
@@ -18,10 +19,14 @@ export class ReportsService {
     @InjectModel(Driver.name) private driverModel: Model<DriverDocument>,
   ) {}
 
-  async getTopCompanies(period: ReportPeriod, limit: number = 10, sortBy: string = 'tripCount') {
+  async getTopCompanies(
+    period: ReportPeriod,
+    limit: number = 10,
+    sortBy: string = 'tripCount',
+  ) {
     const dateQuery = this.getDateRange(period);
-    
-    const sortStage: any = {};
+
+    const sortStage: Record<string, 1 | -1> = {};
     if (sortBy === 'revenue') {
       sortStage.totalRevenue = -1;
     } else if (sortBy === 'avgTurnaround') {
@@ -30,7 +35,7 @@ export class ReportsService {
       sortStage.tripCount = -1;
     }
 
-    const pipeline: any[] = [
+    const pipeline: PipelineStage[] = [
       {
         $match: {
           is_trip_canceled: false,
@@ -56,7 +61,12 @@ export class ReportsService {
           avgTurnaroundMs: {
             $avg: {
               $cond: [
-                { $and: [{ $ne: ['$departure_time', null] }, { $ne: ['$arrival_time', null] }] },
+                {
+                  $and: [
+                    { $ne: ['$departure_time', null] },
+                    { $ne: ['$arrival_time', null] },
+                  ],
+                },
                 { $subtract: ['$departure_time', '$arrival_time'] },
                 null,
               ],
@@ -82,7 +92,9 @@ export class ReportsService {
           _id: 1,
           tripCount: 1,
           companyName: { $ifNull: ['$company.name', { $toString: '$_id' }] },
-          avgTurnaroundMinutes: { $round: [{ $divide: ['$avgTurnaroundMs', 1000 * 60] }, 2] },
+          avgTurnaroundMinutes: {
+            $round: [{ $divide: ['$avgTurnaroundMs', 1000 * 60] }, 2],
+          },
         },
       },
     ];
@@ -90,12 +102,30 @@ export class ReportsService {
     return this.tripModel.aggregate(pipeline);
   }
 
-  async getUnloadWaitingStats(period: ReportPeriod, groupBy: string = 'company') {
+  async getUnloadWaitingStats(
+    period: ReportPeriod,
+    groupBy: string = 'company',
+  ) {
     const dateQuery = this.getDateRange(period);
-    
-    const groupField = groupBy === 'driver' ? '$driver' : groupBy === 'vehicle' ? '$vehicle' : '$company';
-    const collectionName = groupBy === 'driver' ? 'drivers' : groupBy === 'vehicle' ? 'vehicles' : 'companies';
-    const nameField = groupBy === 'driver' ? 'full_name' : groupBy === 'vehicle' ? 'licence_plate' : 'name';
+
+    const groupField =
+      groupBy === 'driver'
+        ? '$driver'
+        : groupBy === 'vehicle'
+          ? '$vehicle'
+          : '$company';
+    const collectionName =
+      groupBy === 'driver'
+        ? 'drivers'
+        : groupBy === 'vehicle'
+          ? 'vehicles'
+          : 'companies';
+    const nameField =
+      groupBy === 'driver'
+        ? 'full_name'
+        : groupBy === 'vehicle'
+          ? 'licence_plate'
+          : 'name';
 
     return this.tripModel.aggregate([
       {
@@ -135,27 +165,35 @@ export class ReportsService {
         $project: {
           _id: 1,
           waitingCount: 1,
-          entityName: { $ifNull: [`$entity.${nameField}`, { $toString: '$_id' }] },
+          entityName: {
+            $ifNull: [`$entity.${nameField}`, { $toString: '$_id' }],
+          },
         },
       },
       { $sort: { waitingCount: -1 } },
     ]);
   }
 
-  async getDashboardSummary(period: ReportPeriod = ReportPeriod.TODAY): Promise<DashboardSummaryDto> {
+  async getDashboardSummary(
+    period: ReportPeriod = ReportPeriod.TODAY,
+  ): Promise<DashboardSummaryDto> {
     const dateQuery = this.getDateRange(period);
-    
-    const [totalTrips, waitingAll, topCompanies, totalCompanies, totalDrivers] = await Promise.all([
-      this.tripModel.countDocuments({ is_trip_canceled: false, ...dateQuery }),
-      this.tripModel.countDocuments({ 
-        is_trip_canceled: false, 
-        unload_status: { $nin: ['UNLOADED', 'CANCELED', 'COMPLETED'] },
-        ...dateQuery
-      }),
-      this.getTopCompanies(period, 5),
-      this.companyModel.countDocuments({}),
-      this.driverModel.countDocuments({}),
-    ]);
+
+    const [totalTrips, waitingAll, topCompanies, totalCompanies, totalDrivers] =
+      await Promise.all([
+        this.tripModel.countDocuments({
+          is_trip_canceled: false,
+          ...dateQuery,
+        }),
+        this.tripModel.countDocuments({
+          is_trip_canceled: false,
+          unload_status: { $nin: ['UNLOADED', 'CANCELED', 'COMPLETED'] },
+          ...dateQuery,
+        }),
+        this.getTopCompanies(period, 5),
+        this.companyModel.countDocuments({}),
+        this.driverModel.countDocuments({}),
+      ]);
 
     return {
       today: {
@@ -168,23 +206,42 @@ export class ReportsService {
     };
   }
 
-  async getStatusDistribution(period: ReportPeriod, excludeStatus?: string | string[]) {
+  async getStatusDistribution(
+    period: ReportPeriod,
+    excludeStatus?: string | string[],
+  ) {
     const dateQuery = this.getDateRange(period);
-    const excludeQuery: any = {};
+    const excludeQuery: FilterQuery<TripDocument> = {};
     if (excludeStatus) {
-      excludeQuery.unload_status = { $nin: Array.isArray(excludeStatus) ? excludeStatus : [excludeStatus] };
+      excludeQuery.unload_status = {
+        $nin: Array.isArray(excludeStatus) ? excludeStatus : [excludeStatus],
+      };
     }
 
-    const [statusDistribution, parkingLotStats, canceledStats] = await Promise.all([
-      this.tripModel.aggregate([
-        { $match: { is_trip_canceled: false, ...dateQuery, ...excludeQuery } },
-        { $group: { _id: '$unload_status', count: { $sum: 1 } } }
-      ]),
-      this.tripModel.countDocuments({ is_trip_canceled: false, is_in_parking_lot: true, ...dateQuery, ...excludeQuery }),
-      this.tripModel.countDocuments({ is_trip_canceled: true, ...dateQuery, ...excludeQuery }),
-    ]);
+    const [statusDistribution, parkingLotStats, canceledStats] =
+      await Promise.all([
+        this.tripModel.aggregate([
+          {
+            $match: { is_trip_canceled: false, ...dateQuery, ...excludeQuery },
+          },
+          { $group: { _id: '$unload_status', count: { $sum: 1 } } },
+        ]),
+        this.tripModel.countDocuments({
+          is_trip_canceled: false,
+          is_in_parking_lot: true,
+          ...dateQuery,
+          ...excludeQuery,
+        }),
+        this.tripModel.countDocuments({
+          is_trip_canceled: true,
+          ...dateQuery,
+          ...excludeQuery,
+        }),
+      ]);
 
-    const formattedDistribution = statusDistribution.reduce((acc, curr) => {
+    const formattedDistribution = statusDistribution.reduce<
+      Record<string, number>
+    >((acc, curr) => {
       acc[curr._id] = curr.count;
       return acc;
     }, {});
@@ -198,7 +255,7 @@ export class ReportsService {
 
   async getAverageTurnaround(period: ReportPeriod, companyId?: string) {
     const dateQuery = this.getDateRange(period);
-    const matchQuery: any = {
+    const matchQuery: FilterQuery<TripDocument> = {
       is_trip_canceled: false,
       departure_time: { $ne: null },
       arrival_time: { $ne: null },
@@ -238,7 +295,7 @@ export class ReportsService {
 
   async getTrend(period: ReportPeriod, year?: number, companyId?: string) {
     const dateQuery = this.getDateRange(period, year);
-    const matchQuery: any = {
+    const matchQuery: FilterQuery<TripDocument> = {
       is_trip_canceled: false,
       ...dateQuery,
     };
@@ -246,7 +303,7 @@ export class ReportsService {
     if (companyId) {
       matchQuery.company = companyId;
     }
-    
+
     // Determine the grouping format based on the period
     let format = '%Y-%m-%d'; // Default to daily
     if (period === ReportPeriod.TODAY) {
@@ -276,15 +333,22 @@ export class ReportsService {
     ]);
   }
 
-  async exportTripsToExcel(period: ReportPeriod, response: any, excludeStatus?: string | string[]): Promise<void> {
+  async exportTripsToExcel(
+    period: ReportPeriod,
+    response: any,
+    excludeStatus?: string | string[],
+  ): Promise<void> {
     const dateQuery = this.getDateRange(period);
-    const excludeQuery: any = {};
+    const excludeQuery: FilterQuery<TripDocument> = {};
     if (excludeStatus) {
-      excludeQuery.unload_status = { $nin: Array.isArray(excludeStatus) ? excludeStatus : [excludeStatus] };
+      excludeQuery.unload_status = {
+        $nin: Array.isArray(excludeStatus) ? excludeStatus : [excludeStatus],
+      };
     }
-    
+
     // Create cursor for streaming
-    const cursor = this.tripModel.find({ is_trip_canceled: false, ...dateQuery, ...excludeQuery })
+    const cursor = this.tripModel
+      .find({ is_trip_canceled: false, ...dateQuery, ...excludeQuery })
       .select('arrival_time unload_status company driver vehicle')
       .populate('company', 'name')
       .populate('driver', 'full_name')
@@ -296,7 +360,7 @@ export class ReportsService {
     const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
       stream: response,
       useStyles: true,
-      useSharedStrings: true
+      useSharedStrings: true,
     });
 
     const worksheet = workbook.addWorksheet('Trips');
@@ -314,31 +378,46 @@ export class ReportsService {
     worksheet.addRow([]).commit(); // Empty row
 
     // Manually add the header row
-    worksheet.addRow(['Arrival Time', 'Company', 'Plate', 'Driver', 'Status', 'Notes']).commit();
+    worksheet
+      .addRow(['Arrival Time', 'Company', 'Plate', 'Driver', 'Status', 'Notes'])
+      .commit();
 
-    for (let trip = await cursor.next(); trip != null; trip = await cursor.next()) {
-      worksheet.addRow([
-        dayjs(trip.arrival_time).format('YYYY-MM-DD HH:mm'),
-        trip.company?.name || 'N/A',
-        trip.vehicle?.licence_plate || 'N/A',
-        trip.driver?.full_name || 'N/A',
-        trip.unload_status,
-        trip.notes || '',
-      ]).commit();
+    for (
+      let trip = await cursor.next();
+      trip != null;
+      trip = await cursor.next()
+    ) {
+      worksheet
+        .addRow([
+          dayjs(trip.arrival_time).format('YYYY-MM-DD HH:mm'),
+          trip.company?.name || 'N/A',
+          trip.vehicle?.licence_plate || 'N/A',
+          trip.driver?.full_name || 'N/A',
+          trip.unload_status,
+          trip.notes || '',
+        ])
+        .commit();
     }
 
     await workbook.commit();
   }
 
-  async exportTripsToPdf(period: ReportPeriod, response: any, excludeStatus?: string | string[]): Promise<void> {
+  async exportTripsToPdf(
+    period: ReportPeriod,
+    response: any,
+    excludeStatus?: string | string[],
+  ): Promise<void> {
     const dateQuery = this.getDateRange(period);
-    const excludeQuery: any = {};
+    const excludeQuery: FilterQuery<TripDocument> = {};
     if (excludeStatus) {
-      excludeQuery.unload_status = { $nin: Array.isArray(excludeStatus) ? excludeStatus : [excludeStatus] };
+      excludeQuery.unload_status = {
+        $nin: Array.isArray(excludeStatus) ? excludeStatus : [excludeStatus],
+      };
     }
-    
+
     // Create cursor for streaming
-    const cursor = this.tripModel.find({ is_trip_canceled: false, ...dateQuery, ...excludeQuery })
+    const cursor = this.tripModel
+      .find({ is_trip_canceled: false, ...dateQuery, ...excludeQuery })
       .select('arrival_time unload_status company driver vehicle')
       .populate('company', 'name')
       .populate('driver', 'full_name')
@@ -349,13 +428,22 @@ export class ReportsService {
 
     const doc = new PDFDocument({ margin: 30, size: 'A4' });
     doc.pipe(response);
-    
+
     const fontPath = '/usr/share/fonts/TTF/DejaVuSans.ttf';
     const boldFontPath = '/usr/share/fonts/TTF/DejaVuSans-Bold.ttf';
-    
-    try { doc.font(fontPath); } catch (e) {}
 
-    doc.font(boldFontPath).text(`Trips Report - ${period.toUpperCase()}`, { align: 'center', size: 18 });
+    try {
+      doc.font(fontPath);
+    } catch {
+      /* ignore */
+    }
+
+    doc
+      .font(boldFontPath)
+      .fontSize(18)
+      .text(`Trips Report - ${period.toUpperCase()}`, {
+        align: 'center',
+      });
     doc.moveDown();
 
     const [totalCompanies, totalDrivers] = await Promise.all([
@@ -367,26 +455,30 @@ export class ReportsService {
     doc.text(`Total Drivers: ${totalDrivers}`);
     doc.moveDown();
 
-    const tableRows: any[] = [];
-    for (let trip = await cursor.next(); trip != null; trip = await cursor.next()) {
+    const tableRows: string[][] = [];
+    for (
+      let trip = await cursor.next();
+      trip != null;
+      trip = await cursor.next()
+    ) {
       tableRows.push([
         dayjs(trip.arrival_time).format('DD.MM.YYYY HH:mm'),
         trip.company?.name || 'N/A',
         trip.vehicle?.licence_plate || 'N/A',
         trip.driver?.full_name || 'N/A',
-        trip.unload_status
+        trip.unload_status,
       ]);
     }
 
     const table = {
-      title: "Trips Summary",
-      headers: ["Date", "Company", "Plate", "Driver", "Status"],
+      title: 'Trips Summary',
+      headers: ['Date', 'Company', 'Plate', 'Driver', 'Status'],
       rows: tableRows,
     };
 
-    doc.table(table, {
+    await doc.table(table, {
       prepareHeader: () => doc.font(boldFontPath).fontSize(10),
-      prepareRow: (row: any, i: any) => doc.font(fontPath).fontSize(10),
+      prepareRow: () => doc.font(fontPath).fontSize(10),
     });
 
     doc.end();
@@ -430,7 +522,9 @@ export class ReportsService {
     });
 
     // Calculate occupancy percentage if capacity is provided
-    const occupancyPercentage = totalCapacity ? Math.round((currentCount / totalCapacity) * 100) : undefined;
+    const occupancyPercentage = totalCapacity
+      ? Math.round((currentCount / totalCapacity) * 100)
+      : undefined;
 
     return {
       totalCapacity,
@@ -468,7 +562,7 @@ export class ReportsService {
         return {};
     }
 
-    const range: any = { $gte: startDate.toDate() };
+    const range: Record<string, Date> = { $gte: startDate.toDate() };
     if (endDate) {
       range.$lte = endDate.toDate();
     }

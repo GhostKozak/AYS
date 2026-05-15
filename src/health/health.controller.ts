@@ -1,5 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
-import { HealthCheck, HealthCheckService, MongooseHealthIndicator, MemoryHealthIndicator, DiskHealthIndicator } from '@nestjs/terminus';
+import {
+  HealthCheck,
+  HealthCheckService,
+  MongooseHealthIndicator,
+  MemoryHealthIndicator,
+  DiskHealthIndicator,
+} from '@nestjs/terminus';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
 @ApiTags('health')
@@ -22,7 +28,8 @@ export class HealthController {
       // Memory heap check (max 150MB)
       () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),
       // Disk storage check
-      () => this.disk.checkStorage('storage', { path: '/', thresholdPercent: 0.9 }),
+      () =>
+        this.disk.checkStorage('storage', { path: '/', thresholdPercent: 0.9 }),
     ]);
   }
 }

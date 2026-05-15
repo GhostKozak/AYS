@@ -1,9 +1,22 @@
-import { Controller, Post, Body, UseGuards, Request, Res } from '@nestjs/common';
-import { Response } from 'express';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+  Res,
+} from '@nestjs/common';
+import { Response, Request as ExpressRequest } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from '../users/dto/login.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import { ApiBody, ApiOperation, ApiTags, ApiUnauthorizedResponse, ApiOkResponse } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+  ApiOkResponse,
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('auth')
@@ -16,11 +29,25 @@ export class AuthController {
   @Post('login')
   @ApiOperation({ summary: 'User login to obtain JWT token' })
   @ApiBody({ type: LoginDto })
-  @ApiOkResponse({ description: 'Login successful, returns access token and user info' })
+  @ApiOkResponse({
+    description: 'Login successful, returns access token and user info',
+  })
   @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
-  async login(@Request() req, @Res({ passthrough: true }) res: Response) {
-    const authData = await this.authService.login(req.user);
-    
+  login(
+    @Request()
+    req: ExpressRequest & {
+      user: {
+        _id: string;
+        email: string;
+        role: string;
+        firstName: string;
+        lastName: string;
+      };
+    },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const authData = this.authService.login(req.user);
+
     // Set secure HttpOnly cookie
     res.cookie('access_token', authData.access_token, {
       httpOnly: true,

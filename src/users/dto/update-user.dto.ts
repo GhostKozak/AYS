@@ -8,4 +8,4 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsBoolean({ message: 'validation.IS_BOOLEAN' })
   @IsOptional()
   isActive?: boolean;
-} 
+}

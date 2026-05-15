@@ -4,12 +4,12 @@ import { VehiclesService } from './vehicles.service';
 import { Vehicle } from './schema/vehicles.schema';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { FilterVehicleDto } from './dto/filter-vehicle.dto';
-import { 
-  mockI18nService, 
-  mockAuditService, 
-  mockModel, 
+import {
+  mockI18nService,
+  mockAuditService,
+  mockModel,
   mockQuery,
-  getMockProvider 
+  getMockProvider,
 } from '../common/test/test-utils';
 import { I18nService } from 'nestjs-i18n';
 import { AuditService } from '../audit/audit.service';
@@ -44,9 +44,9 @@ describe('VehiclesService', () => {
     model = module.get(getModelToken(Vehicle.name));
   });
 
-    afterEach(() => {
-        jest.clearAllMocks();
-    });
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
@@ -54,18 +54,18 @@ describe('VehiclesService', () => {
 
   describe('findAll', () => {
     it('should return all vehicles', async () => {
-        const mockedResult = {
-            data: [{ licence_plate: '34ABC123' }],
-            count: 1,
-        };
-        model.find.mockReturnValue(mockQuery(mockedResult.data));
-        model.countDocuments.mockReturnValue(mockQuery(mockedResult.count));
+      const mockedResult = {
+        data: [{ licence_plate: '34ABC123' }],
+        count: 1,
+      };
+      model.find.mockReturnValue(mockQuery(mockedResult.data));
+      model.countDocuments.mockReturnValue(mockQuery(mockedResult.count));
 
-        const paginationQuery: PaginationQueryDto = {};
-        const filterVehicleDto: FilterVehicleDto = {};
+      const paginationQuery: PaginationQueryDto = {};
+      const filterVehicleDto: FilterVehicleDto = {};
 
-        const result = await service.findAll(paginationQuery, filterVehicleDto);
-        expect(result).toEqual(mockedResult);
+      const result = await service.findAll(paginationQuery, filterVehicleDto);
+      expect(result).toEqual(mockedResult);
     });
   });
 });
