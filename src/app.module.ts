@@ -78,12 +78,11 @@ import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
             ttl: parseInt(configService.get('CACHE_TTL', '600000'), 10),
           };
         }
+        const redisHost = configService.get('REDIS_HOST') || 'localhost';
+        const redisPort = configService.get('REDIS_PORT') || '6379';
+
         return {
-          stores: [
-            createKeyv(
-              `redis://${configService.get('REDIS_HOST', 'localhost')}:${configService.get('REDIS_PORT', '6379')}`,
-            ),
-          ],
+          stores: [createKeyv(`redis://${redisHost}:${redisPort}`)],
         } as any;
       },
       inject: [ConfigService],

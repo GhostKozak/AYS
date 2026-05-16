@@ -7,7 +7,7 @@ import { Company, CompanyDocument } from '../companies/schemas/company.schema';
 import { Driver, DriverDocument } from '../drivers/schemas/driver.schema';
 import { ReportPeriod } from './dto/report-query.dto';
 import { DashboardSummaryDto } from './dto/dashboard-summary.dto';
-import * as dayjs from 'dayjs';
+import dayjs = require('dayjs');
 import * as ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit-table';
 
@@ -438,12 +438,21 @@ export class ReportsService {
       /* ignore */
     }
 
-    doc
-      .font(boldFontPath)
-      .fontSize(18)
-      .text(`Trips Report - ${period.toUpperCase()}`, {
-        align: 'center',
-      });
+    try {
+      doc
+        .font(boldFontPath)
+        .fontSize(18)
+        .text(`Trips Report - ${period.toUpperCase()}`, {
+          align: 'center',
+        });
+    } catch {
+      doc
+        .font('Helvetica-Bold')
+        .fontSize(18)
+        .text(`Trips Report - ${period.toUpperCase()}`, {
+          align: 'center',
+        });
+    }
     doc.moveDown();
 
     const [totalCompanies, totalDrivers] = await Promise.all([
@@ -451,8 +460,19 @@ export class ReportsService {
       this.driverModel.countDocuments({}),
     ]);
 
-    doc.font(fontPath).fontSize(12).text(`Total Companies: ${totalCompanies}`);
-    doc.text(`Total Drivers: ${totalDrivers}`);
+    try {
+      doc
+        .font(fontPath)
+        .fontSize(12)
+        .text(`Total Companies: ${totalCompanies}`);
+      doc.text(`Total Drivers: ${totalDrivers}`);
+    } catch {
+      doc
+        .font('Helvetica')
+        .fontSize(12)
+        .text(`Total Companies: ${totalCompanies}`);
+      doc.text(`Total Drivers: ${totalDrivers}`);
+    }
     doc.moveDown();
 
     const tableRows: string[][] = [];
@@ -477,8 +497,20 @@ export class ReportsService {
     };
 
     await doc.table(table, {
-      prepareHeader: () => doc.font(boldFontPath).fontSize(10),
-      prepareRow: () => doc.font(fontPath).fontSize(10),
+      prepareHeader: () => {
+        try {
+          return doc.font(boldFontPath).fontSize(10);
+        } catch {
+          return doc.font('Helvetica-Bold').fontSize(10);
+        }
+      },
+      prepareRow: () => {
+        try {
+          return doc.font(fontPath).fontSize(10);
+        } catch {
+          return doc.font('Helvetica').fontSize(10);
+        }
+      },
     });
 
     doc.end();

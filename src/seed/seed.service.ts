@@ -10,6 +10,7 @@ import { VehicleType } from '../vehicles/enums/vehicleTypes';
 import { Trip } from '../trips/schema/trips.schema';
 import { UnloadStatus } from '../trips/enums/unloadStatus';
 import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
 import { I18nService } from 'nestjs-i18n';
 
 @Injectable()
@@ -51,6 +52,33 @@ export class SeedService {
     }
   }
 
+  async seedSystemUser() {
+    const systemEmail = process.env.SYSTEM_USER_EMAIL || 'system@internal';
+    const existing = await this.userModel.findOne({ email: systemEmail });
+
+    if (!existing) {
+      const password =
+        process.env.SYSTEM_USER_PASSWORD ||
+        crypto.randomBytes(12).toString('hex');
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const systemUser = new this.userModel({
+        email: systemEmail,
+        password: hashedPassword,
+        firstName: 'System',
+        lastName: 'Internal',
+        role: UserRole.ADMIN,
+        isActive: true,
+      });
+
+      await systemUser.save();
+      this.logger.log(`System user created: ${systemEmail}`);
+      this.logger.log(`System user password: ${password}`);
+    } else {
+      this.logger.log(`System user already exists: ${systemEmail}`);
+    }
+  }
+
   async seedAllData() {
     this.logger.log('Starting comprehensive seed...');
 
@@ -59,7 +87,12 @@ export class SeedService {
     await this.driverModel.deleteMany({});
     await this.vehicleModel.deleteMany({});
     await this.companyModel.deleteMany({});
-    await this.userModel.deleteMany({ email: { $ne: 'admin@admin.com' } });
+
+    // Ensure system and admin users exist and preserve them
+    await this.seedSystemUser();
+    const systemEmail = process.env.SYSTEM_USER_EMAIL || 'system@internal';
+    const protectedEmails = ['admin@admin.com', systemEmail];
+    await this.userModel.deleteMany({ email: { $nin: protectedEmails } });
 
     // Seed Users
     await this.seedUsers();
@@ -243,9 +276,15 @@ export class SeedService {
         let randomDigits = '';
         if (country.code === 'TR') {
           // Turkish mobile numbers usually start with 5
-          randomDigits = '5' + Math.floor(Math.random() * 1000000000).toString().padStart(9, '0');
+          randomDigits =
+            '5' +
+            Math.floor(Math.random() * 1000000000)
+              .toString()
+              .padStart(9, '0');
         } else {
-          randomDigits = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+          randomDigits = Math.floor(
+            1000000000 + Math.random() * 9000000000,
+          ).toString();
         }
 
         drivers.push({

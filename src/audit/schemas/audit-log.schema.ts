@@ -6,23 +6,26 @@ export type AuditLogDocument = AuditLog & Document;
 
 @Schema({ timestamps: true })
 export class AuditLog {
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
-  user: User;
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: false })
+  user!: User | null;
+
+  @Prop()
+  userLabel?: string;
 
   @Prop({ required: true })
-  action: string; // CREATE, UPDATE, DELETE, RESTORE
+  action!: string; // CREATE, UPDATE, DELETE, RESTORE
 
   @Prop({ required: true })
-  entity: string; // Company, Driver, Vehicle, Trip
+  entity!: string; // Company, Driver, Vehicle, Trip
 
   @Prop({ required: true })
-  entityId: string;
+  entityId!: string;
 
   @Prop({ type: Object })
-  oldValue: any;
+  oldValue?: any;
 
   @Prop({ type: Object })
-  newValue: any;
+  newValue?: any;
 
   @Prop()
   ipAddress?: string;
