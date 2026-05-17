@@ -2,7 +2,7 @@ import { getModelToken } from '@nestjs/mongoose';
 
 export const mockI18nService = () => ({
   translate: jest.fn().mockImplementation((key: string, options?: any) => {
-    return Promise.resolve(key); // Just return the key for testing
+    return key; // Just return the key for testing
   }),
 });
 

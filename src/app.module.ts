@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
-import { createKeyv } from '@keyv/redis';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -71,20 +70,10 @@ import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => {
-        if (process.env.NODE_ENV === 'test') {
-          return {
-            store: 'memory',
-            ttl: parseInt(configService.get('CACHE_TTL', '600000'), 10),
-          };
-        }
-        const redisHost = configService.get('REDIS_HOST') || 'localhost';
-        const redisPort = configService.get('REDIS_PORT') || '6379';
-
-        return {
-          stores: [createKeyv(`redis://${redisHost}:${redisPort}`)],
-        } as any;
-      },
+      useFactory: (configService: ConfigService) => ({
+        store: 'memory',
+        ttl: parseInt(configService.get('CACHE_TTL', '600000'), 10),
+      }),
       inject: [ConfigService],
     }),
     UsersModule,

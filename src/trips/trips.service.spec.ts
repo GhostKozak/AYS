@@ -23,17 +23,20 @@ import { AuditService } from '../audit/audit.service';
 const companiesServiceMock = {
   findOrCreateByName: jest.fn(),
   findOne: jest.fn(),
+  searchByName: jest.fn(),
 };
 
 const driversServiceMock = {
   findByPhone: jest.fn(),
   create: jest.fn(),
   findOne: jest.fn(),
+  findDriverByNameOrPhone: jest.fn(),
 };
 
 const vehiclesServiceMock = {
   findOrCreateByPlate: jest.fn(),
   findOne: jest.fn(),
+  findAll: jest.fn(),
 };
 
 const mockCacheManager = {
@@ -287,6 +290,10 @@ describe('TripsService', () => {
       const pagination = { limit: 5, offset: 0 };
       const filter = { search: 'test' };
       const trips = [{ _id: '1' }];
+
+      driversServiceMock.findDriverByNameOrPhone.mockResolvedValue({ data: [], count: 0 });
+      companiesServiceMock.searchByName.mockResolvedValue({ data: [], count: 0 });
+      vehiclesServiceMock.findAll.mockResolvedValue({ data: [], count: 0 });
 
       tripModel.find.mockReturnValue(mockQuery(trips));
       tripModel.countDocuments.mockReturnValue(mockQuery(1));

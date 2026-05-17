@@ -6,8 +6,6 @@ services:
       - "3000:3000"
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/ays
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
       - CACHE_TTL=${CACHE_TTL}
       - FALLBACK_LANGUAGE=${FALLBACK_LANGUAGE}
       - JWT_SECRET=${JWT_SECRET}
@@ -21,12 +19,6 @@ services:
           memory: 512M
     depends_on:
       - mongodb
-      - redis
-    networks:
-      - ays-network
-
-  redis:
-    image: docker.io/library/redis:7.2-alpine
     networks:
       - ays-network
 

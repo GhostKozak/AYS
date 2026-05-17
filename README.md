@@ -22,7 +22,7 @@ AYS, filo, araç ve nakliye operasyonlarını yönetmek için geliştirilmiş, y
 
 - **Framework**: [NestJS](https://nestjs.com/)
 - **Veritabanı**: [MongoDB](https://www.mongodb.com/) (Mongoose)
-- **Caching**: [Redis](https://redis.io/)
+- **Caching**: Bellek İçi (In-Memory) Önbellekleme
 - **Orkestrasyon**: [Podman](https://podman.io/) / [Docker](https://www.docker.com/)
 
 ## 📦 Kurulum ve Çalıştırma
@@ -41,7 +41,7 @@ AYS, filo, araç ve nakliye operasyonlarını yönetmek için geliştirilmiş, y
 
 ### Konteyner (Docker/Podman)
 
-Orkestrasyon dosyası tüm bağımlılıkları (Redis, MongoDB) otomatik olarak ayağa kaldırır:
+Orkestrasyon dosyası tüm bağımlılıkları (MongoDB) otomatik olarak ayağa kaldırır:
 
 ```bash
 podman-compose up -d --build

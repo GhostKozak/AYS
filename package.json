@@ -20,7 +20,6 @@
     "test:e2e": "jest --config ./test/jest-e2e.json --runInBand ----detectOpenHandles --forceExit"
   },
   "dependencies": {
-    "@keyv/redis": "^5.1.6",
     "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^11.1.17",
     "@nestjs/config": "^4.0.2",
@@ -45,7 +44,6 @@
     "dayjs": "^1.11.20",
     "exceljs": "^4.4.0",
     "helmet": "^8.1.0",
-    "keyv": "^5.6.0",
     "mongoose": "^8.16.0",
     "nestjs-i18n": "^10.5.1",
     "passport": "^0.7.0",
