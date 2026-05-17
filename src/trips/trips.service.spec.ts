@@ -291,8 +291,14 @@ describe('TripsService', () => {
       const filter = { search: 'test' };
       const trips = [{ _id: '1' }];
 
-      driversServiceMock.findDriverByNameOrPhone.mockResolvedValue({ data: [], count: 0 });
-      companiesServiceMock.searchByName.mockResolvedValue({ data: [], count: 0 });
+      driversServiceMock.findDriverByNameOrPhone.mockResolvedValue({
+        data: [],
+        count: 0,
+      });
+      companiesServiceMock.searchByName.mockResolvedValue({
+        data: [],
+        count: 0,
+      });
       vehiclesServiceMock.findAll.mockResolvedValue({ data: [], count: 0 });
 
       tripModel.find.mockReturnValue(mockQuery(trips));

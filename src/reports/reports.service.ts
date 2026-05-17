@@ -7,6 +7,7 @@ import { Company, CompanyDocument } from '../companies/schemas/company.schema';
 import { Driver, DriverDocument } from '../drivers/schemas/driver.schema';
 import { ReportPeriod } from './dto/report-query.dto';
 import { DashboardSummaryDto } from './dto/dashboard-summary.dto';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 import dayjs = require('dayjs');
 import * as ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit-table';

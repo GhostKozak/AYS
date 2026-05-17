@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, FilterQuery, isValidObjectId } from 'mongoose';
+import { Model, FilterQuery, isValidObjectId, Types } from 'mongoose';
 import { AuditLog, AuditLogDocument } from './schemas/audit-log.schema';
 import { User } from '../users/schemas/user.schema';
 
@@ -23,17 +23,25 @@ export class AuditService {
   }) {
     // Normalize user to an ObjectId string when possible. For system actions
     // or invalid IDs, store `user` as `null` so schema validation doesn't fail.
-    let userField: string | undefined | null = undefined;
+    let userField: string | null = null;
 
-    const u = data.user as any;
+    const u = data.user;
     if (!u) {
       userField = null;
     } else if (typeof u === 'string') {
       userField = isValidObjectId(u) ? u : null;
     } else if (typeof u === 'object') {
-      const candidate = u._id || u.id || u.userId;
-      if (typeof candidate === 'string' && isValidObjectId(candidate)) {
-        userField = candidate;
+      const userObj = u as { _id?: unknown; id?: unknown; userId?: unknown };
+      const candidate = userObj._id || userObj.id || userObj.userId;
+      let candidateStr: string | null = null;
+      if (typeof candidate === 'string') {
+        candidateStr = candidate;
+      } else if (candidate instanceof Types.ObjectId) {
+        candidateStr = candidate.toHexString();
+      }
+
+      if (candidateStr && isValidObjectId(candidateStr)) {
+        userField = candidateStr;
       } else {
         userField = null;
       }
@@ -41,7 +49,17 @@ export class AuditService {
       userField = null;
     }
 
-    const payload: any = { ...data, user: userField };
+    const payload = {
+      action: data.action,
+      entity: data.entity,
+      entityId: data.entityId,
+      oldValue: data.oldValue,
+      newValue: data.newValue,
+      ipAddress: data.ipAddress,
+      userAgent: data.userAgent,
+      user: userField,
+      userLabel: undefined as string | undefined,
+    };
 
     // If we couldn't resolve an ObjectId, attempt to use the persistent
     // system user (if created), otherwise capture a human-readable label.
@@ -52,31 +70,36 @@ export class AuditService {
           .findOne({ email: systemEmail })
           .exec();
         if (systemUser) {
-          payload.user = systemUser._id;
+          const systemUserObj = systemUser as { id?: string; _id?: unknown };
+          payload.user = systemUserObj.id || String(systemUserObj._id);
         } else {
-          if (typeof u === 'string') {
-            payload.userLabel = u;
-          } else if (typeof u === 'object') {
-            payload.userLabel =
-              `${u.firstName || ''} ${u.lastName || ''}`.trim() || undefined;
-          } else {
-            payload.userLabel = 'SYSTEM';
-          }
+          payload.userLabel = this.getUserLabel(u);
         }
-      } catch (err) {
-        if (typeof u === 'string') {
-          payload.userLabel = u;
-        } else if (typeof u === 'object') {
-          payload.userLabel =
-            `${u.firstName || ''} ${u.lastName || ''}`.trim() || undefined;
-        } else {
-          payload.userLabel = 'SYSTEM';
-        }
+      } catch {
+        payload.userLabel = this.getUserLabel(u);
       }
     }
 
     const log = new this.auditLogModel(payload);
     return log.save();
+  }
+
+  private getUserLabel(u: unknown): string | undefined {
+    if (!u) {
+      return 'SYSTEM';
+    }
+    if (typeof u === 'string') {
+      return u;
+    }
+    if (typeof u === 'object') {
+      const userObj = u as { firstName?: unknown; lastName?: unknown };
+      const firstName =
+        typeof userObj.firstName === 'string' ? userObj.firstName : '';
+      const lastName =
+        typeof userObj.lastName === 'string' ? userObj.lastName : '';
+      return `${firstName} ${lastName}`.trim() || undefined;
+    }
+    return 'SYSTEM';
   }
 
   async findAll(query: FilterQuery<AuditLogDocument> = {}) {
