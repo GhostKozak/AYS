@@ -7,6 +7,11 @@ import { Company, CompanySchema } from '../companies/schemas/company.schema';
 import { Driver, DriverSchema } from '../drivers/schemas/driver.schema';
 import { Vehicle, VehicleSchema } from '../vehicles/schema/vehicles.schema';
 import { Trip, TripSchema } from '../trips/schema/trips.schema';
+import { UserSeeder } from './seeders/user.seeder';
+import { CompanySeeder } from './seeders/company.seeder';
+import { DriverSeeder } from './seeders/driver.seeder';
+import { VehicleSeeder } from './seeders/vehicle.seeder';
+import { TripSeeder } from './seeders/trip.seeder';
 
 @Module({
   imports: [
@@ -19,7 +24,14 @@ import { Trip, TripSchema } from '../trips/schema/trips.schema';
     ]),
   ],
   controllers: [SeedController],
-  providers: [SeedService],
+  providers: [
+    SeedService,
+    UserSeeder,
+    CompanySeeder,
+    DriverSeeder,
+    VehicleSeeder,
+    TripSeeder,
+  ],
   exports: [SeedService],
 })
 export class SeedModule {}

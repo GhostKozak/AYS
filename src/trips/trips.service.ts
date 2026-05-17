@@ -2,7 +2,6 @@
 import {
   Injectable,
   NotFoundException,
-  BadRequestException,
   ConflictException,
 } from '@nestjs/common';
 import { CreateTripDto } from './dto/create-trip.dto';
@@ -10,22 +9,24 @@ import { UpdateTripDto } from './dto/update-trip.dto';
 import { Model, FilterQuery } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Trip, TripDocument } from './schema/trips.schema';
-import { CompaniesService } from '../companies/companies.service';
-import { DriversService } from '../drivers/drivers.service';
-import { VehiclesService } from '../vehicles/vehicles.service';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { FilterTripDto } from './dto/filter-trip.dto';
 import { I18nService } from 'nestjs-i18n';
 import { UnloadStatus } from './enums/unloadStatus';
 import { AuditService } from '../audit/audit.service';
 import { EventsGateway } from '../events/events.gateway';
+import { TripEntityResolverService } from './trip-entity-resolver.service';
+import { DriversService } from '../drivers/drivers.service';
+import { CompaniesService } from '../companies/companies.service';
+import { VehiclesService } from '../vehicles/vehicles.service';
 
 @Injectable()
 export class TripsService {
   constructor(
     @InjectModel(Trip.name) private tripModel: Model<TripDocument>,
-    private readonly companiesService: CompaniesService,
+    private readonly entityResolver: TripEntityResolverService,
     private readonly driversService: DriversService,
+    private readonly companiesService: CompaniesService,
     private readonly vehiclesService: VehiclesService,
     private readonly i18n: I18nService,
     private readonly auditService: AuditService,
@@ -44,59 +45,9 @@ export class TripsService {
         createTripDto.driver_phone_number.replace(/[^\d+]/g, '');
     }
 
-    let company: { _id: any } | null = null;
-    if (createTripDto.company) {
-      company = (await this.companiesService.findOne(
-        createTripDto.company,
-      )) as any;
-    } else {
-      if (!createTripDto.company_name) {
-        throw new BadRequestException(
-          this.i18n.translate('validation.COMPANY_NAME_REQUIRED'),
-        );
-      }
-      company = (await this.companiesService.findOrCreateByName(
-        createTripDto.company_name,
-      )) as any;
-    }
-
-    let driver: { _id: any } | null = null;
-    if (createTripDto.driver) {
-      driver = (await this.driversService.findOne(createTripDto.driver)) as any;
-    } else {
-      if (!createTripDto.driver_phone_number) {
-        throw new BadRequestException(
-          this.i18n.translate('validation.DRIVER_PHONE_NUMBER_REQUIRED'),
-        );
-      }
-      driver = (await this.driversService.findByPhone(
-        createTripDto.driver_phone_number,
-      )) as any;
-      if (!driver) {
-        if (!createTripDto.driver_full_name) {
-          throw new BadRequestException(
-            this.i18n.translate('validation.NEW_DRIVER_NAME_REQUIRED'),
-          );
-        }
-        driver = (await this.driversService.create({
-          full_name: createTripDto.driver_full_name,
-          phone_number: createTripDto.driver_phone_number,
-          company: company!._id.toString(),
-        })) as any;
-      }
-    }
-
-    let vehicle: { _id: any } | null = null;
-    if (createTripDto.vehicle) {
-      vehicle = (await this.vehiclesService.findOne(
-        createTripDto.vehicle,
-      )) as any;
-    } else if (createTripDto.licence_plate) {
-      vehicle = (await this.vehiclesService.findOrCreateByPlate(
-        createTripDto.licence_plate,
-        createTripDto.vehicle_type,
-      )) as any;
-    }
+    const company = await this.entityResolver.resolveCompany(createTripDto);
+    const driver = await this.entityResolver.resolveDriver(createTripDto, company._id);
+    const vehicle = await this.entityResolver.resolveVehicle(createTripDto);
 
     const twoWeeksAgo = new Date();
     twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
@@ -129,7 +80,6 @@ export class TripsService {
       driver: driver?._id,
       company: company?._id,
       vehicle: vehicle?._id,
-      // Set is_in_parking_lot based on initial status
       is_in_parking_lot: this.isVehicleInParkingLot(
         createTripDto.unload_status,
         createTripDto.is_trip_canceled,
@@ -137,10 +87,7 @@ export class TripsService {
     });
 
     const savedTrip = await newTrip.save();
-
-    // Broadcast real-time event
     this.eventsGateway.emitTripCreated(savedTrip);
-
     return savedTrip;
   }
 

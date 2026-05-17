@@ -8,38 +8,28 @@ import {
   Param,
   Delete,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
 import { FilterCompanyDto } from './dto/filter-company.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import {
-  ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiTags,
   ApiParam,
   ApiQuery,
-  ApiUnauthorizedResponse,
-  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User, UserRole } from '../users/schemas/user.schema';
 import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
+import { AuthenticatedController } from '../common/decorators/authenticated-controller.decorator';
 
 @ApiTags('companies')
-@ApiBearerAuth('access-token')
-@ApiUnauthorizedResponse({
-  description: 'Unauthorized - Invalid or missing token',
-})
-@ApiForbiddenResponse({ description: 'Forbidden - Insufficient permissions' })
+@AuthenticatedController()
 @Controller('companies')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class CompaniesController {
   constructor(private readonly companiesService: CompaniesService) {}
 

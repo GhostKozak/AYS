@@ -8,6 +8,7 @@ import { DriversModule } from '../drivers/drivers.module';
 import { VehiclesModule } from '../vehicles/vehicles.module';
 import { AuditModule } from '../audit/audit.module';
 import { EventsModule } from '../events/events.module';
+import { TripEntityResolverService } from './trip-entity-resolver.service';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { EventsModule } from '../events/events.module';
     EventsModule,
   ],
   controllers: [TripsController],
-  providers: [TripsService],
+  providers: [TripsService, TripEntityResolverService],
 })
 export class TripsModule {}
+

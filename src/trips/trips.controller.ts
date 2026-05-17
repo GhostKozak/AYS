@@ -8,37 +8,27 @@ import {
   Param,
   Delete,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { TripsService } from './trips.service';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
 import { FilterTripDto } from './dto/filter-trip.dto';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import {
-  ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiTags,
   ApiParam,
-  ApiUnauthorizedResponse,
-  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User, UserRole } from '../users/schemas/user.schema';
 import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
+import { AuthenticatedController } from '../common/decorators/authenticated-controller.decorator';
 
 @ApiTags('trips')
-@ApiBearerAuth('access-token')
-@ApiUnauthorizedResponse({
-  description: 'Unauthorized - Invalid or missing token',
-})
-@ApiForbiddenResponse({ description: 'Forbidden - Insufficient permissions' })
+@AuthenticatedController()
 @Controller('trips')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class TripsController {
   constructor(private readonly tripsService: TripsService) {}
 
