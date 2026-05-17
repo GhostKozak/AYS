@@ -3,6 +3,7 @@ import {
   Post,
   Headers,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { SeedService } from './seed.service';
 import { I18nService } from 'nestjs-i18n';
@@ -26,9 +27,11 @@ export class SeedController {
   @ApiResponse({ status: 201, description: 'Admin user created successfully' })
   @ApiResponse({ status: 401, description: 'Invalid or missing seed secret' })
   async createAdmin(@Headers('x-seed-secret') secret: string) {
-    const expectedSecret = 'test-secret-123';
+    const isProd = process.env.NODE_ENV === 'production';
+    const expectedSecret =
+      process.env.SEED_ADMIN_SECRET || (isProd ? null : 'test-secret-123');
 
-    if (secret !== expectedSecret) {
+    if (!expectedSecret || secret !== expectedSecret) {
       throw new UnauthorizedException('Invalid or missing seed secret');
     }
 
@@ -49,6 +52,13 @@ export class SeedController {
   })
   @ApiResponse({ status: 401, description: 'Invalid or missing seed secret' })
   async seedAllData(@Headers('x-seed-secret') secret: string) {
+    const isProd = process.env.NODE_ENV === 'production';
+    if (isProd) {
+      throw new ForbiddenException(
+        'Comprehensive seeding is disabled in production.',
+      );
+    }
+
     const expectedSecret = process.env.SEED_ALL_SECRET || 'test-secret-123';
 
     if (secret !== expectedSecret) {
@@ -59,3 +69,4 @@ export class SeedController {
     return { message: 'Comprehensive test data seeded successfully' };
   }
 }
+

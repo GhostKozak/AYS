@@ -15,7 +15,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole } from './schemas/user.schema';
+import { User, UserRole } from './schemas/user.schema';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
 import {
   ApiBearerAuth,
@@ -27,6 +27,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
+import { GetUser } from '../auth/decorators/get-user.decorator';
 
 @ApiTags('users')
 @ApiBearerAuth('access-token')
@@ -69,14 +70,11 @@ export class UsersController {
     status: 200,
     description: 'Current user updated successfully',
   })
-  updateMe(
-    @Req() req: import('express').Request & { user: { userId: string } },
-    @Body() updateUserDto: UpdateUserDto,
-  ) {
+  updateMe(@GetUser() user: User, @Body() updateUserDto: UpdateUserDto) {
     // Güvenlik: Admin olmayan profilin rolünü veya yetkisini kendi kendine değiştirememesi için kısıtla
     delete updateUserDto.role;
     delete updateUserDto.isActive;
-    return this.usersService.update(req.user.userId, updateUserDto);
+    return this.usersService.update(user._id as string, updateUserDto, user);
   }
 
   @Get(':id')
@@ -98,8 +96,9 @@ export class UsersController {
   update(
     @Param('id', ParseMongoIdPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
+    @GetUser() actor: User,
   ) {
-    return this.usersService.update(id, updateUserDto);
+    return this.usersService.update(id, updateUserDto, actor);
   }
 
   @Delete(':id')
@@ -111,3 +110,4 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 }
+

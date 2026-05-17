@@ -11,12 +11,14 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcryptjs';
 import { I18nService } from 'nestjs-i18n';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private readonly i18n: I18nService,
+    private readonly auditService: AuditService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -67,19 +69,51 @@ export class UsersService {
     return this.userModel.findOne({ email }).lean().exec();
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+    actor?: { userId?: string; _id?: string },
+  ): Promise<User> {
+    const existingUser = await this.userModel.findById(id).lean().exec();
+    if (!existingUser) {
+      throw new NotFoundException(this.i18n.translate('user.NOT_FOUND'));
+    }
+
     if (updateUserDto.password) {
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
     }
 
     const updatedUser = await this.userModel
       .findByIdAndUpdate(id, updateUserDto, { new: true, select: '-password' })
+      .lean()
       .exec();
 
     if (!updatedUser) {
       throw new NotFoundException(this.i18n.translate('user.NOT_FOUND'));
     }
-    return updatedUser;
+
+    if (actor) {
+      setImmediate(() => {
+        const sanitizedExisting = { ...existingUser };
+        delete (sanitizedExisting as any).password;
+
+        const sanitizedUpdated = { ...updatedUser };
+        delete (sanitizedUpdated as any).password;
+
+        this.auditService
+          .log({
+            user: actor.userId || actor._id || 'SYSTEM',
+            action: 'UPDATE',
+            entity: 'User',
+            entityId: id,
+            oldValue: sanitizedExisting,
+            newValue: sanitizedUpdated,
+          })
+          .catch((err) => console.error('Audit log failed', err));
+      });
+    }
+
+    return updatedUser as unknown as User;
   }
 
   async remove(id: string): Promise<void> {
@@ -117,3 +151,4 @@ export class UsersService {
       .exec();
   }
 }
+
