@@ -113,6 +113,63 @@ export class DriversService {
     return savedDriver;
   }
 
+  async findOrCreateByPhone(
+    phone: string,
+    fullName: string,
+    companyId: string,
+  ): Promise<DriverDocument> {
+    const normalizedPhone = phone.replace(/[^\d+]/g, '');
+
+    const existingDriver = await this.driverModel
+      .findOne({ phone_number: normalizedPhone })
+      .populate('company')
+      .lean()
+      .exec();
+
+    if (existingDriver) {
+      if (existingDriver.deleted) {
+        return (await this.driverModel.findByIdAndUpdate(
+          existingDriver._id,
+          { deleted: false },
+          { new: true },
+        ).populate('company')) as DriverDocument;
+      }
+      return existingDriver as DriverDocument;
+    }
+
+    // Ensure company exists
+    await this.companiesService.findOne(companyId);
+
+    try {
+      const newDriver = new this.driverModel({
+        full_name: fullName,
+        phone_number: normalizedPhone,
+        company: companyId,
+      });
+      const saved = await newDriver.save();
+      return (await saved.populate('company')) as DriverDocument;
+    } catch (error: unknown) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if ((error as any).code === 11000) {
+        const raceConditionDriver = await this.driverModel
+          .findOne({ phone_number: normalizedPhone })
+          .populate('company')
+          .lean()
+          .exec();
+        if (raceConditionDriver?.deleted) {
+          return (await this.driverModel.findByIdAndUpdate(
+            raceConditionDriver._id,
+            { deleted: false },
+            { new: true },
+          ).populate('company')) as DriverDocument;
+        }
+        return raceConditionDriver as DriverDocument;
+      }
+      throw error;
+    }
+  }
+
+
   async findAll(
     paginationQuery: PaginationQueryDto,
     filterDriverDto: FilterDriverDto,

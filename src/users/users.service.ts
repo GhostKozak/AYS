@@ -72,8 +72,9 @@ export class UsersService {
   async update(
     id: string,
     updateUserDto: UpdateUserDto,
-    actor?: { userId?: string; _id?: string },
+    actor?: { userId: string },
   ): Promise<User> {
+
     const existingUser = await this.userModel.findById(id).lean().exec();
     if (!existingUser) {
       throw new NotFoundException(this.i18n.translate('user.NOT_FOUND'));
@@ -102,7 +103,8 @@ export class UsersService {
 
         this.auditService
           .log({
-            user: actor.userId || actor._id || 'SYSTEM',
+            user: actor.userId,
+
             action: 'UPDATE',
             entity: 'User',
             entityId: id,

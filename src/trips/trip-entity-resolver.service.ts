@@ -55,22 +55,24 @@ export class TripEntityResolverService {
       );
     }
 
-    const existing = await this.driversService.findByPhone(
-      dto.driver_phone_number,
-    );
-    if (existing) return existing as any;
-
     if (!dto.driver_full_name) {
-      throw new BadRequestException(
-        this.i18n.translate('validation.NEW_DRIVER_NAME_REQUIRED'),
+      const existing = await this.driversService.findByPhone(
+        dto.driver_phone_number,
       );
+      if (!existing) {
+        throw new BadRequestException(
+          this.i18n.translate('validation.NEW_DRIVER_NAME_REQUIRED'),
+        );
+      }
+      return existing as any;
     }
 
-    return (await this.driversService.create({
-      full_name: dto.driver_full_name,
-      phone_number: dto.driver_phone_number,
-      company: companyId.toString(),
-    })) as any;
+    return (await this.driversService.findOrCreateByPhone(
+      dto.driver_phone_number,
+      dto.driver_full_name,
+      companyId.toString(),
+    )) as any;
+
   }
 
   async resolveVehicle(

@@ -17,7 +17,7 @@ export class ReportsService {
     @InjectModel(Trip.name) private tripModel: Model<TripDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(Driver.name) private driverModel: Model<DriverDocument>,
-  ) {}
+  ) { }
 
   async getTopCompanies(
     period: ReportPeriod,
@@ -349,7 +349,7 @@ export class ReportsService {
     // Create cursor for streaming
     const cursor = this.tripModel
       .find({ is_trip_canceled: false, ...dateQuery, ...excludeQuery })
-      .select('arrival_time unload_status company driver vehicle')
+      .select('arrival_time unload_status company driver vehicle notes')
       .populate('company', 'name')
       .populate('driver', 'full_name')
       .populate('vehicle', 'licence_plate')

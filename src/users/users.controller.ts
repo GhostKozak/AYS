@@ -15,7 +15,10 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { User, UserRole } from './schemas/user.schema';
+import { UserRole } from './schemas/user.schema';
+
+// JWT strategy'nin validate() metodundan dönen gerçek payload şekli
+type JwtUser = { userId: string; email: string; role: string };
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
 import {
   ApiBearerAuth,
@@ -70,12 +73,13 @@ export class UsersController {
     status: 200,
     description: 'Current user updated successfully',
   })
-  updateMe(@GetUser() user: User, @Body() updateUserDto: UpdateUserDto) {
+  updateMe(@GetUser() actor: JwtUser, @Body() updateUserDto: UpdateUserDto) {
     // Güvenlik: Admin olmayan profilin rolünü veya yetkisini kendi kendine değiştirememesi için kısıtla
     delete updateUserDto.role;
     delete updateUserDto.isActive;
-    return this.usersService.update(user._id as string, updateUserDto, user);
+    return this.usersService.update(actor.userId, updateUserDto, actor);
   }
+
 
   @Get(':id')
   @Roles(UserRole.ADMIN)
@@ -96,7 +100,7 @@ export class UsersController {
   update(
     @Param('id', ParseMongoIdPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
-    @GetUser() actor: User,
+    @GetUser() actor: JwtUser,
   ) {
     return this.usersService.update(id, updateUserDto, actor);
   }
