@@ -17,6 +17,8 @@ services:
         limits:
           cpus: '0.50'
           memory: 512M
+    volumes:
+      - ./uploads/field-photos:/app/uploads/field-photos
     depends_on:
       - mongodb
     networks:
@@ -24,6 +26,8 @@ services:
 
   mongodb:
     image: docker.io/library/mongo:6.0
+    ports:
+      - "27017:27017"
     volumes:
       - ./mongo_data:/data/db
     networks:

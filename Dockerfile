@@ -23,6 +23,10 @@ RUN npm ci --omit=dev
 
 # Copy built assets
 COPY --from=builder /app/dist ./dist
+
+# Create uploads directory for field photos
+RUN mkdir -p /app/uploads/field-photos
+
 # If you have i18n or other assets, copy them here
 # Note: nest-cli.json handles asset copying to dist, so we only need dist
 

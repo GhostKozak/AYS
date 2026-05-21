@@ -46,6 +46,22 @@ export class Trip {
   @Prop({ default: null })
   parked_at: Date;
 
+  @Prop({
+    type: String,
+    enum: ['PENDING', 'CONFIRMED', 'CANCELED'],
+    default: 'PENDING',
+  })
+  status: string;
+
+  @Prop({ default: null })
+  field_photo_path: string;
+
+  @Prop({ default: null })
+  seal_number: string;
+
+  @Prop({ default: null })
+  field_verified_at: Date;
+
   @Prop()
   notes: string;
 }

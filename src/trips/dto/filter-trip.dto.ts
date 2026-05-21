@@ -50,6 +50,16 @@ export class FilterTripDto {
   unload_status?: UnloadStatus;
 
   @ApiPropertyOptional({
+    description: 'Filter by verification status',
+    enum: ['PENDING', 'CONFIRMED', 'CANCELED'],
+  })
+  @IsOptional()
+  @IsEnum(['PENDING', 'CONFIRMED', 'CANCELED'], {
+    message: 'validation.IS_ENUM',
+  })
+  status?: string;
+
+  @ApiPropertyOptional({
     description: 'Search term for notes, driver, company, or plate',
   })
   @IsOptional()

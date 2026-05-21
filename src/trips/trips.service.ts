@@ -97,7 +97,7 @@ export class TripsService {
     showDeleted = false,
   ) {
     const { limit, offset } = paginationQuery;
-    const { companyId, driverId, vehicleId, unload_status, search } =
+    const { companyId, driverId, vehicleId, unload_status, status, search } =
       filterTripDto;
 
     const query: FilterQuery<TripDocument> = {};
@@ -106,6 +106,7 @@ export class TripsService {
     if (driverId) query.driver = driverId;
     if (vehicleId) query.vehicle = vehicleId;
     if (unload_status) query.unload_status = unload_status;
+    if (status) query.status = status;
 
     if (search) {
       const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -134,7 +135,7 @@ export class TripsService {
       .find(query)
       .setOptions({ skipSoftDelete: showDeleted })
       .select(
-        'arrival_time departure_time unload_status is_in_parking_lot notes company driver vehicle',
+        'arrival_time departure_time unload_status is_in_parking_lot notes company driver vehicle status field_photo_path seal_number field_verified_at',
       )
       .skip(offset ?? 0)
       .limit(limit ?? 10)
@@ -152,6 +153,20 @@ export class TripsService {
       data: trips,
       count,
     };
+  }
+
+  async findPendingVerification(): Promise<Trip[]> {
+    return this.tripModel
+      .find({ status: 'PENDING', is_trip_canceled: false })
+      .select(
+        'arrival_time departure_time unload_status is_in_parking_lot notes company driver vehicle status field_photo_path seal_number field_verified_at',
+      )
+      .sort({ arrival_time: 1 })
+      .populate('driver', 'full_name phone_number')
+      .populate('company', 'name')
+      .populate('vehicle', 'licence_plate vehicle_type')
+      .lean()
+      .exec() as unknown as Promise<Trip[]>;
   }
 
   async findOne(id: string, showDeleted = false): Promise<Trip> {
@@ -227,6 +242,74 @@ export class TripsService {
           .log({
             user: user.userId || user._id || 'SYSTEM',
             action: 'UPDATE',
+            entity: 'Trip',
+            entityId: id,
+            oldValue: existingTrip,
+            newValue: updatedTrip,
+          })
+          .catch((err) => console.error('Audit log failed', err));
+      });
+    }
+
+    this.eventsGateway.emitTripUpdated(updatedTrip as unknown as Trip);
+
+    return updatedTrip as unknown as Trip;
+  }
+
+  async fieldVerify(
+    id: string,
+    sealNumber: string | undefined,
+    photoPath: string,
+    user?: { userId?: string; _id?: string },
+  ): Promise<Trip> {
+    const existingTrip = await this.tripModel
+      .findOne({ _id: id })
+      .populate('driver', 'full_name phone_number')
+      .populate('company')
+      .populate('vehicle')
+      .lean()
+      .exec();
+
+    if (!existingTrip) {
+      throw new NotFoundException(
+        this.i18n.translate('trip.NOT_FOUND', { args: { id } }),
+      );
+    }
+
+    // Since trips.schema.ts might not have been fully re-typed yet, we cast to any
+    if ((existingTrip as any).status !== 'PENDING') {
+      throw new ConflictException('This trip is already verified or canceled.');
+    }
+
+    const updatedTrip = await this.tripModel
+      .findOneAndUpdate(
+        { _id: id },
+        {
+          status: 'CONFIRMED',
+          seal_number: sealNumber,
+          field_photo_path: photoPath,
+          field_verified_at: new Date(),
+        },
+        { new: true, returnDocument: 'after' },
+      )
+      .populate('driver', 'full_name phone_number')
+      .populate('company')
+      .populate('vehicle')
+      .lean()
+      .exec();
+
+    if (!updatedTrip) {
+      throw new NotFoundException(
+        this.i18n.translate('trip.NOT_FOUND', { args: { id } }),
+      );
+    }
+
+    if (user) {
+      setImmediate(() => {
+        this.auditService
+          .log({
+            user: user.userId || user._id || 'SYSTEM',
+            action: 'VERIFY_FIELD',
             entity: 'Trip',
             entityId: id,
             oldValue: existingTrip,
