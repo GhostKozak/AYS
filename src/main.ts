@@ -19,7 +19,18 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const i18nService = app.get(I18nService);
 
-  app.use(helmet());
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "blob:"],
+        connectSrc: ["'self'", process.env.FRONTEND_URL || "http://localhost:5173", "ws://localhost:3000"],
+        mediaSrc: ["'self'", "https://actions.google.com"],
+      },
+    },
+  }));
   app.use(compression());
   app.use(cookieParser());
 
