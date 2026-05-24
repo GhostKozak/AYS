@@ -149,6 +149,7 @@ export class TripsService {
       .select(
         'arrival_time departure_time unload_status is_in_parking_lot is_in_temporary_parking_lot has_gps_tracking parked_at notes company driver vehicle status field_photo_path seal_number field_verified_at',
       )
+      .sort({ arrival_time: -1 })
       .skip(offset ?? 0)
       .limit(limit ?? 10)
       .populate('driver', 'full_name phone_number')
