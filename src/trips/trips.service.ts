@@ -3,7 +3,10 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  Inject,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
 import { Model, FilterQuery } from 'mongoose';
@@ -31,7 +34,17 @@ export class TripsService {
     private readonly i18n: I18nService,
     private readonly auditService: AuditService,
     private readonly eventsGateway: EventsGateway,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
+
+  /** Trip verisi değiştiğinde search cache'ini temizle */
+  private async invalidateSearchCache(): Promise<void> {
+    try {
+      await this.cacheManager.clear();
+    } catch (err) {
+      console.warn('Search cache reset failed:', err);
+    }
+  }
 
   async create(createTripDto: CreateTripDto): Promise<Trip> {
     if (createTripDto.licence_plate) {
@@ -90,6 +103,7 @@ export class TripsService {
       });
       const savedTrip = await newTrip.save();
       this.eventsGateway.emitTripCreated(savedTrip);
+      void this.invalidateSearchCache();
       return savedTrip;
     } catch (error: unknown) {
       if ((error as any).code === 11000) {
@@ -266,6 +280,7 @@ export class TripsService {
     }
 
     this.eventsGateway.emitTripUpdated(updatedTrip as unknown as Trip);
+    void this.invalidateSearchCache();
 
     return updatedTrip as unknown as Trip;
   }
@@ -338,6 +353,7 @@ export class TripsService {
     }
 
     this.eventsGateway.emitTripUpdated(updatedTrip as unknown as Trip);
+    void this.invalidateSearchCache();
 
     return updatedTrip as unknown as Trip;
   }
