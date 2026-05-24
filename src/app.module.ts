@@ -65,23 +65,23 @@ import { SearchModule } from './search/search.module';
     ThrottlerModule.forRoot({
       throttlers: [
         {
-          name: 'default',    // Global fallback — 300 istek / 60sn
+          name: 'default', // Global fallback — 300 istek / 60sn
           ttl: 60000,
           limit: 300,
         },
         {
-          name: 'auth',       // Login — 5 istek / 60sn (auth.controller'da override edilir)
+          name: 'auth', // Login — 5 istek / 60sn (auth.controller'da override edilir)
           ttl: 60000,
           limit: 5,
         },
         {
-          name: 'search',     // Async Search — 300 istek / 60sn
+          name: 'search', // Async Search — 300 istek / 60sn
           ttl: 60000,
           limit: 300,
         },
       ],
       ignoreUserAgents: [/health-check/i], // monitoring araçları
-      getTracker: (req) => req.ips?.length ? req.ips[0] : req.ip, // proxy desteği — gerçek IP
+      getTracker: (req) => (req.ips?.length ? req.ips[0] : req.ip), // proxy desteği — gerçek IP
     }),
     CacheModule.registerAsync({
       isGlobal: true,

@@ -1,5 +1,9 @@
 import { ExecutionContext, Injectable } from '@nestjs/common';
-import { ThrottlerGuard, ThrottlerOptions, ThrottlerRequest } from '@nestjs/throttler';
+import {
+  ThrottlerGuard,
+  ThrottlerOptions,
+  ThrottlerRequest,
+} from '@nestjs/throttler';
 import { UserRole } from '../../users/schemas/user.schema';
 
 /**
@@ -15,7 +19,9 @@ import { UserRole } from '../../users/schemas/user.schema';
  */
 @Injectable()
 export class RoleBasedThrottlerGuard extends ThrottlerGuard {
-  protected async handleRequest(requestProps: ThrottlerRequest): Promise<boolean> {
+  protected async handleRequest(
+    requestProps: ThrottlerRequest,
+  ): Promise<boolean> {
     const { context, throttler } = requestProps;
     const controller = context.getClass();
 
@@ -47,14 +53,13 @@ export class RoleBasedThrottlerGuard extends ThrottlerGuard {
         : throttler.limit;
 
     if (role === UserRole.ADMIN) {
-      return baseLimit * 3;   // Admin: 3x limit
+      return baseLimit * 3; // Admin: 3x limit
     }
 
     if (role === UserRole.EDITOR) {
-      return baseLimit * 2;   // Editor: 2x limit
+      return baseLimit * 2; // Editor: 2x limit
     }
 
-    return baseLimit;         // Viewer / User: standart limit
+    return baseLimit; // Viewer / User: standart limit
   }
 }
-

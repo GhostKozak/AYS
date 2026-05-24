@@ -40,7 +40,7 @@ import { Throttle } from '@nestjs/throttler';
 @ApiForbiddenResponse({ description: 'Forbidden - Insufficient permissions' })
 @Controller('vehicles')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Throttle({ default: { limit: 150, ttl: 60000 } })  // 150 istek / 60sn
+@Throttle({ default: { limit: 150, ttl: 60000 } }) // 150 istek / 60sn
 export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
 

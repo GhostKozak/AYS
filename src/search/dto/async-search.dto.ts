@@ -1,4 +1,11 @@
-import { IsEnum, IsMongoId, IsOptional, IsPositive, IsString, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsMongoId,
+  IsOptional,
+  IsPositive,
+  IsString,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { UnloadStatus } from '../../trips/enums/unloadStatus';
 import { VehicleType } from '../../vehicles/enums/vehicleTypes';

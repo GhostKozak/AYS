@@ -30,7 +30,7 @@ import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('companies')
 @AuthenticatedController()
-@Throttle({ default: { limit: 100, ttl: 60000 } })  // 100 istek / 60sn
+@Throttle({ default: { limit: 100, ttl: 60000 } }) // 100 istek / 60sn
 @Controller('companies')
 export class CompaniesController {
   constructor(private readonly companiesService: CompaniesService) {}

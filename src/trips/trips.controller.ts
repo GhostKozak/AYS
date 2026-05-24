@@ -21,12 +21,7 @@ import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
 import { FilterTripDto } from './dto/filter-trip.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
-import {
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags, ApiParam } from '@nestjs/swagger';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User, UserRole } from '../users/schemas/user.schema';
 import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
@@ -36,7 +31,7 @@ import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('trips')
 @AuthenticatedController()
-@Throttle({ default: { limit: 200, ttl: 60000 } })  // 200 istek / 60sn
+@Throttle({ default: { limit: 200, ttl: 60000 } }) // 200 istek / 60sn
 @Controller('trips')
 export class TripsController {
   constructor(private readonly tripsService: TripsService) {}

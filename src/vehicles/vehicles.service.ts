@@ -109,7 +109,9 @@ export class VehiclesService {
     }
 
     if (search) {
-      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '');
+      const escapedSearch = search
+        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/\s+/g, '');
       query.licence_plate = {
         $regex: escapedSearch,
         $options: 'i',

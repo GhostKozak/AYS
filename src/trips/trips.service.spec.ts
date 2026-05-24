@@ -71,9 +71,15 @@ describe('TripsService', () => {
         {
           provide: TripEntityResolverService,
           useValue: {
-            resolveCompany: jest.fn().mockResolvedValue({ _id: new Types.ObjectId() }),
-            resolveDriver: jest.fn().mockResolvedValue({ _id: new Types.ObjectId() }),
-            resolveVehicle: jest.fn().mockResolvedValue({ _id: new Types.ObjectId() }),
+            resolveCompany: jest
+              .fn()
+              .mockResolvedValue({ _id: new Types.ObjectId() }),
+            resolveDriver: jest
+              .fn()
+              .mockResolvedValue({ _id: new Types.ObjectId() }),
+            resolveVehicle: jest
+              .fn()
+              .mockResolvedValue({ _id: new Types.ObjectId() }),
           },
         },
         {

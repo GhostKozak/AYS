@@ -9,9 +9,7 @@ import { UnloadStatus } from '../../trips/enums/unloadStatus';
 export class TripSeeder {
   private readonly logger = new Logger(TripSeeder.name);
 
-  constructor(
-    @InjectModel(Trip.name) private tripModel: Model<Trip>,
-  ) {}
+  constructor(@InjectModel(Trip.name) private tripModel: Model<Trip>) {}
 
   async clear() {
     await this.tripModel.deleteMany({});
@@ -49,9 +47,17 @@ export class TripSeeder {
     // Bugün ve dün için ek seferler
     const today = new Date();
     for (let dayOffset = 0; dayOffset < 2; dayOffset++) {
-      const targetDate = new Date(today.getTime() - dayOffset * 24 * 60 * 60 * 1000);
+      const targetDate = new Date(
+        today.getTime() - dayOffset * 24 * 60 * 60 * 1000,
+      );
       for (let i = 0; i < 20; i++) {
-        const entry = this.buildRecentTripEntry(targetDate, dayOffset, companies, drivers, vehicles);
+        const entry = this.buildRecentTripEntry(
+          targetDate,
+          dayOffset,
+          companies,
+          drivers,
+          vehicles,
+        );
         if (entry) trips.push(entry);
       }
     }
@@ -73,9 +79,13 @@ export class TripSeeder {
     const activeVehicles = vehicles.filter((v) => !v.deleted);
     if (!activeDrivers.length || !activeVehicles.length) return null;
 
-    const driver = activeDrivers[Math.floor(Math.random() * activeDrivers.length)];
-    const vehicle = activeVehicles[Math.floor(Math.random() * activeVehicles.length)];
-    const company = companies.find((c) => c._id.toString() === driver.company.toString());
+    const driver =
+      activeDrivers[Math.floor(Math.random() * activeDrivers.length)];
+    const vehicle =
+      activeVehicles[Math.floor(Math.random() * activeVehicles.length)];
+    const company = companies.find(
+      (c) => c._id.toString() === driver.company.toString(),
+    );
     if (!company) return null;
 
     const arrivalTime = this.randomArrivalTime(tripDate);
@@ -94,7 +104,9 @@ export class TripSeeder {
       unloadStatus = UnloadStatus.UNLOADED;
       isInParkingLot = false;
       const unloadDuration = Math.floor(Math.random() * 8) + 1;
-      departureTime = new Date(arrivalTime.getTime() + unloadDuration * 60 * 60 * 1000);
+      departureTime = new Date(
+        arrivalTime.getTime() + unloadDuration * 60 * 60 * 1000,
+      );
       notes = `Boşaltıldı - ${unloadDuration} saat sürdü`;
     } else {
       unloadStatus = UnloadStatus.CANCELED;
@@ -135,9 +147,13 @@ export class TripSeeder {
     const activeVehicles = vehicles.filter((v) => !v.deleted);
     if (!activeDrivers.length || !activeVehicles.length) return null;
 
-    const driver = activeDrivers[Math.floor(Math.random() * activeDrivers.length)];
-    const vehicle = activeVehicles[Math.floor(Math.random() * activeVehicles.length)];
-    const company = companies.find((c) => c._id.toString() === driver.company.toString());
+    const driver =
+      activeDrivers[Math.floor(Math.random() * activeDrivers.length)];
+    const vehicle =
+      activeVehicles[Math.floor(Math.random() * activeVehicles.length)];
+    const company = companies.find(
+      (c) => c._id.toString() === driver.company.toString(),
+    );
     if (!company) return null;
 
     const arrivalTime = this.randomArrivalTime(targetDate);
@@ -156,7 +172,9 @@ export class TripSeeder {
       unloadStatus = UnloadStatus.UNLOADED;
       isInParkingLot = false;
       const unloadDuration = Math.floor(Math.random() * 6) + 1;
-      departureTime = new Date(arrivalTime.getTime() + unloadDuration * 60 * 60 * 1000);
+      departureTime = new Date(
+        arrivalTime.getTime() + unloadDuration * 60 * 60 * 1000,
+      );
       notes = `Tamamlandı - ${unloadDuration} saat`;
     } else {
       unloadStatus = UnloadStatus.CANCELED;

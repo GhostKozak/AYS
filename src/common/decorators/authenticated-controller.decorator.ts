@@ -23,7 +23,9 @@ export function AuthenticatedController() {
     ApiUnauthorizedResponse({
       description: 'Unauthorized - Invalid or missing token',
     }),
-    ApiForbiddenResponse({ description: 'Forbidden - Insufficient permissions' }),
+    ApiForbiddenResponse({
+      description: 'Forbidden - Insufficient permissions',
+    }),
     UseGuards(JwtAuthGuard, RolesGuard),
   );
 }

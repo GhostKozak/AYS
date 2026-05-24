@@ -24,11 +24,14 @@ export class SearchService {
 
   async createSearchJob(dto: AsyncSearchDto) {
     const jobId = randomUUID();
-    
+
     // Non-blocking async execution
     setImmediate(() => {
       this.executeSearch(jobId, dto).catch((err) => {
-        this.logger.error(`Search job ${jobId} failed: ${err.message}`, err.stack);
+        this.logger.error(
+          `Search job ${jobId} failed: ${err.message}`,
+          err.stack,
+        );
         this.eventsGateway.emitSearchError({
           jobId,
           module: dto.module,
@@ -47,13 +50,16 @@ export class SearchService {
 
   private async executeSearch(jobId: string, dto: AsyncSearchDto) {
     const startTime = Date.now();
-    
+
     // Sort and clean filters to create a deterministic cache key
     const { module, limit, offset, ...filters } = dto;
     const cacheKey = `search:${module}:l:${limit}:o:${offset}:${Buffer.from(JSON.stringify(filters)).toString('base64')}`;
 
     // Check cache
-    const cachedData = await this.cacheManager.get<{ data: any[]; count: number }>(cacheKey);
+    const cachedData = await this.cacheManager.get<{
+      data: any[];
+      count: number;
+    }>(cacheKey);
     if (cachedData) {
       this.eventsGateway.emitSearchResult({
         jobId,
@@ -72,7 +78,9 @@ export class SearchService {
 
     switch (module) {
       case SearchModuleEnum.COMPANIES:
-        result = await this.companiesService.findAll(pagination, { search: dto.search });
+        result = await this.companiesService.findAll(pagination, {
+          search: dto.search,
+        });
         break;
       case SearchModuleEnum.DRIVERS:
         result = await this.driversService.findAll(pagination, {

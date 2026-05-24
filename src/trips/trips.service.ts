@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
 import {
   Injectable,
   NotFoundException,
@@ -45,7 +45,10 @@ export class TripsService {
     }
 
     const company = await this.entityResolver.resolveCompany(createTripDto);
-    const driver = await this.entityResolver.resolveDriver(createTripDto, company._id);
+    const driver = await this.entityResolver.resolveDriver(
+      createTripDto,
+      company._id,
+    );
     const vehicle = await this.entityResolver.resolveVehicle(createTripDto);
 
     const twoWeeksAgo = new Date();
@@ -144,7 +147,7 @@ export class TripsService {
       .find(query)
       .setOptions({ skipSoftDelete: showDeleted })
       .select(
-        'arrival_time departure_time unload_status is_in_parking_lot notes company driver vehicle status field_photo_path seal_number field_verified_at',
+        'arrival_time departure_time unload_status is_in_parking_lot is_in_temporary_parking_lot has_gps_tracking parked_at notes company driver vehicle status field_photo_path seal_number field_verified_at',
       )
       .skip(offset ?? 0)
       .limit(limit ?? 10)
@@ -168,7 +171,7 @@ export class TripsService {
     return this.tripModel
       .find({ status: 'PENDING', is_trip_canceled: false })
       .select(
-        'arrival_time departure_time unload_status is_in_parking_lot notes company driver vehicle status field_photo_path seal_number field_verified_at',
+        'arrival_time departure_time unload_status is_in_parking_lot is_in_temporary_parking_lot has_gps_tracking parked_at notes company driver vehicle status field_photo_path seal_number field_verified_at',
       )
       .sort({ arrival_time: 1 })
       .limit(200)

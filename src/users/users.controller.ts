@@ -80,7 +80,6 @@ export class UsersController {
     return this.usersService.update(actor.userId, updateUserDto, actor);
   }
 
-
   @Get(':id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get user by ID' })
@@ -114,4 +113,3 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 }
-

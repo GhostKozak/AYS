@@ -37,24 +37,48 @@ const COUNTRIES = [
 ];
 
 const DRIVER_NAMES = [
-  'Ahmet Yılmaz', 'Mehmet Kaya', 'Ali Demir', 'Ayşe Yıldız',
-  'Fatma Çelik', 'Hasan Öztürk', 'Emine Şahin', 'Mustafa Aydın',
-  'Zeynep Kara', 'Hüseyin Yıldırım', 'Elif Demir', 'İbrahim Çelik',
-  'Sevgi Aydın', 'Osman Yıldız', 'Gülşen Kaya', 'Ramazan Öztürk',
-  'Hatice Şahin', 'Yusuf Kara', 'Merve Yıldırım', 'Halil Demir',
-  'Sultan Çelik', 'Recep Aydın', 'Nur Yıldız', 'Salih Kaya',
-  'Zehra Öztürk', 'Kemal Şahin', 'Filiz Kara', 'İsmail Yıldırım',
-  'Hacer Demir', 'Fatih Çelik', 'Dilek Aydın', 'Orhan Yıldız',
-  'Gizem Kaya', 'Burak Öztürk', 'Esra Şahin',
+  'Ahmet Yılmaz',
+  'Mehmet Kaya',
+  'Ali Demir',
+  'Ayşe Yıldız',
+  'Fatma Çelik',
+  'Hasan Öztürk',
+  'Emine Şahin',
+  'Mustafa Aydın',
+  'Zeynep Kara',
+  'Hüseyin Yıldırım',
+  'Elif Demir',
+  'İbrahim Çelik',
+  'Sevgi Aydın',
+  'Osman Yıldız',
+  'Gülşen Kaya',
+  'Ramazan Öztürk',
+  'Hatice Şahin',
+  'Yusuf Kara',
+  'Merve Yıldırım',
+  'Halil Demir',
+  'Sultan Çelik',
+  'Recep Aydın',
+  'Nur Yıldız',
+  'Salih Kaya',
+  'Zehra Öztürk',
+  'Kemal Şahin',
+  'Filiz Kara',
+  'İsmail Yıldırım',
+  'Hacer Demir',
+  'Fatih Çelik',
+  'Dilek Aydın',
+  'Orhan Yıldız',
+  'Gizem Kaya',
+  'Burak Öztürk',
+  'Esra Şahin',
 ];
 
 @Injectable()
 export class DriverSeeder {
   private readonly logger = new Logger(DriverSeeder.name);
 
-  constructor(
-    @InjectModel(Driver.name) private driverModel: Model<Driver>,
-  ) {}
+  constructor(@InjectModel(Driver.name) private driverModel: Model<Driver>) {}
 
   async clear() {
     await this.driverModel.deleteMany({});
@@ -64,11 +88,19 @@ export class DriverSeeder {
     const drivers: any[] = [];
     let driverIndex = 0;
 
-    for (let companyIndex = 0; companyIndex < companies.length; companyIndex++) {
+    for (
+      let companyIndex = 0;
+      companyIndex < companies.length;
+      companyIndex++
+    ) {
       const company = companies[companyIndex];
       const driverCount = Math.floor(Math.random() * 16) + 15;
 
-      for (let i = 0; i < driverCount && driverIndex < DRIVER_NAMES.length * 3; i++) {
+      for (
+        let i = 0;
+        i < driverCount && driverIndex < DRIVER_NAMES.length * 3;
+        i++
+      ) {
         const isDeleted = company.deleted || Math.random() < 0.1;
 
         let country;

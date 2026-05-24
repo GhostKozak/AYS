@@ -1,4 +1,11 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ThrottlerGuard, SkipThrottle } from '@nestjs/throttler';
 import { SearchService } from './search.service';
@@ -16,7 +23,10 @@ export class SearchController {
   @Post('async')
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiOperation({ summary: 'Initiate an asynchronous search operation' })
-  @ApiResponse({ status: 202, description: 'Search job accepted. Results will be pushed via WebSocket.' })
+  @ApiResponse({
+    status: 202,
+    description: 'Search job accepted. Results will be pushed via WebSocket.',
+  })
   @SkipThrottle({ default: true, auth: true }) // Skip default and auth throttlers so only search throttler applies
   async createAsyncSearch(@Body() dto: AsyncSearchDto) {
     return this.searchService.createSearchJob(dto);

@@ -125,11 +125,13 @@ export class DriversService {
 
     if (existingDriver) {
       if (existingDriver.deleted) {
-        return (await this.driverModel.findByIdAndUpdate(
-          existingDriver._id,
-          { deleted: false },
-          { new: true },
-        ).populate('company')) as DriverDocument;
+        return (await this.driverModel
+          .findByIdAndUpdate(
+            existingDriver._id,
+            { deleted: false },
+            { new: true },
+          )
+          .populate('company')) as DriverDocument;
       }
       return existingDriver as DriverDocument;
     }
@@ -157,18 +159,19 @@ export class DriversService {
           throw error;
         }
         if (raceConditionDriver.deleted) {
-          return (await this.driverModel.findByIdAndUpdate(
-            raceConditionDriver._id,
-            { deleted: false },
-            { new: true },
-          ).populate('company')) as DriverDocument;
+          return (await this.driverModel
+            .findByIdAndUpdate(
+              raceConditionDriver._id,
+              { deleted: false },
+              { new: true },
+            )
+            .populate('company')) as DriverDocument;
         }
         return raceConditionDriver as DriverDocument;
       }
       throw error;
     }
   }
-
 
   async findAll(
     paginationQuery: PaginationQueryDto,
@@ -195,7 +198,9 @@ export class DriversService {
         { full_name: { $regex: escapedSearch, $options: 'i' } },
       ];
       if (escapedNormalizedSearch) {
-        orClauses.push({ phone_number: { $regex: escapedNormalizedSearch, $options: 'i' } });
+        orClauses.push({
+          phone_number: { $regex: escapedNormalizedSearch, $options: 'i' },
+        });
       }
       query.$or = orClauses;
     }

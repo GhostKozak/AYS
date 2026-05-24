@@ -17,7 +17,7 @@ export class ReportsService {
     @InjectModel(Trip.name) private tripModel: Model<TripDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(Driver.name) private driverModel: Model<DriverDocument>,
-  ) { }
+  ) {}
 
   async getTopCompanies(
     period: ReportPeriod,

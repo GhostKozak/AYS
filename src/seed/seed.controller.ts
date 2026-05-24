@@ -69,4 +69,3 @@ export class SeedController {
     return { message: 'Comprehensive test data seeded successfully' };
   }
 }
-

@@ -23,9 +23,7 @@ export class TripEntityResolverService {
     private readonly i18n: I18nService,
   ) {}
 
-  async resolveCompany(
-    dto: CreateTripDto,
-  ): Promise<{ _id: any }> {
+  async resolveCompany(dto: CreateTripDto): Promise<{ _id: any }> {
     if (dto.company) {
       return (await this.companiesService.findOne(dto.company)) as any;
     }
@@ -72,12 +70,9 @@ export class TripEntityResolverService {
       dto.driver_full_name,
       companyId.toString(),
     )) as any;
-
   }
 
-  async resolveVehicle(
-    dto: CreateTripDto,
-  ): Promise<{ _id: any } | null> {
+  async resolveVehicle(dto: CreateTripDto): Promise<{ _id: any } | null> {
     if (dto.vehicle) {
       return (await this.vehiclesService.findOne(dto.vehicle)) as any;
     }

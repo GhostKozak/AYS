@@ -21,7 +21,11 @@ export class VehicleSeeder {
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const vehicles: any[] = [];
 
-    for (let companyIndex = 0; companyIndex < companies.length; companyIndex++) {
+    for (
+      let companyIndex = 0;
+      companyIndex < companies.length;
+      companyIndex++
+    ) {
       const company = companies[companyIndex];
       const vehicleCount = Math.floor(Math.random() * 11) + 5;
 
@@ -30,9 +34,13 @@ export class VehicleSeeder {
         const letter1 = letters[Math.floor(Math.random() * letters.length)];
         const letter2 = letters[Math.floor(Math.random() * letters.length)];
         const letter3 = letters[Math.floor(Math.random() * letters.length)];
-        const number = String(Math.floor(Math.random() * 900) + 100).padStart(3, '0');
+        const number = String(Math.floor(Math.random() * 900) + 100).padStart(
+          3,
+          '0',
+        );
         const licencePlate = `${city}${letter1}${letter2}${letter3}${number}`;
-        const vehicleType = Math.random() < 0.7 ? VehicleType.TRUCK : VehicleType.VAN;
+        const vehicleType =
+          Math.random() < 0.7 ? VehicleType.TRUCK : VehicleType.VAN;
 
         vehicles.push({
           licence_plate: licencePlate,

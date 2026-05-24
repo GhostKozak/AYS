@@ -30,7 +30,7 @@ import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('drivers')
 @AuthenticatedController()
-@Throttle({ default: { limit: 150, ttl: 60000 } })  // 150 istek / 60sn
+@Throttle({ default: { limit: 150, ttl: 60000 } }) // 150 istek / 60sn
 @Controller('drivers')
 export class DriversController {
   constructor(private readonly driversService: DriversService) {}

@@ -24,4 +24,3 @@ import { TripEntityResolverService } from './trip-entity-resolver.service';
   exports: [TripsService],
 })
 export class TripsModule {}
-

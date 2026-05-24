@@ -122,4 +122,17 @@ export class CreateTripDto {
   @IsOptional()
   @IsBoolean()
   is_trip_canceled?: boolean;
+
+  @ApiPropertyOptional({ description: 'Is in parking lot (auto-calculated from unload status)' })
+  @IsOptional()
+  @IsBoolean()
+  is_in_parking_lot?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Parked at timestamp',
+    example: '2024-03-20T18:00:00Z',
+  })
+  @IsOptional()
+  @IsDateString()
+  parked_at?: string;
 }

@@ -74,7 +74,6 @@ export class UsersService {
     updateUserDto: UpdateUserDto,
     actor?: { userId: string },
   ): Promise<User> {
-
     const existingUser = await this.userModel.findById(id).lean().exec();
     if (!existingUser) {
       throw new NotFoundException(this.i18n.translate('user.NOT_FOUND'));
@@ -153,4 +152,3 @@ export class UsersService {
       .exec();
   }
 }
-
