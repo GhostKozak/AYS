@@ -126,16 +126,6 @@ export class TripsController {
     @GetUser() user: User,
   ) {
     if (!file) {
-      if (process.env.NODE_ENV === 'development') {
-        // Dev mode: skip photo requirement, use placeholder
-        const photoPath = '__dev_skip__';
-        return this.tripsService.fieldVerify(
-          id,
-          sealNumber,
-          photoPath,
-          user as any,
-        );
-      }
       throw new BadRequestException('Vehicle/plate photo is required.');
     }
     const photoPath = `/uploads/field-photos/${file.filename}`;
