@@ -89,6 +89,7 @@ import { SearchModule } from './search/search.module';
       useFactory: (configService: ConfigService) => ({
         store: 'memory',
         ttl: parseInt(configService.get('CACHE_TTL', '600000'), 10),
+        max: 100,
       }),
       inject: [ConfigService],
     }),

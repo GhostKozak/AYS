@@ -68,3 +68,9 @@ export class Trip {
 
 export const TripSchema = SchemaFactory.createForClass(Trip);
 TripSchema.plugin(SoftDeletePlugin);
+
+TripSchema.index({ vehicle: 1, driver: 1, company: 1, arrival_time: -1 });
+TripSchema.index({ unload_status: 1, arrival_time: -1 });
+TripSchema.index({ is_trip_canceled: 1, arrival_time: -1 });
+TripSchema.index({ is_in_parking_lot: 1 });
+TripSchema.index({ status: 1, is_trip_canceled: 1 });

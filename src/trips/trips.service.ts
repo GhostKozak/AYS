@@ -34,7 +34,6 @@ export class TripsService {
   ) {}
 
   async create(createTripDto: CreateTripDto): Promise<Trip> {
-    // Normalize identifiers
     if (createTripDto.licence_plate) {
       createTripDto.licence_plate = createTripDto.licence_plate
         .replace(/\s+/g, '')
@@ -75,20 +74,30 @@ export class TripsService {
       }
     }
 
-    const newTrip = new this.tripModel({
-      ...createTripDto,
-      driver: driver?._id,
-      company: company?._id,
-      vehicle: vehicle?._id,
-      is_in_parking_lot: this.isVehicleInParkingLot(
-        createTripDto.unload_status,
-        createTripDto.is_trip_canceled,
-      ),
-    });
-
-    const savedTrip = await newTrip.save();
-    this.eventsGateway.emitTripCreated(savedTrip);
-    return savedTrip;
+    try {
+      const newTrip = new this.tripModel({
+        ...createTripDto,
+        driver: driver?._id,
+        company: company?._id,
+        vehicle: vehicle?._id,
+        is_in_parking_lot: this.isVehicleInParkingLot(
+          createTripDto.unload_status,
+          createTripDto.is_trip_canceled,
+        ),
+      });
+      const savedTrip = await newTrip.save();
+      this.eventsGateway.emitTripCreated(savedTrip);
+      return savedTrip;
+    } catch (error: unknown) {
+      if ((error as any).code === 11000) {
+        throw new ConflictException(
+          this.i18n.translate('trip.CONFLICT_TRIP', {
+            args: { unload_status: 'duplicate' },
+          }),
+        );
+      }
+      throw error;
+    }
   }
 
   async findAll(
@@ -162,6 +171,7 @@ export class TripsService {
         'arrival_time departure_time unload_status is_in_parking_lot notes company driver vehicle status field_photo_path seal_number field_verified_at',
       )
       .sort({ arrival_time: 1 })
+      .limit(200)
       .populate('driver', 'full_name phone_number')
       .populate('company', 'name')
       .populate('vehicle', 'licence_plate vehicle_type')

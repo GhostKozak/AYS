@@ -62,7 +62,6 @@ export class UserSeeder {
 
       await systemUser.save();
       this.logger.log(`System user created: ${systemEmail}`);
-      this.logger.log(`System user password: ${password}`);
     } else {
       this.logger.log(`System user already exists: ${systemEmail}`);
     }

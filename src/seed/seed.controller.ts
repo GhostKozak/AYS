@@ -7,9 +7,11 @@ import {
 } from '@nestjs/common';
 import { SeedService } from './seed.service';
 import { I18nService } from 'nestjs-i18n';
+import { Throttle } from '@nestjs/throttler';
 import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('seed')
+@Throttle({ default: { limit: 3, ttl: 60000 } })
 @Controller('seed')
 export class SeedController {
   constructor(

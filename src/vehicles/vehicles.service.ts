@@ -79,7 +79,10 @@ export class VehiclesService {
           .findOne({ licence_plate: normalizedPlate })
           .lean()
           .exec();
-        if (raceConditionVehicle?.deleted) {
+        if (!raceConditionVehicle) {
+          throw error;
+        }
+        if (raceConditionVehicle.deleted) {
           return (await this.vehicleModel.findByIdAndUpdate(
             raceConditionVehicle._id,
             { deleted: false },
@@ -106,8 +109,9 @@ export class VehiclesService {
     }
 
     if (search) {
+      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '');
       query.licence_plate = {
-        $regex: search.replace(/\s+/g, ''),
+        $regex: escapedSearch,
         $options: 'i',
       };
     }

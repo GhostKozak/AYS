@@ -19,6 +19,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const i18nService = app.get(I18nService);
 
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const wsUrl = frontendUrl.startsWith('https')
+    ? frontendUrl.replace(/^http/, 'wss')
+    : frontendUrl.replace(/^http/, 'ws');
+
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
@@ -26,10 +31,13 @@ async function bootstrap() {
         scriptSrc: ["'self'", "'unsafe-inline'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "blob:"],
-        connectSrc: ["'self'", process.env.FRONTEND_URL || "http://localhost:5173", "ws://localhost:3000"],
-        mediaSrc: ["'self'", "https://actions.google.com"],
+        connectSrc: ["'self'", frontendUrl, wsUrl],
+        mediaSrc: ["'self'"],
       },
     },
+    hsts: process.env.NODE_ENV === 'production'
+      ? { maxAge: 31536000, includeSubDomains: true, preload: true }
+      : false,
   }));
   app.use(compression());
   app.use(cookieParser());

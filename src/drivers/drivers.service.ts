@@ -29,10 +29,12 @@ export class DriversService {
     const normalizedPhone = phone.replace(/[^\d+]/g, '');
     const driver = await this.driverModel
       .findOne({ phone_number: normalizedPhone })
+      .setOptions({ skipSoftDelete: true })
       .populate('company')
       .lean()
       .exec();
 
+    if (!driver) return null;
     return driver as DriverDocument | null;
   }
 
@@ -151,7 +153,10 @@ export class DriversService {
           .populate('company')
           .lean()
           .exec();
-        if (raceConditionDriver?.deleted) {
+        if (!raceConditionDriver) {
+          throw error;
+        }
+        if (raceConditionDriver.deleted) {
           return (await this.driverModel.findByIdAndUpdate(
             raceConditionDriver._id,
             { deleted: false },

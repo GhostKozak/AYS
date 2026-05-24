@@ -37,7 +37,7 @@ export class AuthService {
     await this.usersService.incrementFailedLogins(user._id as string);
     this.auditService
       .log({
-        user: 'SYSTEM',
+        user: email,
         action: 'LOGIN_FAILED',
         entity: 'Auth',
         entityId: user._id as string,
