@@ -277,6 +277,10 @@ export class TripsService {
     }
 
     // Since trips.schema.ts might not have been fully re-typed yet, we cast to any
+    if ((existingTrip as any).is_trip_canceled) {
+      throw new ConflictException('Canceled trips cannot be verified.');
+    }
+
     if ((existingTrip as any).status !== 'PENDING') {
       throw new ConflictException('This trip is already verified or canceled.');
     }

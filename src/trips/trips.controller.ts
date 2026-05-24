@@ -32,9 +32,11 @@ import { User, UserRole } from '../users/schemas/user.schema';
 import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
 import { AuthenticatedController } from '../common/decorators/authenticated-controller.decorator';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('trips')
 @AuthenticatedController()
+@Throttle({ default: { limit: 200, ttl: 60000 } })  // 200 istek / 60sn
 @Controller('trips')
 export class TripsController {
   constructor(private readonly tripsService: TripsService) {}

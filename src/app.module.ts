@@ -22,11 +22,13 @@ import {
   QueryResolver,
 } from 'nestjs-i18n';
 import * as path from 'path';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { RoleBasedThrottlerGuard } from './common/guards/role-based-throttler.guard';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AuditModule } from './audit/audit.module';
 import { AuditInterceptor } from './audit/audit.interceptor';
 import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -60,12 +62,27 @@ import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
         new HeaderResolver(['x-lang']),
       ],
     }),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000,
-        limit: 10,
-      },
-    ]),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          name: 'default',    // Global fallback — 300 istek / 60sn
+          ttl: 60000,
+          limit: 300,
+        },
+        {
+          name: 'auth',       // Login — 5 istek / 60sn (auth.controller'da override edilir)
+          ttl: 60000,
+          limit: 5,
+        },
+        {
+          name: 'search',     // Async Search — 300 istek / 60sn
+          ttl: 60000,
+          limit: 300,
+        },
+      ],
+      ignoreUserAgents: [/health-check/i], // monitoring araçları
+      getTracker: (req) => req.ips?.length ? req.ips[0] : req.ip, // proxy desteği — gerçek IP
+    }),
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
@@ -86,13 +103,14 @@ import { SoftDeletePlugin } from './common/plugins/soft-delete.plugin';
     ReportsModule,
     HealthModule,
     AuditModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: RoleBasedThrottlerGuard,
     },
     {
       provide: APP_INTERCEPTOR,

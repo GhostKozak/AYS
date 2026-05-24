@@ -21,6 +21,7 @@ import { TripEntityResolverService } from './trip-entity-resolver.service';
   ],
   controllers: [TripsController],
   providers: [TripsService, TripEntityResolverService],
+  exports: [TripsService],
 })
 export class TripsModule {}
 

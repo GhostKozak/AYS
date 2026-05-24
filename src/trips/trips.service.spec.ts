@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 import { TripsService } from './trips.service';
 import { Trip } from './schema/trips.schema';
+import { TripEntityResolverService } from './trip-entity-resolver.service';
 import { CompaniesService } from '../companies/companies.service';
 import { DriversService } from '../drivers/drivers.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
@@ -66,6 +67,14 @@ describe('TripsService', () => {
         {
           provide: getModelToken(Trip.name),
           useValue: mockModel(),
+        },
+        {
+          provide: TripEntityResolverService,
+          useValue: {
+            resolveCompany: jest.fn().mockResolvedValue({ _id: new Types.ObjectId() }),
+            resolveDriver: jest.fn().mockResolvedValue({ _id: new Types.ObjectId() }),
+            resolveVehicle: jest.fn().mockResolvedValue({ _id: new Types.ObjectId() }),
+          },
         },
         {
           provide: CompaniesService,

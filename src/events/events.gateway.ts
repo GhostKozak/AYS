@@ -10,7 +10,7 @@ import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.FRONTEND_URL,
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true,
   },
   namespace: 'events',
@@ -26,9 +26,18 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: Socket) {
     try {
-      const token =
+      let token =
         (client.handshake.auth?.token as string) ||
         (client.handshake.headers?.authorization?.split(' ')[1] as string);
+
+      if (!token) {
+        const cookieHeader = client.handshake.headers?.cookie || '';
+        const match = cookieHeader.match(/access_token=([^;]+)/);
+        if (match) {
+          token = match[1];
+        }
+      }
+
       if (!token) {
         this.logger.warn(`Client ${client.id} disconnected: No token provided`);
         client.disconnect();
@@ -69,5 +78,24 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   emitCompanyUpdated(company: any) {
     this.server.emit('company_updated', company);
+  }
+
+  emitSearchResult(payload: {
+    jobId: string;
+    module: string;
+    data: any[];
+    count: number;
+    cached: boolean;
+    durationMs: number;
+  }): void {
+    this.server.emit('search_result', payload);
+  }
+
+  emitSearchError(payload: {
+    jobId: string;
+    module: string;
+    error: string;
+  }): void {
+    this.server.emit('search_error', payload);
   }
 }

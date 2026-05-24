@@ -24,7 +24,7 @@ import { Throttle } from '@nestjs/throttler';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({ auth: { limit: 5, ttl: 60000 } })
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @ApiOperation({ summary: 'User login to obtain JWT token' })
@@ -53,10 +53,23 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 Days
+      maxAge: 1000 * 60 * 60 * 24, // 24 Hours (matching signOptions.expiresIn)
       path: '/',
     });
 
     return authData;
+  }
+
+  @Post('logout')
+  @ApiOperation({ summary: 'Logout and clear the HttpOnly cookie' })
+  @ApiOkResponse({ description: 'Logout successful' })
+  logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('access_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
+    return { message: 'Logout successful' };
   }
 }

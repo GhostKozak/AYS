@@ -26,9 +26,11 @@ import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User, UserRole } from '../users/schemas/user.schema';
 import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
 import { AuthenticatedController } from '../common/decorators/authenticated-controller.decorator';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('drivers')
 @AuthenticatedController()
+@Throttle({ default: { limit: 150, ttl: 60000 } })  // 150 istek / 60sn
 @Controller('drivers')
 export class DriversController {
   constructor(private readonly driversService: DriversService) {}

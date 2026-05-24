@@ -7,8 +7,10 @@ import {
   DiskHealthIndicator,
 } from '@nestjs/terminus';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @ApiTags('health')
+@SkipThrottle()
 @Controller('health')
 export class HealthController {
   constructor(

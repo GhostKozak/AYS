@@ -30,6 +30,7 @@ import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User, UserRole } from '../users/schemas/user.schema';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('vehicles')
 @ApiBearerAuth('access-token')
@@ -39,6 +40,7 @@ import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
 @ApiForbiddenResponse({ description: 'Forbidden - Insufficient permissions' })
 @Controller('vehicles')
 @UseGuards(JwtAuthGuard, RolesGuard)
+@Throttle({ default: { limit: 150, ttl: 60000 } })  // 150 istek / 60sn
 export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
 

@@ -33,13 +33,7 @@ export class DriversService {
       .lean()
       .exec();
 
-    if (driver && driver.deleted) {
-      return (await this.driverModel
-        .findByIdAndUpdate(driver._id, { deleted: false }, { new: true })
-        .populate('company')) as DriverDocument;
-    }
-
-    return driver;
+    return driver as DriverDocument | null;
   }
 
   async findDriverByNameOrPhone(
@@ -54,10 +48,11 @@ export class DriversService {
       '\\$&',
     );
 
-    queryPayload.$or = [
-      { full_name: new RegExp(escapedQuery, 'i') },
-      { phone_number: new RegExp(escapedNormalizedQuery, 'i') },
-    ];
+    const orClauses: any[] = [{ full_name: new RegExp(escapedQuery, 'i') }];
+    if (escapedNormalizedQuery) {
+      orClauses.push({ phone_number: new RegExp(escapedNormalizedQuery, 'i') });
+    }
+    queryPayload.$or = orClauses;
 
     const drivers = await this.driverModel
       .find(queryPayload)
@@ -191,10 +186,13 @@ export class DriversService {
         '\\$&',
       );
 
-      query.$or = [
+      const orClauses: any[] = [
         { full_name: { $regex: escapedSearch, $options: 'i' } },
-        { phone_number: { $regex: escapedNormalizedSearch, $options: 'i' } },
       ];
+      if (escapedNormalizedSearch) {
+        orClauses.push({ phone_number: { $regex: escapedNormalizedSearch, $options: 'i' } });
+      }
+      query.$or = orClauses;
     }
 
     const drivers = await this.driverModel
