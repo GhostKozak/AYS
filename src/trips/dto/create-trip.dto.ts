@@ -1,6 +1,7 @@
 import {
   IsBoolean,
   IsDateString,
+  IsDefined,
   IsEnum,
   IsMongoId,
   IsNotEmpty,
@@ -28,6 +29,7 @@ export class CreateTripDto {
     example: '+905551234567',
   })
   @ValidateIf((o: CreateTripDto) => !o.driver)
+  @IsDefined({ message: 'validation.DRIVER_PHONE_NUMBER_REQUIRED' })
   @IsString({ message: 'validation.IS_STRING' })
   @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
   driver_phone_number?: string;
@@ -52,6 +54,7 @@ export class CreateTripDto {
     example: 'Example Logistics',
   })
   @ValidateIf((o: CreateTripDto) => !o.company)
+  @IsDefined({ message: 'validation.COMPANY_NAME_REQUIRED' })
   @IsString({ message: 'validation.IS_STRING' })
   @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
   company_name?: string;
@@ -70,6 +73,7 @@ export class CreateTripDto {
     example: '34ABC123',
   })
   @ValidateIf((o: CreateTripDto) => !o.vehicle)
+  @IsDefined({ message: 'validation.LICENCE_PLATE_REQUIRED' })
   @IsString({ message: 'validation.IS_STRING' })
   @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
   @MinLength(4, { message: 'validation.MIN_LENGTH' })
