@@ -8,7 +8,11 @@ import { CompaniesService } from '../companies/companies.service';
 import { DriversService } from '../drivers/drivers.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { CreateTripDto } from './dto/create-trip.dto';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { EventsGateway } from '../events/events.gateway';
 import {
@@ -29,6 +33,7 @@ const companiesServiceMock = {
 
 const driversServiceMock = {
   findByPhone: jest.fn(),
+  findOrCreateByPhone: jest.fn(),
   create: jest.fn(),
   findOne: jest.fn(),
   findDriverByNameOrPhone: jest.fn(),
@@ -42,7 +47,7 @@ const vehiclesServiceMock = {
 
 const mockCacheManager = {
   clear: jest.fn(),
-  reset: jest.fn(), // for compatibility check
+  reset: jest.fn(),
   get: jest.fn(),
   set: jest.fn(),
   del: jest.fn(),
@@ -64,23 +69,10 @@ describe('TripsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TripsService,
+        TripEntityResolverService,
         {
           provide: getModelToken(Trip.name),
           useValue: mockModel(),
-        },
-        {
-          provide: TripEntityResolverService,
-          useValue: {
-            resolveCompany: jest
-              .fn()
-              .mockResolvedValue({ _id: new Types.ObjectId() }),
-            resolveDriver: jest
-              .fn()
-              .mockResolvedValue({ _id: new Types.ObjectId() }),
-            resolveVehicle: jest
-              .fn()
-              .mockResolvedValue({ _id: new Types.ObjectId() }),
-          },
         },
         {
           provide: CompaniesService,
@@ -138,9 +130,7 @@ describe('TripsService', () => {
       vehiclesServiceMock.findOrCreateByPlate.mockResolvedValue(vehicle as any);
 
       const saveMock = jest.fn().mockResolvedValue({});
-      tripModel.mockReturnValue({
-        save: saveMock,
-      });
+      tripModel.mockReturnValue({ save: saveMock });
 
       await service.create(createTripDto);
 
@@ -173,35 +163,34 @@ describe('TripsService', () => {
       tripModel.findOne.mockReturnValue(mockQuery(null));
 
       companiesServiceMock.findOrCreateByName.mockResolvedValue(company as any);
-      driversServiceMock.findByPhone.mockResolvedValue(null);
-      driversServiceMock.create.mockResolvedValue(newDriver as any);
+      driversServiceMock.findOrCreateByPhone.mockResolvedValue(
+        newDriver as any,
+      );
       vehiclesServiceMock.findOrCreateByPlate.mockResolvedValue(vehicle as any);
 
       const saveMock = jest.fn().mockResolvedValue({});
-      tripModel.mockReturnValue({
-        save: saveMock,
-      });
+      tripModel.mockReturnValue({ save: saveMock });
 
       await service.create(createTripDto);
 
-      expect(driversServiceMock.findByPhone).toHaveBeenCalledWith(
+      expect(driversServiceMock.findOrCreateByPhone).toHaveBeenCalledWith(
         createTripDto.driver_phone_number,
+        createTripDto.driver_full_name,
+        company._id.toString(),
       );
-      expect(driversServiceMock.create).toHaveBeenCalledWith({
-        full_name: createTripDto.driver_full_name,
-        phone_number: createTripDto.driver_phone_number,
-        company: company._id.toString(),
-      });
       expect(tripModel).toHaveBeenCalled();
     });
 
-    it('should throw BadRequestException if new driver name is not provided', async () => {
+    it('should throw BadRequestException if new driver name is not provided for unknown phone', async () => {
       const createTripDto: CreateTripDto = {
         driver_phone_number: '5557778899',
         company_name: 'Another Company',
         licence_plate: '34GHI789',
       };
 
+      companiesServiceMock.findOrCreateByName.mockResolvedValue({
+        _id: new Types.ObjectId(),
+      } as any);
       driversServiceMock.findByPhone.mockResolvedValue(null);
 
       await expect(service.create(createTripDto)).rejects.toThrow(
@@ -229,7 +218,6 @@ describe('TripsService', () => {
       driversServiceMock.findOne.mockResolvedValue(driver as any);
       vehiclesServiceMock.findOne.mockResolvedValue(vehicle as any);
 
-      // Mock the tripModel.findOne for conflict check
       tripModel.findOne.mockReturnValue({
         sort: jest.fn().mockReturnThis(),
         lean: jest.fn().mockResolvedValue(activeTrip),
@@ -269,6 +257,121 @@ describe('TripsService', () => {
       await expect(service.findOne(tripId, true)).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  describe('findPendingVerification', () => {
+    it('should return pending trips', async () => {
+      const pendingTrips = [
+        { _id: '1', status: 'PENDING', is_trip_canceled: false },
+      ];
+      tripModel.find.mockReturnValue(mockQuery(pendingTrips));
+
+      const result = await service.findPendingVerification();
+      expect(result).toEqual(pendingTrips);
+      expect(tripModel.find).toHaveBeenCalledWith({
+        $or: [{ status: 'PENDING' }, { status: { $exists: false } }],
+        is_trip_canceled: false,
+      });
+    });
+
+    it('should return empty array when no pending trips', async () => {
+      tripModel.find.mockReturnValue(mockQuery([]));
+
+      const result = await service.findPendingVerification();
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('fieldVerify', () => {
+    it('should verify a trip and set status to CONFIRMED', async () => {
+      const tripId = new Types.ObjectId().toString();
+      const sealNumber = 'SEAL-001';
+      const photoPath = '/uploads/photo.jpg';
+      const user = { _id: 'admin-id' };
+
+      const existingTrip = {
+        _id: tripId,
+        status: 'PENDING',
+        is_trip_canceled: false,
+      };
+      const updatedTrip = {
+        ...existingTrip,
+        status: 'CONFIRMED',
+        seal_number: sealNumber,
+        field_photo_path: photoPath,
+        field_verified_at: expect.any(Date),
+      };
+
+      tripModel.findOne.mockReturnValue(mockQuery(existingTrip));
+      tripModel.findOneAndUpdate.mockReturnValue({
+        populate: jest.fn().mockReturnThis(),
+        lean: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue(updatedTrip),
+      });
+
+      const result = await service.fieldVerify(
+        tripId,
+        sealNumber,
+        photoPath,
+        user,
+      );
+
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(result).toEqual(updatedTrip);
+      expect(tripModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: tripId },
+        {
+          status: 'CONFIRMED',
+          seal_number: sealNumber,
+          field_photo_path: photoPath,
+          field_verified_at: expect.any(Date),
+        },
+        { new: true, returnDocument: 'after' },
+      );
+      expect(auditService.log).toHaveBeenCalled();
+      expect(mockEventsGateway.emitTripUpdated).toHaveBeenCalled();
+      expect(mockCacheManager.clear).toHaveBeenCalled();
+    });
+
+    it('should throw ConflictException if trip is already verified or canceled', async () => {
+      const tripId = new Types.ObjectId().toString();
+      const existingTrip = {
+        _id: tripId,
+        status: 'CONFIRMED',
+        is_trip_canceled: false,
+      };
+
+      tripModel.findOne.mockReturnValue(mockQuery(existingTrip));
+
+      await expect(
+        service.fieldVerify(tripId, 'SEAL-001', '/photo.jpg'),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('should throw ConflictException if trip is canceled', async () => {
+      const tripId = new Types.ObjectId().toString();
+      const existingTrip = {
+        _id: tripId,
+        status: 'PENDING',
+        is_trip_canceled: true,
+      };
+
+      tripModel.findOne.mockReturnValue(mockQuery(existingTrip));
+
+      await expect(
+        service.fieldVerify(tripId, 'SEAL-001', '/photo.jpg'),
+      ).rejects.toThrow('Canceled trips cannot be verified.');
+    });
+
+    it('should throw NotFoundException if trip not found', async () => {
+      const tripId = new Types.ObjectId().toString();
+      tripModel.findOne.mockReturnValue(mockQuery(null));
+
+      await expect(
+        service.fieldVerify(tripId, 'SEAL-001', '/photo.jpg'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -345,7 +448,6 @@ describe('TripsService', () => {
 
       const result = await service.update(tripId, updateDto, user);
 
-      // Wait for detached audit logging (setImmediate)
       await new Promise((resolve) => setImmediate(resolve));
 
       expect(result).toEqual(updatedTrip);
