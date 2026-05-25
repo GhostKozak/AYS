@@ -11,6 +11,7 @@ import { ThrottlerGuard, SkipThrottle } from '@nestjs/throttler';
 import { SearchService } from './search.service';
 import { AsyncSearchDto } from './dto/async-search.dto';
 import { AuthenticatedController } from '../common/decorators/authenticated-controller.decorator';
+import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
 
 @ApiTags('Search')
 @AuthenticatedController()
@@ -21,6 +22,7 @@ export class SearchController {
   constructor(private readonly searchService: SearchService) {}
 
   @Post('async')
+  @SkipAudit()
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiOperation({ summary: 'Initiate an asynchronous search operation' })
   @ApiResponse({
