@@ -63,6 +63,7 @@ export class AuditInterceptor implements NestInterceptor {
             entityId: String(
               (response as any)?._id || (response as any)?.id || 'N/A',
             ),
+            oldValue: method === 'DELETE' ? this.sanitize(response) : null,
             newValue: method !== 'DELETE' ? this.sanitize(body) : null,
             ipAddress: ip,
             userAgent,
