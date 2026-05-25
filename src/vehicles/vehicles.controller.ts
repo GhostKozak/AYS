@@ -8,40 +8,30 @@ import {
   Param,
   Delete,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import { VehiclesService } from './vehicles.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { FilterVehicleDto } from './dto/filter-vehicle.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import {
-  ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiTags,
   ApiParam,
   ApiQuery,
-  ApiUnauthorizedResponse,
-  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User, UserRole } from '../users/schemas/user.schema';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
 import { Throttle } from '@nestjs/throttler';
+import { AuthenticatedController } from '../common/decorators/authenticated-controller.decorator';
 
 @ApiTags('vehicles')
-@ApiBearerAuth('access-token')
-@ApiUnauthorizedResponse({
-  description: 'Unauthorized - Invalid or missing token',
-})
-@ApiForbiddenResponse({ description: 'Forbidden - Insufficient permissions' })
+@AuthenticatedController()
+@Throttle({ default: { limit: 150, ttl: 60000 } })
 @Controller('vehicles')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Throttle({ default: { limit: 150, ttl: 60000 } }) // 150 istek / 60sn
 export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
 

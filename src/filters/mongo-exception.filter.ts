@@ -4,15 +4,15 @@ import {
   ExceptionFilter,
   HttpStatus,
 } from '@nestjs/common';
-import { MongoError } from 'mongodb';
+import { MongoServerError } from 'mongodb';
 import { Response } from 'express';
 import { I18nService } from 'nestjs-i18n';
 
-@Catch(MongoError)
+@Catch(MongoServerError)
 export class MongoExceptionFilter implements ExceptionFilter {
   constructor(private readonly i18n: I18nService) {}
 
-  catch(exception: MongoError, host: ArgumentsHost) {
+  catch(exception: MongoServerError, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
 
@@ -20,7 +20,7 @@ export class MongoExceptionFilter implements ExceptionFilter {
       case 11000: {
         const status = HttpStatus.CONFLICT;
         const keyValue = (
-          exception as MongoError & { keyValue: Record<string, unknown> }
+          exception
         ).keyValue;
         const field = Object.keys(keyValue)[0];
         const value = keyValue[field];

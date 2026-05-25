@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverDto } from './dto/update-driver.dto';
@@ -17,6 +18,7 @@ import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class DriversService {
+  private readonly logger = new Logger(DriversService.name);
   constructor(
     @InjectModel(Driver.name) private driverModel: Model<DriverDocument>,
     private readonly companiesService: CompaniesService,
@@ -85,11 +87,13 @@ export class DriversService {
 
     if (existingDriver) {
       if (existingDriver.deleted) {
-        const savedDriver = await this.driverModel.findByIdAndUpdate(
-          existingDriver._id,
-          { deleted: false },
-          { new: true },
-        );
+        const savedDriver = await this.driverModel
+          .findOneAndUpdate(
+            { _id: existingDriver._id },
+            { deleted: false },
+            { new: true },
+          )
+          .exec();
         return savedDriver as DriverDocument;
       }
 
@@ -126,12 +130,13 @@ export class DriversService {
     if (existingDriver) {
       if (existingDriver.deleted) {
         return (await this.driverModel
-          .findByIdAndUpdate(
-            existingDriver._id,
+          .findOneAndUpdate(
+            { _id: existingDriver._id },
             { deleted: false },
             { new: true },
           )
-          .populate('company')) as DriverDocument;
+          .populate('company')
+          .exec()) as DriverDocument;
       }
       return existingDriver as DriverDocument;
     }
@@ -160,12 +165,13 @@ export class DriversService {
         }
         if (raceConditionDriver.deleted) {
           return (await this.driverModel
-            .findByIdAndUpdate(
-              raceConditionDriver._id,
+            .findOneAndUpdate(
+              { _id: raceConditionDriver._id },
               { deleted: false },
               { new: true },
             )
-            .populate('company')) as DriverDocument;
+            .populate('company')
+            .exec()) as DriverDocument;
         }
         return raceConditionDriver as DriverDocument;
       }
@@ -290,7 +296,7 @@ export class DriversService {
             oldValue: existingDriver,
             newValue: updatedDriver,
           })
-          .catch((err) => console.error('Audit log failed', err));
+          .catch((err) => this.logger.error('Audit log failed', err instanceof Error ? err.stack : err));
       });
     }
 

@@ -51,11 +51,13 @@ export class VehiclesService {
     if (existingVehicle) {
       this.logger.log(`Existing vehicle found: ${normalizedPlate}`);
       if (existingVehicle.deleted) {
-        const savedVehicle = await this.vehicleModel.findByIdAndUpdate(
-          existingVehicle._id,
-          { deleted: false },
-          { new: true },
-        );
+        const savedVehicle = await this.vehicleModel
+          .findOneAndUpdate(
+            { _id: existingVehicle._id },
+            { deleted: false },
+            { new: true },
+          )
+          .exec();
         return savedVehicle as VehicleDocument;
       }
       return existingVehicle;
@@ -83,11 +85,13 @@ export class VehiclesService {
           throw error;
         }
         if (raceConditionVehicle.deleted) {
-          return (await this.vehicleModel.findByIdAndUpdate(
-            raceConditionVehicle._id,
-            { deleted: false },
-            { new: true },
-          )) as VehicleDocument;
+          return (await this.vehicleModel
+            .findOneAndUpdate(
+              { _id: raceConditionVehicle._id },
+              { deleted: false },
+              { new: true },
+            )
+            .exec()) as VehicleDocument;
         }
         return raceConditionVehicle as VehicleDocument;
       }

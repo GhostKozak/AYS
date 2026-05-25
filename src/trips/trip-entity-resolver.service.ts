@@ -5,15 +5,8 @@ import { DriversService } from '../drivers/drivers.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { CreateTripDto } from './dto/create-trip.dto';
 
-/**
- * TripsService.create() içindeki cross-domain varlık çözümleme (resolve)
- * mantığını TripsService'den ayırır.
- *
- * Sorumlulukları:
- * - Şirket: ID ile bul veya isim ile bul/oluştur
- * - Sürücü: ID ile bul, telefon ile bul veya yeni oluştur
- * - Araç: ID ile bul veya plaka ile bul/oluştur
- */
+type EntityRef = { _id: string };
+
 @Injectable()
 export class TripEntityResolverService {
   constructor(
@@ -23,9 +16,9 @@ export class TripEntityResolverService {
     private readonly i18n: I18nService,
   ) {}
 
-  async resolveCompany(dto: CreateTripDto): Promise<{ _id: any }> {
+  async resolveCompany(dto: CreateTripDto): Promise<EntityRef> {
     if (dto.company) {
-      return (await this.companiesService.findOne(dto.company)) as any;
+      return (await this.companiesService.findOne(dto.company)) as unknown as EntityRef;
     }
 
     if (!dto.company_name) {
@@ -36,15 +29,15 @@ export class TripEntityResolverService {
 
     return (await this.companiesService.findOrCreateByName(
       dto.company_name,
-    )) as any;
+    )) as unknown as EntityRef;
   }
 
   async resolveDriver(
     dto: CreateTripDto,
-    companyId: any,
-  ): Promise<{ _id: any }> {
+    companyId: string,
+  ): Promise<EntityRef> {
     if (dto.driver) {
-      return (await this.driversService.findOne(dto.driver)) as any;
+      return (await this.driversService.findOne(dto.driver)) as unknown as EntityRef;
     }
 
     if (!dto.driver_phone_number) {
@@ -62,26 +55,26 @@ export class TripEntityResolverService {
           this.i18n.translate('validation.NEW_DRIVER_NAME_REQUIRED'),
         );
       }
-      return existing as any;
+      return existing as unknown as EntityRef;
     }
 
     return (await this.driversService.findOrCreateByPhone(
       dto.driver_phone_number,
       dto.driver_full_name,
       companyId.toString(),
-    )) as any;
+    )) as unknown as EntityRef;
   }
 
-  async resolveVehicle(dto: CreateTripDto): Promise<{ _id: any } | null> {
+  async resolveVehicle(dto: CreateTripDto): Promise<EntityRef | null> {
     if (dto.vehicle) {
-      return (await this.vehiclesService.findOne(dto.vehicle)) as any;
+      return (await this.vehiclesService.findOne(dto.vehicle)) as unknown as EntityRef;
     }
 
     if (dto.licence_plate) {
       return (await this.vehiclesService.findOrCreateByPlate(
         dto.licence_plate,
         dto.vehicle_type,
-      )) as any;
+      )) as unknown as EntityRef;
     }
 
     return null;

@@ -7,6 +7,7 @@ import {
   Min,
 } from 'class-validator';
 import { UnloadStatus } from '../enums/unloadStatus';
+import { VerificationStatus } from '../enums/verificationStatus';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -51,13 +52,13 @@ export class FilterTripDto {
 
   @ApiPropertyOptional({
     description: 'Filter by verification status',
-    enum: ['PENDING', 'CONFIRMED', 'CANCELED'],
+    enum: VerificationStatus,
   })
   @IsOptional()
-  @IsEnum(['PENDING', 'CONFIRMED', 'CANCELED'], {
+  @IsEnum(VerificationStatus, {
     message: 'validation.IS_ENUM',
   })
-  status?: string;
+  status?: VerificationStatus;
 
   @ApiPropertyOptional({
     description: 'Search term for notes, driver, company, or plate',

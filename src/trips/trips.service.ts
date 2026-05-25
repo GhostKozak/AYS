@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
 import {
   Injectable,
   NotFoundException,
   ConflictException,
   Inject,
+  Logger,
 } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
@@ -25,6 +25,7 @@ import { VehiclesService } from '../vehicles/vehicles.service';
 
 @Injectable()
 export class TripsService {
+  private readonly logger = new Logger(TripsService.name);
   constructor(
     @InjectModel(Trip.name) private tripModel: Model<TripDocument>,
     private readonly entityResolver: TripEntityResolverService,
@@ -208,8 +209,8 @@ export class TripsService {
       .findOne({ _id: id })
       .setOptions({ skipSoftDelete: showDeleted })
       .populate('driver', 'full_name phone_number')
-      .populate('company')
-      .populate('vehicle')
+      .populate('company', 'name')
+      .populate('vehicle', 'licence_plate vehicle_type')
       .lean()
       .exec();
 
@@ -231,8 +232,8 @@ export class TripsService {
       .findOne({ _id: id })
       .setOptions({ skipSoftDelete: false })
       .populate('driver', 'full_name phone_number')
-      .populate('company')
-      .populate('vehicle')
+      .populate('company', 'name')
+      .populate('vehicle', 'licence_plate vehicle_type')
       .lean()
       .exec();
 
@@ -259,8 +260,8 @@ export class TripsService {
       )
       .setOptions({ skipSoftDelete: false })
       .populate('driver', 'full_name phone_number')
-      .populate('company')
-      .populate('vehicle')
+      .populate('company', 'name')
+      .populate('vehicle', 'licence_plate vehicle_type')
       .lean()
       .exec();
 
@@ -281,14 +282,13 @@ export class TripsService {
             oldValue: existingTrip,
             newValue: updatedTrip,
           })
-          .catch((err) => console.error('Audit log failed', err));
+          .catch((err) => this.logger.error('Audit log failed', err instanceof Error ? err.stack : err));
       });
     }
 
     this.eventsGateway.emitTripUpdated(updatedTrip as unknown as Trip);
-    void this.invalidateSearchCache();
 
-    return updatedTrip as unknown as Trip;
+    return updatedTrip;
   }
 
   async fieldVerify(
@@ -300,8 +300,8 @@ export class TripsService {
     const existingTrip = await this.tripModel
       .findOne({ _id: id })
       .populate('driver', 'full_name phone_number')
-      .populate('company')
-      .populate('vehicle')
+      .populate('company', 'name')
+      .populate('vehicle', 'licence_plate vehicle_type')
       .lean()
       .exec();
 
@@ -332,8 +332,8 @@ export class TripsService {
         { new: true, returnDocument: 'after' },
       )
       .populate('driver', 'full_name phone_number')
-      .populate('company')
-      .populate('vehicle')
+      .populate('company', 'name')
+      .populate('vehicle', 'licence_plate vehicle_type')
       .lean()
       .exec();
 
@@ -354,7 +354,7 @@ export class TripsService {
             oldValue: existingTrip,
             newValue: updatedTrip,
           })
-          .catch((err) => console.error('Audit log failed', err));
+          .catch((err) => this.logger.error('Audit log failed', err instanceof Error ? err.stack : err));
       });
     }
 
@@ -366,7 +366,7 @@ export class TripsService {
 
   async remove(id: string): Promise<Trip> {
     const deletedTrip = await this.tripModel
-      .findByIdAndUpdate(id, { deleted: true }, { new: true })
+      .findOneAndUpdate({ _id: id }, { deleted: true }, { new: true })
       .exec();
 
     if (!deletedTrip) {

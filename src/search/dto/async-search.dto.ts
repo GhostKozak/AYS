@@ -9,6 +9,7 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UnloadStatus } from '../../trips/enums/unloadStatus';
+import { VerificationStatus } from '../../trips/enums/verificationStatus';
 import { VehicleType } from '../../vehicles/enums/vehicleTypes';
 
 export enum SearchModuleEnum {
@@ -55,10 +56,10 @@ export class AsyncSearchDto {
   @IsMongoId()
   vehicleId?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by field verification status (trips)', enum: ['PENDING', 'CONFIRMED', 'CANCELED'] })
+  @ApiPropertyOptional({ description: 'Filter by field verification status (trips)', enum: VerificationStatus })
   @IsOptional()
-  @IsEnum(['PENDING', 'CONFIRMED', 'CANCELED'])
-  status?: string;
+  @IsEnum(VerificationStatus)
+  status?: VerificationStatus;
 
   @ApiPropertyOptional({ description: 'Filter by unload status (trips)', enum: UnloadStatus })
   @IsOptional()

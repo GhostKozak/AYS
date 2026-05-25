@@ -1,20 +1,17 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   Injectable,
   ConflictException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import * as bcrypt from 'bcryptjs';
-import { I18nService } from 'nestjs-i18n';
-import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private readonly i18n: I18nService,
@@ -84,7 +81,7 @@ export class UsersService {
     }
 
     const updatedUser = await this.userModel
-      .findByIdAndUpdate(id, updateUserDto, { new: true, select: '-password' })
+      .findOneAndUpdate({ _id: id }, updateUserDto, { new: true, select: '-password' })
       .lean()
       .exec();
 
@@ -110,7 +107,7 @@ export class UsersService {
             oldValue: sanitizedExisting,
             newValue: sanitizedUpdated,
           })
-          .catch((err) => console.error('Audit log failed', err));
+          .catch((err) => this.logger.error('Audit log failed', err instanceof Error ? err.stack : err));
       });
     }
 
@@ -119,7 +116,7 @@ export class UsersService {
 
   async remove(id: string): Promise<void> {
     const result = await this.userModel
-      .findByIdAndUpdate(id, { deleted: true })
+      .findOneAndUpdate({ _id: id }, { deleted: true })
       .exec();
     if (!result) {
       throw new NotFoundException(this.i18n.translate('user.NOT_FOUND'));
@@ -128,7 +125,7 @@ export class UsersService {
 
   async updateLastLogin(id: string): Promise<void> {
     await this.userModel
-      .findByIdAndUpdate(id, { lastLoginAt: new Date() })
+      .findOneAndUpdate({ _id: id }, { lastLoginAt: new Date() })
       .exec();
   }
 
@@ -145,7 +142,7 @@ export class UsersService {
 
   async resetFailedLogins(id: string): Promise<void> {
     await this.userModel
-      .findByIdAndUpdate(id, {
+      .findOneAndUpdate({ _id: id }, {
         failedLoginAttempts: 0,
         $unset: { lockedUntil: 1 },
       })

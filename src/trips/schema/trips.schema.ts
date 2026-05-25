@@ -4,6 +4,7 @@ import { Company } from '../../companies/schemas/company.schema';
 import { Driver } from '../../drivers/schemas/driver.schema';
 import { Vehicle } from '../../vehicles/schema/vehicles.schema';
 import { UnloadStatus } from '../enums/unloadStatus';
+import { VerificationStatus } from '../enums/verificationStatus';
 import { SoftDeletePlugin } from '../../common/plugins/soft-delete.plugin';
 
 export type TripDocument = HydratedDocument<Trip>;
@@ -48,10 +49,10 @@ export class Trip {
 
   @Prop({
     type: String,
-    enum: ['PENDING', 'CONFIRMED', 'CANCELED'],
-    default: 'PENDING',
+    enum: VerificationStatus,
+    default: VerificationStatus.PENDING,
   })
-  status: string;
+  status: VerificationStatus;
 
   @Prop({ default: null })
   field_photo_path: string;

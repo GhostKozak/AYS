@@ -277,15 +277,15 @@ describe('TripsService', () => {
       const tripId = new Types.ObjectId().toString();
       const deletedTrip = { _id: tripId, deleted: true };
 
-      tripModel.findByIdAndUpdate.mockReturnValue({
+      tripModel.findOneAndUpdate.mockReturnValue({
         exec: jest.fn().mockResolvedValue(deletedTrip),
       } as any);
 
       const result = await service.remove(tripId);
 
       expect(result).toEqual(deletedTrip);
-      expect(tripModel.findByIdAndUpdate).toHaveBeenCalledWith(
-        tripId,
+      expect(tripModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: tripId },
         { deleted: true },
         { new: true },
       );
@@ -293,7 +293,7 @@ describe('TripsService', () => {
 
     it('should throw NotFoundException if trip to remove is not found', async () => {
       const tripId = new Types.ObjectId().toString();
-      tripModel.findByIdAndUpdate.mockReturnValue({
+      tripModel.findOneAndUpdate.mockReturnValue({
         exec: jest.fn().mockResolvedValue(null),
       } as any);
       await expect(service.remove(tripId)).rejects.toThrow(NotFoundException);

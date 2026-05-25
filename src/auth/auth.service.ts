@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcryptjs';
@@ -6,6 +6,7 @@ import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
@@ -45,7 +46,7 @@ export class AuthService {
         newValue: { email },
         ipAddress,
       })
-      .catch((err) => console.error('Audit log failed', err));
+      .catch((err) => this.logger.error('Audit log failed', err instanceof Error ? err.stack : err));
 
     return null;
   }
@@ -63,7 +64,7 @@ export class AuthService {
     setImmediate(() => {
       this.usersService
         .updateLastLogin(user._id)
-        .catch((err) => console.error('Last login update failed', err));
+        .catch((err) => this.logger.error('Last login update failed', err instanceof Error ? err.stack : err));
     });
 
     return {

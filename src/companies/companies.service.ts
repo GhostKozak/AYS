@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
@@ -16,6 +17,7 @@ import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class CompaniesService {
+  private readonly logger = new Logger(CompaniesService.name);
   constructor(
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     private readonly i18n: I18nService,
@@ -47,11 +49,13 @@ export class CompaniesService {
 
     if (existingCompany) {
       if (existingCompany.deleted) {
-        return (await this.companyModel.findByIdAndUpdate(
-          existingCompany._id,
-          { deleted: false },
-          { new: true },
-        )) as CompanyDocument;
+        return (await this.companyModel
+          .findOneAndUpdate(
+            { _id: existingCompany._id },
+            { deleted: false },
+            { new: true },
+          )
+          .exec()) as CompanyDocument;
       }
       return existingCompany as CompanyDocument;
     }
@@ -67,11 +71,13 @@ export class CompaniesService {
           .lean()
           .exec();
         if (raceConditionCompany?.deleted) {
-          return (await this.companyModel.findByIdAndUpdate(
-            raceConditionCompany._id,
-            { deleted: false },
-            { new: true },
-          )) as CompanyDocument;
+          return (await this.companyModel
+            .findOneAndUpdate(
+              { _id: raceConditionCompany._id },
+              { deleted: false },
+              { new: true },
+            )
+            .exec()) as CompanyDocument;
         }
         return raceConditionCompany as CompanyDocument;
       }
@@ -89,11 +95,13 @@ export class CompaniesService {
 
     if (existingCompany) {
       if (existingCompany.deleted) {
-        const savedCompany = await this.companyModel.findByIdAndUpdate(
-          existingCompany._id,
-          { deleted: false },
-          { new: true },
-        );
+        const savedCompany = await this.companyModel
+          .findOneAndUpdate(
+            { _id: existingCompany._id },
+            { deleted: false },
+            { new: true },
+          )
+          .exec();
         return savedCompany as Company;
       }
 
@@ -200,7 +208,7 @@ export class CompaniesService {
             oldValue: existingCompany,
             newValue: updatedCompany,
           })
-          .catch((err) => console.error('Audit log failed', err));
+          .catch((err) => this.logger.error('Audit log failed', err instanceof Error ? err.stack : err));
       });
     }
 
