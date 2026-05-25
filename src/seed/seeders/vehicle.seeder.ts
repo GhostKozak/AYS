@@ -45,7 +45,6 @@ export class VehicleSeeder {
         vehicles.push({
           licence_plate: licencePlate,
           vehicle_type: vehicleType,
-          company: company._id,
         });
       }
     }

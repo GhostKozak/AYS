@@ -184,9 +184,15 @@ export class TripsService {
 
   async findPendingVerification(): Promise<Trip[]> {
     return this.tripModel
-      .find({ status: 'PENDING', is_trip_canceled: false })
+      .find({
+        $or: [
+          { status: 'PENDING' },
+          { status: { $exists: false } },
+        ],
+        is_trip_canceled: false,
+      })
       .select(
-        'arrival_time departure_time unload_status is_in_parking_lot is_in_temporary_parking_lot has_gps_tracking parked_at notes company driver vehicle status field_photo_path seal_number field_verified_at',
+        'arrival_time departure_time unload_status is_in_parking_lot is_in_temporary_parking_lot has_gps_tracking parked_at is_trip_canceled createdAt updatedAt notes company driver vehicle status field_photo_path seal_number field_verified_at',
       )
       .sort({ arrival_time: 1 })
       .limit(200)
