@@ -59,8 +59,9 @@ export class TripsController {
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
   @ApiOperation({ summary: 'Get all pending field verification trips' })
   @ApiResponse({ status: 200, description: 'Return pending trips' })
-  getPendingVerification() {
-    return this.tripsService.findPendingVerification();
+  async getPendingVerification() {
+    const trips = await this.tripsService.findPendingVerification();
+    return { data: trips, count: trips.length };
   }
 
   @Get(':id')

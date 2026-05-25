@@ -44,13 +44,14 @@ export class AuditController {
     status: 200,
     description: 'Return all audit logs matching criteria',
   })
-  findAll(
+  async findAll(
     @Query('entity') entity?: string,
     @Query('entityId') entityId?: string,
   ) {
     const query: Record<string, string> = {};
     if (entity) query.entity = entity;
     if (entityId) query.entityId = entityId;
-    return this.auditService.findAll(query);
+    const logs = await this.auditService.findAll(query);
+    return { data: logs, count: logs.length };
   }
 }
