@@ -55,6 +55,9 @@ export class CompaniesController {
   @Get()
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
   @ApiOperation({ summary: 'Get all companies (paged)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of items to return' })
+  @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Number of items to skip' })
+  @ApiQuery({ name: 'search', required: false, description: 'Search term for company name' })
   @ApiResponse({ status: 200, description: 'Return paged companies' })
   findAll(@Query() filterCompanyDto: FilterCompanyDto, @GetUser() user: User) {
     const { limit, offset, ...filters } = filterCompanyDto;

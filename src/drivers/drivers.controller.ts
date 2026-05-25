@@ -65,6 +65,10 @@ export class DriversController {
   @Get()
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
   @ApiOperation({ summary: 'Get all drivers (paged)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of items to return' })
+  @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Number of items to skip' })
+  @ApiQuery({ name: 'companyId', required: false, description: 'Filter by company ID' })
+  @ApiQuery({ name: 'search', required: false, description: 'Search term for driver name or phone' })
   @ApiResponse({ status: 200, description: 'Return paged drivers' })
   findAll(@Query() filterDriverDto: FilterDriverDto, @GetUser() user: User) {
     const { limit, offset, ...filters } = filterDriverDto;

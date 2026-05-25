@@ -21,7 +21,7 @@ import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
 import { FilterTripDto } from './dto/filter-trip.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { ApiOperation, ApiResponse, ApiTags, ApiParam } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User, UserRole } from '../users/schemas/user.schema';
 import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
@@ -47,6 +47,14 @@ export class TripsController {
   @Get()
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
   @ApiOperation({ summary: 'Get all trips (paged)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of items to return' })
+  @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Number of items to skip' })
+  @ApiQuery({ name: 'companyId', required: false, description: 'Filter by company ID' })
+  @ApiQuery({ name: 'driverId', required: false, description: 'Filter by driver ID' })
+  @ApiQuery({ name: 'vehicleId', required: false, description: 'Filter by vehicle ID' })
+  @ApiQuery({ name: 'unload_status', required: false, description: 'Filter by unload status', enum: ['WAITING', 'UNLOADING', 'UNLOADED', 'COMPLETED', 'CANCELED', 'UNKNOWN'] })
+  @ApiQuery({ name: 'status', required: false, description: 'Filter by verification status', enum: ['PENDING', 'CONFIRMED', 'CANCELED'] })
+  @ApiQuery({ name: 'search', required: false, description: 'Search term for notes, driver, company, or plate' })
   @ApiResponse({ status: 200, description: 'Return paged trips' })
   findAll(@Query() filterTripDto: FilterTripDto, @GetUser() user: User) {
     const { limit, offset, ...filters } = filterTripDto;

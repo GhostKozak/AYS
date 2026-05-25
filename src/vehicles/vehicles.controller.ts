@@ -23,6 +23,7 @@ import {
   ApiResponse,
   ApiTags,
   ApiParam,
+  ApiQuery,
   ApiUnauthorizedResponse,
   ApiForbiddenResponse,
 } from '@nestjs/swagger';
@@ -55,6 +56,10 @@ export class VehiclesController {
   @Get()
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
   @ApiOperation({ summary: 'Get all vehicles (paged)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of items to return' })
+  @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Number of items to skip' })
+  @ApiQuery({ name: 'vehicle_type', required: false, description: 'Filter by vehicle type', enum: ['TRUCK', 'LORRY', 'VAN', 'TRAILER'] })
+  @ApiQuery({ name: 'search', required: false, description: 'Search term for licence plate' })
   @ApiResponse({ status: 200, description: 'Return paged vehicles' })
   findAll(@Query() filterVehicleDto: FilterVehicleDto, @GetUser() user: User) {
     const { limit, offset, ...filters } = filterVehicleDto;
