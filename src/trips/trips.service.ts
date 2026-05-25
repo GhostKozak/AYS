@@ -43,7 +43,7 @@ export class TripsService {
     try {
       await this.cacheManager.clear();
     } catch (err) {
-      console.warn('Search cache reset failed:', err);
+      this.logger.warn('Search cache reset failed', err as string);
     }
   }
 

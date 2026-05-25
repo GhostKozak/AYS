@@ -43,13 +43,17 @@ export function SoftDeletePlugin(schema: Schema) {
 
       const pipeline = this.pipeline();
       const hasDeletedMatch = pipeline.some(
-        (stage) =>
-          stage &&
-          typeof stage === 'object' &&
-          '$match' in stage &&
-          (stage as Record<string, unknown>).$match &&
-          typeof (stage as Record<string, unknown>).$match === 'object' &&
-          'deleted' in ((stage as Record<string, unknown>).$match as Record<string, unknown>),
+        (stage) => {
+          const s = stage as unknown as Record<string, unknown>;
+          return (
+            stage &&
+            typeof stage === 'object' &&
+            '$match' in stage &&
+            s.$match &&
+            typeof s.$match === 'object' &&
+            'deleted' in (s.$match as Record<string, unknown>)
+          );
+        },
       );
 
       if (hasDeletedMatch) {

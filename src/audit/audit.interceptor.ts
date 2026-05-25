@@ -4,6 +4,7 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
+  Logger,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -14,6 +15,7 @@ import { Request } from 'express';
 
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(AuditInterceptor.name);
   constructor(
     private readonly auditService: AuditService,
     private readonly reflector: Reflector,
@@ -68,7 +70,7 @@ export class AuditInterceptor implements NestInterceptor {
             ipAddress: ip,
             userAgent,
           })
-          .catch((err) => console.error('Audit log failed', err));
+          .catch((err) => this.logger.error('Audit log failed', err instanceof Error ? err.stack : err));
       }),
     );
   }
