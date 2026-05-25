@@ -40,7 +40,23 @@ export function SoftDeletePlugin(schema: Schema) {
       if (options.skipSoftDelete === true) {
         return next();
       }
-      this.pipeline().unshift({ $match: { deleted: { $ne: true } } });
+
+      const pipeline = this.pipeline();
+      const hasDeletedMatch = pipeline.some(
+        (stage) =>
+          stage &&
+          typeof stage === 'object' &&
+          '$match' in stage &&
+          (stage as Record<string, unknown>).$match &&
+          typeof (stage as Record<string, unknown>).$match === 'object' &&
+          'deleted' in ((stage as Record<string, unknown>).$match as Record<string, unknown>),
+      );
+
+      if (hasDeletedMatch) {
+        return next();
+      }
+
+      pipeline.unshift({ $match: { deleted: { $ne: true } } });
       next();
     },
   );
