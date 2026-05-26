@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
   ForbiddenException,
 } from '@nestjs/common';
+import { timingSafeEqual } from 'crypto';
 import { SeedService } from './seed.service';
 import { I18nService } from 'nestjs-i18n';
 import { Throttle } from '@nestjs/throttler';
@@ -29,9 +30,24 @@ export class SeedController {
   @ApiResponse({ status: 201, description: 'Admin user created successfully' })
   @ApiResponse({ status: 401, description: 'Invalid or missing seed secret' })
   async createAdmin(@Headers('x-seed-secret') secret: string) {
+    const isProd = process.env.NODE_ENV === 'production';
+    if (isProd) {
+      throw new ForbiddenException('Seeding is disabled in production.');
+    }
+
     const expectedSecret = process.env.SEED_ADMIN_SECRET;
 
-    if (!expectedSecret || secret !== expectedSecret) {
+    if (!expectedSecret) {
+      throw new UnauthorizedException('Seed secret is not configured');
+    }
+
+    const secretBuf = Buffer.from(secret);
+    const expectedBuf = Buffer.from(expectedSecret);
+
+    if (
+      secretBuf.length !== expectedBuf.length ||
+      !timingSafeEqual(secretBuf, expectedBuf)
+    ) {
       throw new UnauthorizedException('Invalid or missing seed secret');
     }
 
@@ -61,7 +77,17 @@ export class SeedController {
 
     const expectedSecret = process.env.SEED_ALL_SECRET;
 
-    if (!expectedSecret || secret !== expectedSecret) {
+    if (!expectedSecret) {
+      throw new UnauthorizedException('Seed secret is not configured');
+    }
+
+    const secretBuf = Buffer.from(secret);
+    const expectedBuf = Buffer.from(expectedSecret);
+
+    if (
+      secretBuf.length !== expectedBuf.length ||
+      !timingSafeEqual(secretBuf, expectedBuf)
+    ) {
       throw new UnauthorizedException('Invalid or missing seed secret');
     }
 
