@@ -8,13 +8,15 @@ import {
   Param,
   Delete,
   Query,
+  Res,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, join } from 'path';
 import { randomUUID } from 'crypto';
 import { TripsService } from './trips.service';
 import { CreateTripDto } from './dto/create-trip.dto';
@@ -144,6 +146,18 @@ export class TripsController {
       photoPath,
       user as any,
     );
+  }
+
+  @Get('field-photos/:filename')
+  @Roles(UserRole.ADMIN, UserRole.EDITOR)
+  @ApiOperation({ summary: 'Serve a field photo (auth required)' })
+  @ApiParam({ name: 'filename', description: 'Photo filename (photo-{uuid}.ext)' })
+  @ApiResponse({ status: 200, description: 'Photo file' })
+  @ApiResponse({ status: 404, description: 'Photo not found' })
+  @SkipAudit()
+  serveFieldPhoto(@Param('filename') filename: string, @Res() res: Response) {
+    const uploadDir = join(process.cwd(), 'uploads', 'field-photos');
+    res.sendFile(filename, { root: uploadDir });
   }
 
   @Delete(':id')

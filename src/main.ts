@@ -11,7 +11,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
-import * as express from 'express';
 import { join } from 'path';
 import * as fs from 'fs';
 
@@ -49,8 +48,6 @@ async function bootstrap() {
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
-
-  app.use('/uploads/field-photos', express.static(uploadDir));
 
   app.enableCors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
