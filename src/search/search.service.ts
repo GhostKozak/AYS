@@ -13,6 +13,9 @@ import { TripsService } from '../trips/trips.service';
 export class SearchService {
   private readonly logger = new Logger(SearchService.name);
 
+  /** Tracks which user owns which async search job */
+  private readonly jobOwners = new Map<string, string>();
+
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly eventsGateway: EventsGateway,
@@ -22,8 +25,9 @@ export class SearchService {
     private readonly tripsService: TripsService,
   ) {}
 
-  async createSearchJob(dto: AsyncSearchDto) {
+  async createSearchJob(dto: AsyncSearchDto, userId: string) {
     const jobId = randomUUID();
+    this.jobOwners.set(jobId, userId);
 
     // Non-blocking async execution
     setImmediate(() => {
@@ -32,11 +36,12 @@ export class SearchService {
           `Search job ${jobId} failed: ${err.message}`,
           err.stack,
         );
-        this.eventsGateway.emitSearchError({
+        this.eventsGateway.emitSearchErrorToUser(userId, {
           jobId,
           module: dto.module,
           error: 'search.error', // i18n key or simple message
         });
+        this.jobOwners.delete(jobId);
       });
     });
 
@@ -49,6 +54,12 @@ export class SearchService {
   }
 
   private async executeSearch(jobId: string, dto: AsyncSearchDto) {
+    const userId = this.jobOwners.get(jobId);
+    if (!userId) {
+      this.logger.warn(`No owner found for job ${jobId}, skipping emit`);
+      return;
+    }
+
     const startTime = Date.now();
 
     // Sort and clean filters to create a deterministic cache key
@@ -61,7 +72,7 @@ export class SearchService {
       count: number;
     }>(cacheKey);
     if (cachedData) {
-      this.eventsGateway.emitSearchResult({
+      this.eventsGateway.emitSearchResultToUser(userId, {
         jobId,
         module,
         data: cachedData.data,
@@ -69,6 +80,7 @@ export class SearchService {
         cached: true,
         durationMs: Date.now() - startTime,
       });
+      this.jobOwners.delete(jobId);
       return;
     }
 
@@ -119,8 +131,8 @@ export class SearchService {
     // without needing to store the key list in the cache itself.
     this.tripsService.registerSearchCacheKey(cacheKey);
 
-    // Emit result
-    this.eventsGateway.emitSearchResult({
+    // Emit result to the requesting user only
+    this.eventsGateway.emitSearchResultToUser(userId, {
       jobId,
       module,
       data: result.data,
@@ -128,5 +140,6 @@ export class SearchService {
       cached: false,
       durationMs: Date.now() - startTime,
     });
+    this.jobOwners.delete(jobId);
   }
 }

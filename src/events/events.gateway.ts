@@ -43,8 +43,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      await this.jwtService.verifyAsync(token);
-      this.logger.log(`Client connected: ${client.id}`);
+      const payload = await this.jwtService.verifyAsync<{ sub: string }>(token);
+      await client.join(`user:${payload.sub}`);
+      this.logger.log(`Client connected: ${client.id} (user:${payload.sub})`);
     } catch {
       this.logger.warn(`Client ${client.id} disconnected: Invalid token`);
       client.disconnect();
@@ -90,11 +91,36 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.emit('search_result', payload);
   }
 
+  emitSearchResultToUser(
+    userId: string,
+    payload: {
+      jobId: string;
+      module: string;
+      data: any[];
+      count: number;
+      cached: boolean;
+      durationMs: number;
+    },
+  ): void {
+    this.server.to(`user:${userId}`).emit('search_result', payload);
+  }
+
   emitSearchError(payload: {
     jobId: string;
     module: string;
     error: string;
   }): void {
     this.server.emit('search_error', payload);
+  }
+
+  emitSearchErrorToUser(
+    userId: string,
+    payload: {
+      jobId: string;
+      module: string;
+      error: string;
+    },
+  ): void {
+    this.server.to(`user:${userId}`).emit('search_error', payload);
   }
 }
