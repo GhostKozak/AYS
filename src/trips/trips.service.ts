@@ -26,6 +26,18 @@ import { VehiclesService } from '../vehicles/vehicles.service';
 @Injectable()
 export class TripsService {
   private readonly logger = new Logger(TripsService.name);
+
+  /**
+   * In-memory registry of active search cache keys.
+   * Using a Set instead of storing keys in the cache itself avoids:
+   *  - Race conditions (Set mutations are synchronous)
+   *  - TTL expiry causing the registry to disappear while keys linger
+   *  - An extra cache round-trip on every write
+   * Trade-off: keys are lost on process restart, but the cache itself is
+   * also in-memory so it resets too — no consistency problem.
+   */
+  private readonly searchCacheKeys = new Set<string>();
+
   constructor(
     @InjectModel(Trip.name) private tripModel: Model<TripDocument>,
     private readonly entityResolver: TripEntityResolverService,
@@ -38,12 +50,26 @@ export class TripsService {
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
-  /** Trip verisi değiştiğinde search cache'ini temizle */
+  /**
+   * Called by SearchService after caching a result so we can
+   * track which keys to invalidate when trip data changes.
+   */
+  registerSearchCacheKey(key: string): void {
+    this.searchCacheKeys.add(key);
+  }
+
+  /**
+   * Deletes only the search-related cache entries tracked in the
+   * in-memory registry. Does NOT touch report or dashboard cache.
+   */
   private async invalidateSearchCache(): Promise<void> {
+    if (this.searchCacheKeys.size === 0) return;
+    const keys = [...this.searchCacheKeys];
+    this.searchCacheKeys.clear(); // clear first — if del fails we still reset
     try {
-      await this.cacheManager.clear();
+      await Promise.all(keys.map((key) => this.cacheManager.del(key)));
     } catch (err) {
-      this.logger.warn('Search cache reset failed', err as string);
+      this.logger.warn('Search cache invalidation failed', err as string);
     }
   }
 
@@ -377,6 +403,7 @@ export class TripsService {
 
     // Broadcast real-time event
     this.eventsGateway.emitTripDeleted(id);
+    void this.invalidateSearchCache();
 
     return deletedTrip;
   }

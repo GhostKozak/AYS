@@ -115,6 +115,10 @@ export class SearchService {
     // Cache the result. TTL uses the CACHE_MANAGER global config.
     await this.cacheManager.set(cacheKey, result);
 
+    // Register key in TripsService so it can be invalidated on trip mutations
+    // without needing to store the key list in the cache itself.
+    this.tripsService.registerSearchCacheKey(cacheKey);
+
     // Emit result
     this.eventsGateway.emitSearchResult({
       jobId,
