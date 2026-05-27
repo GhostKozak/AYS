@@ -16,6 +16,7 @@ import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { FilterTripDto } from './dto/filter-trip.dto';
 import { I18nService } from 'nestjs-i18n';
 import { UnloadStatus } from './enums/unloadStatus';
+import { VerificationStatus } from './enums/verificationStatus';
 import { AuditService } from '../audit/audit.service';
 import { EventsGateway } from '../events/events.gateway';
 import { TripEntityResolverService } from './trip-entity-resolver.service';
@@ -337,12 +338,11 @@ export class TripsService {
       );
     }
 
-    // Since trips.schema.ts might not have been fully re-typed yet, we cast to any
-    if ((existingTrip as any).is_trip_canceled) {
+    if (existingTrip.is_trip_canceled) {
       throw new ConflictException('Canceled trips cannot be verified.');
     }
 
-    if ((existingTrip as any).status !== 'PENDING') {
+    if (existingTrip.status !== VerificationStatus.PENDING) {
       throw new ConflictException('This trip is already verified or canceled.');
     }
 
