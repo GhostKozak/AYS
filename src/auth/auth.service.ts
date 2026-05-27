@@ -31,7 +31,7 @@ export class AuthService {
 
     if (user.lockedUntil && user.lockedUntil > new Date()) {
       throw new UnauthorizedException(
-        'Hesabınız çok fazla hatalı giriş nedeniyle kilitlendi. Lütfen daha sonra tekrar deneyin.',
+        'Your account has been locked due to too many failed login attempts. Please try again later.',
       );
     }
 
