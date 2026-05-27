@@ -29,11 +29,11 @@ import { Res } from '@nestjs/common';
 @Controller('reports')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN, UserRole.EDITOR)
-@UseInterceptors(CacheInterceptor)
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Get('top-companies')
+  @UseInterceptors(CacheInterceptor)
   @ApiOperation({ summary: 'Get top companies with most trips' })
   @ApiQuery({
     name: 'period',
@@ -67,6 +67,7 @@ export class ReportsController {
   }
 
   @Get('unload-waiting')
+  @UseInterceptors(CacheInterceptor)
   @ApiOperation({ summary: 'Get stats of vehicles waiting to unload' })
   @ApiQuery({
     name: 'period',
@@ -95,6 +96,7 @@ export class ReportsController {
   }
 
   @Get('dashboard-summary')
+  @UseInterceptors(CacheInterceptor)
   @ApiOperation({ summary: 'Get general dashboard summary' })
   @ApiQuery({
     name: 'period',
@@ -114,6 +116,7 @@ export class ReportsController {
   }
 
   @Get('parking-lot-dashboard')
+  @UseInterceptors(CacheInterceptor)
   @ApiOperation({
     summary: 'Get parking lot vehicle status breakdown for dashboard widget',
   })
@@ -136,6 +139,7 @@ export class ReportsController {
   }
 
   @Get('status-distribution')
+  @UseInterceptors(CacheInterceptor)
   @ApiOperation({
     summary: 'Get distribution of trip statuses and parking lot occupancy',
   })
@@ -160,6 +164,7 @@ export class ReportsController {
   }
 
   @Get('average-turnaround')
+  @UseInterceptors(CacheInterceptor)
   @ApiOperation({
     summary: 'Get average turnaround time (arrival to departure) in minutes',
   })
@@ -187,6 +192,7 @@ export class ReportsController {
   }
 
   @Get('trend')
+  @UseInterceptors(CacheInterceptor)
   @ApiOperation({ summary: 'Get time-series trend of trips' })
   @ApiQuery({
     name: 'period',
