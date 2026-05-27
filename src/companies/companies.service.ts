@@ -70,7 +70,10 @@ export class CompaniesService {
           .findOne({ name })
           .lean()
           .exec();
-        if (raceConditionCompany?.deleted) {
+        if (!raceConditionCompany) {
+          throw error;
+        }
+        if (raceConditionCompany.deleted) {
           return (await this.companyModel
             .findOneAndUpdate(
               { _id: raceConditionCompany._id },
