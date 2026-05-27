@@ -37,3 +37,8 @@ export class AuditLog {
 export const AuditLogSchema = SchemaFactory.createForClass(AuditLog);
 AuditLogSchema.index({ entity: 1, entityId: 1 });
 AuditLogSchema.index({ user: 1 });
+// Auto-expire logs after 90 days
+AuditLogSchema.index(
+  { createdAt: 1 },
+  { expireAfterSeconds: 90 * 24 * 60 * 60 },
+);
