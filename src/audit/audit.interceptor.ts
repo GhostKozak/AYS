@@ -65,8 +65,8 @@ export class AuditInterceptor implements NestInterceptor {
             entityId: String(
               (response as any)?._id || (response as any)?.id || 'N/A',
             ),
-            oldValue: method === 'DELETE' ? this.sanitize(response) : null,
-            newValue: method !== 'DELETE' ? this.sanitize(body) : null,
+            oldValue: method === 'DELETE' ? this.truncate(this.sanitize(response)) : null,
+            newValue: method !== 'DELETE' ? this.truncate(this.sanitize(body)) : null,
             ipAddress: ip,
             userAgent,
           })
@@ -93,5 +93,11 @@ export class AuditInterceptor implements NestInterceptor {
       }
     }
     return sanitized;
+  }
+
+  private truncate(data: unknown): unknown {
+    const str = JSON.stringify(data);
+    if (!str || str.length <= 10000) return data;
+    return { _truncated: true, originalSize: str.length, preview: str.slice(0, 10000) };
   }
 }
