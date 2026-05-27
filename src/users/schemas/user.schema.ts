@@ -1,14 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { SoftDeletePlugin } from '../../common/plugins/soft-delete.plugin';
-
-export enum UserRole {
-  ADMIN = 'admin',
-  EDITOR = 'editor',
-  VIEWER = 'viewer',
-  USER = 'user',
-}
-
 @Schema({ timestamps: true })
 export class User extends Document {
   @Prop({ required: true, unique: true })
@@ -46,4 +37,3 @@ export class User extends Document {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-UserSchema.plugin(SoftDeletePlugin);

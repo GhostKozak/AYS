@@ -5,8 +5,6 @@ import { Driver } from '../../drivers/schemas/driver.schema';
 import { Vehicle } from '../../vehicles/schema/vehicles.schema';
 import { UnloadStatus } from '../enums/unloadStatus';
 import { VerificationStatus } from '../enums/verificationStatus';
-import { SoftDeletePlugin } from '../../common/plugins/soft-delete.plugin';
-
 export type TripDocument = HydratedDocument<Trip>;
 
 @Schema({
@@ -68,7 +66,6 @@ export class Trip {
 }
 
 export const TripSchema = SchemaFactory.createForClass(Trip);
-TripSchema.plugin(SoftDeletePlugin);
 
 TripSchema.index({ vehicle: 1, driver: 1, company: 1, arrival_time: -1 });
 TripSchema.index({ unload_status: 1, arrival_time: -1 });

@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import { Company } from '../../companies/schemas/company.schema';
-import { SoftDeletePlugin } from '../../common/plugins/soft-delete.plugin';
 
 export type DriverDocument = HydratedDocument<Driver>;
 
@@ -23,6 +22,5 @@ export class Driver {
 }
 
 export const DriverSchema = SchemaFactory.createForClass(Driver);
-DriverSchema.plugin(SoftDeletePlugin);
 
 DriverSchema.index({ full_name: 'text' });
