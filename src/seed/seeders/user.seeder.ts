@@ -56,8 +56,8 @@ export class UserSeeder {
         password: hashedPassword,
         firstName: 'System',
         lastName: 'Internal',
-        role: UserRole.ADMIN,
-        isActive: true,
+        role: UserRole.USER,
+        isActive: false,
       });
 
       await systemUser.save();
