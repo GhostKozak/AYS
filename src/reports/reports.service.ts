@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 import { Injectable, BadRequestException } from '@nestjs/common';
+import type { Response } from 'express';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PipelineStage, FilterQuery, Types } from 'mongoose';
 import { Trip, TripDocument } from '../trips/schema/trips.schema';
@@ -340,7 +341,7 @@ export class ReportsService {
 
   async exportTripsToExcel(
     period: ReportPeriod,
-    response: any,
+    response: Response,
     excludeStatus?: string | string[],
   ): Promise<void> {
     const dateQuery = this.getDateRange(period);
@@ -405,7 +406,7 @@ export class ReportsService {
 
   async exportTripsToPdf(
     period: ReportPeriod,
-    response: any,
+    response: Response,
     excludeStatus?: string | string[],
   ): Promise<void> {
     const dateQuery = this.getDateRange(period);

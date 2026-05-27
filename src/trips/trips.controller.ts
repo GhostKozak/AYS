@@ -136,7 +136,7 @@ export class TripsController {
   async fieldVerify(
     @Param('id', ParseMongoIdPipe) id: string,
     @Body('seal_number') sealNumber: string,
-    @UploadedFile() file: any,
+    @UploadedFile() file: Express.Multer.File,
     @GetUser() user: User,
   ) {
     if (!file) {
