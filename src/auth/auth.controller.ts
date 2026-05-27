@@ -15,6 +15,7 @@ import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { GetUser } from './decorators/get-user.decorator';
 import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
+import { TokenBlacklistService } from './token-blacklist.service';
 import {
   ApiBody,
   ApiOperation,
@@ -28,7 +29,10 @@ import { Throttle } from '@nestjs/throttler';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly tokenBlacklistService: TokenBlacklistService,
+  ) {}
 
   @Throttle({ auth: { limit: 5, ttl: 60000 } })
   @UseGuards(LocalAuthGuard)
@@ -96,9 +100,14 @@ export class AuthController {
   @ApiOkResponse({ description: 'Logout successful' })
   async logout(
     @GetUser('userId') userId: string,
+    @GetUser('jti') jti: string | undefined,
+    @GetUser('exp') exp: number | undefined,
     @Res({ passthrough: true }) res: Response,
   ) {
     await this.authService.clearRefreshToken(userId);
+    if (jti && exp) {
+      this.tokenBlacklistService.add(jti, exp);
+    }
 
     res.clearCookie('access_token', {
       httpOnly: true,

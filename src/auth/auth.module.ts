@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
+import { TokenBlacklistService } from './token-blacklist.service';
 import { AuditModule } from '../audit/audit.module';
 
 @Module({
@@ -24,7 +25,7 @@ import { AuditModule } from '../audit/audit.module';
     AuditModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy],
-  exports: [AuthService, JwtModule],
+  providers: [AuthService, JwtStrategy, LocalStrategy, TokenBlacklistService],
+  exports: [AuthService, JwtModule, TokenBlacklistService],
 })
 export class AuthModule {}

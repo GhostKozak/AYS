@@ -9,6 +9,7 @@ import { UsersService } from '../users/users.service';
 import { randomUUID, createHash } from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import { AuditService } from '../audit/audit.service';
+import { TokenBlacklistService } from './token-blacklist.service';
 
 const REFRESH_TOKEN_EXPIRY_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
 
@@ -19,6 +20,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private readonly auditService: AuditService,
+    private readonly tokenBlacklistService: TokenBlacklistService,
   ) {}
 
   async validateUser(
@@ -77,7 +79,7 @@ export class AuthService {
     firstName: string;
     lastName: string;
   }) {
-    const payload = { email: user.email, sub: user._id, role: user.role };
+    const payload = { email: user.email, sub: user._id, role: user.role, jti: this.tokenBlacklistService.generateJti() };
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = await this.generateRefreshToken(user._id);
 
@@ -111,6 +113,7 @@ export class AuthService {
       email: user.email,
       sub: (user._id as string).toString(),
       role: user.role,
+      jti: this.tokenBlacklistService.generateJti(),
     };
     const accessToken = this.jwtService.sign(payload);
     const newRefreshToken = await this.generateRefreshToken(
