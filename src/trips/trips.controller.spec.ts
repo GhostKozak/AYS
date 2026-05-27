@@ -59,6 +59,7 @@ describe('TripsController', () => {
         driver_phone_number: '5551234567',
         company_name: 'Test Company',
         licence_plate: '34ABC123',
+        arrival_time: new Date().toISOString(),
       };
       const expectedTrip = {
         _id: new Types.ObjectId(),

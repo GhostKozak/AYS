@@ -6,6 +6,7 @@ import {
   Res,
   ParseIntPipe,
   DefaultValuePipe,
+  UseGuards,
 } from '@nestjs/common';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { ReportsService } from './reports.service';
@@ -24,7 +25,6 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { Response } from 'express';
-import { Res } from '@nestjs/common';
 
 @ApiTags('reports')
 @ApiBearerAuth('access-token')

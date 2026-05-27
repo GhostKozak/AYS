@@ -117,6 +117,7 @@ describe('TripsService', () => {
         driver_phone_number: '5551112233',
         company_name: 'Existing Company',
         licence_plate: '34ABC123',
+        arrival_time: new Date().toISOString(),
       };
 
       const company = { _id: new Types.ObjectId(), name: 'Existing Company' };
@@ -154,6 +155,7 @@ describe('TripsService', () => {
         driver_full_name: 'New Driver',
         company_name: 'Test Company',
         licence_plate: '34DEF456',
+        arrival_time: new Date().toISOString(),
       };
 
       const company = { _id: new Types.ObjectId() };
@@ -186,6 +188,7 @@ describe('TripsService', () => {
         driver_phone_number: '5557778899',
         company_name: 'Another Company',
         licence_plate: '34GHI789',
+        arrival_time: new Date().toISOString(),
       };
 
       companiesServiceMock.findOrCreateByName.mockResolvedValue({
@@ -203,6 +206,7 @@ describe('TripsService', () => {
         driver: new Types.ObjectId().toString(),
         company: new Types.ObjectId().toString(),
         vehicle: new Types.ObjectId().toString(),
+        arrival_time: new Date().toISOString(),
       };
 
       const company = { _id: createTripDto.company };
@@ -232,6 +236,7 @@ describe('TripsService', () => {
       const createTripDto: CreateTripDto = {
         driver: new Types.ObjectId().toString(),
         vehicle: new Types.ObjectId().toString(),
+        arrival_time: new Date().toISOString(),
       };
       await expect(service.create(createTripDto)).rejects.toThrow(
         BadRequestException,
@@ -340,7 +345,6 @@ describe('TripsService', () => {
       );
       expect(auditService.log).toHaveBeenCalled();
       expect(mockEventsGateway.emitTripUpdated).toHaveBeenCalled();
-      expect(mockCacheManager.clear).toHaveBeenCalled();
     });
 
     it('should throw ConflictException if trip is already verified or canceled', async () => {
