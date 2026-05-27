@@ -5,17 +5,23 @@ import {
   UseGuards,
   Request,
   Res,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { Response, Request as ExpressRequest } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from '../users/dto/login.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { GetUser } from './decorators/get-user.decorator';
+import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
 import {
   ApiBody,
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
   ApiOkResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
@@ -33,7 +39,7 @@ export class AuthController {
     description: 'Login successful, returns access token and user info',
   })
   @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
-  login(
+  async login(
     @Request()
     req: ExpressRequest & {
       user: {
@@ -46,9 +52,9 @@ export class AuthController {
     },
     @Res({ passthrough: true }) res: Response,
   ) {
-    const authData = this.authService.login(req.user);
+    const authData = await this.authService.login(req.user);
 
-    // Set secure HttpOnly cookie
+    // Set secure HttpOnly cookie for access token
     res.cookie('access_token', authData.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -60,10 +66,40 @@ export class AuthController {
     return authData;
   }
 
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @SkipAudit()
+  @ApiOperation({ summary: 'Refresh access token using refresh token' })
+  @ApiOkResponse({ description: 'Tokens refreshed successfully' })
+  @ApiUnauthorizedResponse({ description: 'Invalid or expired refresh token' })
+  async refresh(
+    @Body('refresh_token') refreshToken: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const authData = await this.authService.refreshTokens(refreshToken);
+
+    res.cookie('access_token', authData.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60 * 24,
+      path: '/',
+    });
+
+    return authData;
+  }
+
   @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Logout and clear the HttpOnly cookie' })
   @ApiOkResponse({ description: 'Logout successful' })
-  logout(@Res({ passthrough: true }) res: Response) {
+  async logout(
+    @GetUser('userId') userId: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    await this.authService.clearRefreshToken(userId);
+
     res.clearCookie('access_token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

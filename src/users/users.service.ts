@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { createHash } from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import { User } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -149,6 +150,37 @@ export class UsersService {
       .findOneAndUpdate({ _id: id }, {
         failedLoginAttempts: 0,
         $unset: { lockedUntil: 1 },
+      })
+      .exec();
+  }
+
+  async storeRefreshToken(
+    id: string,
+    refreshTokenHash: string,
+    expiresAt: Date,
+  ): Promise<void> {
+    await this.userModel
+      .findByIdAndUpdate(id, {
+        refreshTokenHash,
+        refreshTokenExpiresAt: expiresAt,
+      })
+      .exec();
+  }
+
+  async findByRefreshToken(token: string): Promise<User | null> {
+    const hash = createHash('sha256').update(token).digest('hex');
+    return this.userModel
+      .findOne({
+        refreshTokenHash: hash,
+        refreshTokenExpiresAt: { $gt: new Date() },
+      })
+      .exec();
+  }
+
+  async clearRefreshToken(id: string): Promise<void> {
+    await this.userModel
+      .findByIdAndUpdate(id, {
+        $unset: { refreshTokenHash: 1, refreshTokenExpiresAt: 1 },
       })
       .exec();
   }

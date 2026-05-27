@@ -1,8 +1,16 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  Logger,
+  ForbiddenException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
+import { randomUUID, createHash } from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import { AuditService } from '../audit/audit.service';
+
+const REFRESH_TOKEN_EXPIRY_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
 
 @Injectable()
 export class AuthService {
@@ -51,7 +59,7 @@ export class AuthService {
     return null;
   }
 
-  login(user: {
+  async login(user: {
     _id: string;
     email: string;
     role: string;
@@ -59,6 +67,8 @@ export class AuthService {
     lastName: string;
   }) {
     const payload = { email: user.email, sub: user._id, role: user.role };
+    const accessToken = this.jwtService.sign(payload);
+    const refreshToken = await this.generateRefreshToken(user._id);
 
     // Update last login time (Detached)
     setImmediate(() => {
@@ -68,7 +78,8 @@ export class AuthService {
     });
 
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: accessToken,
+      refresh_token: refreshToken,
       user: {
         id: user._id,
         email: user.email,
@@ -77,5 +88,49 @@ export class AuthService {
         role: user.role,
       },
     };
+  }
+
+  async refreshTokens(refreshToken: string) {
+    const user = await this.usersService.findByRefreshToken(refreshToken);
+    if (!user) {
+      throw new ForbiddenException('Invalid or expired refresh token');
+    }
+
+    const payload = {
+      email: user.email,
+      sub: (user._id as string).toString(),
+      role: user.role,
+    };
+    const accessToken = this.jwtService.sign(payload);
+    const newRefreshToken = await this.generateRefreshToken(
+      (user._id as string).toString(),
+    );
+
+    return {
+      access_token: accessToken,
+      refresh_token: newRefreshToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+      },
+    };
+  }
+
+  async clearRefreshToken(userId: string): Promise<void> {
+    await this.usersService.clearRefreshToken(userId);
+  }
+
+  private async generateRefreshToken(userId: string): Promise<string> {
+    const token = randomUUID();
+    const hash = createHash('sha256').update(token).digest('hex');
+    await this.usersService.storeRefreshToken(
+      userId,
+      hash,
+      new Date(Date.now() + REFRESH_TOKEN_EXPIRY_MS),
+    );
+    return token;
   }
 }
