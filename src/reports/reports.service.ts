@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, PipelineStage, FilterQuery } from 'mongoose';
+import { Model, PipelineStage, FilterQuery, Types } from 'mongoose';
 import { Trip, TripDocument } from '../trips/schema/trips.schema';
 import { Company, CompanyDocument } from '../companies/schemas/company.schema';
 import { Driver, DriverDocument } from '../drivers/schemas/driver.schema';
@@ -263,6 +263,9 @@ export class ReportsService {
     };
 
     if (companyId) {
+      if (!Types.ObjectId.isValid(companyId)) {
+        throw new BadRequestException('Invalid companyId');
+      }
       matchQuery.company = companyId;
     }
 
@@ -301,6 +304,9 @@ export class ReportsService {
     };
 
     if (companyId) {
+      if (!Types.ObjectId.isValid(companyId)) {
+        throw new BadRequestException('Invalid companyId');
+      }
       matchQuery.company = companyId;
     }
 
