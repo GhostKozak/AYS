@@ -431,8 +431,9 @@ export class ReportsService {
     const doc = new PDFDocument({ margin: 30, size: 'A4' });
     doc.pipe(response);
 
-    const fontPath = '/usr/share/fonts/TTF/DejaVuSans.ttf';
-    const boldFontPath = '/usr/share/fonts/TTF/DejaVuSans-Bold.ttf';
+    const fontBase = process.env.FONT_DIR || '/usr/share/fonts/TTF';
+    const fontPath = `${fontBase}/DejaVuSans.ttf`;
+    const boldFontPath = `${fontBase}/DejaVuSans-Bold.ttf`;
 
     try {
       doc.font(fontPath);

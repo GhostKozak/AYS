@@ -2,8 +2,10 @@ import {
   Controller,
   Get,
   Query,
-  UseGuards,
   UseInterceptors,
+  Res,
+  ParseIntPipe,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { ReportsService } from './reports.service';
@@ -56,7 +58,7 @@ export class ReportsController {
   @ApiResponse({ status: 200, description: 'Return top companies list' })
   getTopCompanies(
     @Query() query: ReportQueryDto,
-    @Query('limit') limit?: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('sortBy') sortBy?: string,
   ) {
     return this.reportsService.getTopCompanies(
