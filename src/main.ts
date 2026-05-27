@@ -44,6 +44,9 @@ async function bootstrap() {
   app.use(compression());
   app.use(cookieParser());
 
+  // Trust first proxy so rate limiter gets real client IP from X-Forwarded-For
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+
   const uploadDir = join(process.cwd(), 'uploads', 'field-photos');
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
