@@ -388,11 +388,7 @@ export class ReportsService {
       .addRow(['Arrival Time', 'Company', 'Plate', 'Driver', 'Status', 'Notes'])
       .commit();
 
-    for (
-      let trip = await cursor.next();
-      trip != null;
-      trip = await cursor.next()
-    ) {
+    for await (const trip of cursor) {
       worksheet
         .addRow([
           dayjs(trip.arrival_time).format('YYYY-MM-DD HH:mm'),
@@ -482,11 +478,7 @@ export class ReportsService {
     doc.moveDown();
 
     const tableRows: string[][] = [];
-    for (
-      let trip = await cursor.next();
-      trip != null;
-      trip = await cursor.next()
-    ) {
+    for await (const trip of cursor) {
       tableRows.push([
         dayjs(trip.arrival_time).format('DD.MM.YYYY HH:mm'),
         trip.company?.name || 'N/A',
