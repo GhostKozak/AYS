@@ -62,8 +62,8 @@ export class TripSeeder {
       }
     }
 
-    for (const tripData of trips) {
-      await this.tripModel.create(tripData);
+    if (trips.length > 0) {
+      await this.tripModel.insertMany(trips, { ordered: false });
     }
     this.logger.log(`Trips seeded: ${trips.length}`);
   }
