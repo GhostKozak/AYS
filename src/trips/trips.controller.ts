@@ -18,6 +18,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { randomUUID } from 'crypto';
+import * as fs from 'fs';
 import { TripsService } from './trips.service';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
@@ -130,7 +131,7 @@ export class TripsController {
   @ApiOperation({ summary: 'Physically verify trip in the field' })
   @ApiParam({ name: 'id', description: 'Trip MongoDB ID' })
   @ApiResponse({ status: 200, description: 'Trip verified successfully' })
-  fieldVerify(
+  async fieldVerify(
     @Param('id', ParseMongoIdPipe) id: string,
     @Body('seal_number') sealNumber: string,
     @UploadedFile() file: any,
@@ -139,6 +140,15 @@ export class TripsController {
     if (!file) {
       throw new BadRequestException('Vehicle/plate photo is required.');
     }
+
+    // Validate file content via magic bytes (not just MIME type)
+    if (!isValidImageFile(file.path)) {
+      fs.unlink(file.path, () => {});
+      throw new BadRequestException(
+        'Invalid file content: not a valid JPEG or PNG image.',
+      );
+    }
+
     const photoPath = `/uploads/field-photos/${file.filename}`;
     return this.tripsService.fieldVerify(
       id,
@@ -168,4 +178,19 @@ export class TripsController {
   remove(@Param('id', ParseMongoIdPipe) id: string) {
     return this.tripsService.remove(id);
   }
+}
+
+/** JPEG: FF D8 FF — PNG: 89 50 4E 47 0D 0A 1A 0A */
+function isValidImageFile(filePath: string): boolean {
+  const fd = fs.openSync(filePath, 'r');
+  const buf = Buffer.alloc(8);
+  fs.readSync(fd, buf, 0, 8, 0);
+  fs.closeSync(fd);
+
+  // JPEG: starts with FF D8 FF
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return true;
+
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  const pngSig = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  return buf.equals(pngSig);
 }
