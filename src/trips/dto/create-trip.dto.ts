@@ -103,9 +103,8 @@ export class CreateTripDto {
     description: 'Arrival time',
     example: '2024-03-20T18:00:00Z',
   })
-  @IsOptional()
   @IsDateString()
-  arrival_time?: string;
+  arrival_time: string;
 
   @ApiPropertyOptional({ description: 'Unload status', enum: UnloadStatus })
   @IsOptional()
