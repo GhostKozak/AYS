@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, UseGuards, Query, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
 import { AuditService } from './audit.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -47,11 +47,12 @@ export class AuditController {
   async findAll(
     @Query('entity') entity?: string,
     @Query('entityId') entityId?: string,
+    @Query('limit', new DefaultValuePipe(100), ParseIntPipe) limit?: number,
+    @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset?: number,
   ) {
     const query: Record<string, string> = {};
     if (entity) query.entity = entity;
     if (entityId) query.entityId = entityId;
-    const logs = await this.auditService.findAll(query);
-    return { data: logs, count: logs.length };
+    return this.auditService.findAll(query, limit, offset);
   }
 }

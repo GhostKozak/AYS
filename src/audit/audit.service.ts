@@ -110,12 +110,21 @@ export class AuditService implements OnModuleInit {
     return 'SYSTEM';
   }
 
-  async findAll(query: FilterQuery<AuditLogDocument> = {}) {
-    return this.auditLogModel
-      .find(query)
-      .populate('user', 'firstName lastName email role')
-      .sort({ createdAt: -1 })
-      .limit(100)
-      .exec();
+  async findAll(
+    query: FilterQuery<AuditLogDocument> = {},
+    limit = 100,
+    offset = 0,
+  ) {
+    const [logs, count] = await Promise.all([
+      this.auditLogModel
+        .find(query)
+        .populate('user', 'firstName lastName email role')
+        .sort({ createdAt: -1 })
+        .skip(offset)
+        .limit(limit)
+        .exec(),
+      this.auditLogModel.countDocuments(query).exec(),
+    ]);
+    return { data: logs, count };
   }
 }

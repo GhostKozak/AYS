@@ -70,9 +70,11 @@ export class TripsController {
   @Roles(UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER)
   @ApiOperation({ summary: 'Get all pending field verification trips' })
   @ApiResponse({ status: 200, description: 'Return pending trips' })
-  async getPendingVerification() {
-    const trips = await this.tripsService.findPendingVerification();
-    return { data: trips, count: trips.length };
+  async getPendingVerification(
+    @Query('limit', new DefaultValuePipe(200), ParseIntPipe) limit?: number,
+    @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset?: number,
+  ) {
+    return this.tripsService.findPendingVerification(limit, offset);
   }
 
   @Get(':id')

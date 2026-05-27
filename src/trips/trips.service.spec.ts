@@ -265,10 +265,14 @@ describe('TripsService', () => {
       const pendingTrips = [
         { _id: '1', status: 'PENDING', is_trip_canceled: false },
       ];
+      const count = 1;
       tripModel.find.mockReturnValue(mockQuery(pendingTrips));
+      tripModel.countDocuments.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(count),
+      } as any);
 
       const result = await service.findPendingVerification();
-      expect(result).toEqual(pendingTrips);
+      expect(result).toEqual({ data: pendingTrips, count });
       expect(tripModel.find).toHaveBeenCalledWith({
         $or: [{ status: 'PENDING' }, { status: { $exists: false } }],
         is_trip_canceled: false,
@@ -276,10 +280,14 @@ describe('TripsService', () => {
     });
 
     it('should return empty array when no pending trips', async () => {
+      const count = 0;
       tripModel.find.mockReturnValue(mockQuery([]));
+      tripModel.countDocuments.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(count),
+      } as any);
 
       const result = await service.findPendingVerification();
-      expect(result).toEqual([]);
+      expect(result).toEqual({ data: [], count });
     });
   });
 

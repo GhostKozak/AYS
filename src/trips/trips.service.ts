@@ -210,25 +210,34 @@ export class TripsService {
     };
   }
 
-  async findPendingVerification(): Promise<Trip[]> {
-    return this.tripModel
-      .find({
-        $or: [
-          { status: 'PENDING' },
-          { status: { $exists: false } },
-        ],
-        is_trip_canceled: false,
-      })
-      .select(
-        'arrival_time departure_time unload_status is_in_parking_lot is_in_temporary_parking_lot has_gps_tracking parked_at is_trip_canceled createdAt updatedAt notes company driver vehicle status field_photo_path seal_number field_verified_at',
-      )
-      .sort({ arrival_time: 1 })
-      .limit(200)
-      .populate('driver', 'full_name phone_number')
-      .populate('company', 'name')
-      .populate('vehicle', 'licence_plate vehicle_type')
-      .lean()
-      .exec() as unknown as Promise<Trip[]>;
+  async findPendingVerification(
+    limit = 200,
+    offset = 0,
+  ): Promise<{ data: Trip[]; count: number }> {
+    const query = {
+      $or: [
+        { status: 'PENDING' },
+        { status: { $exists: false } },
+      ],
+      is_trip_canceled: false,
+    };
+    const [data, count] = await Promise.all([
+      this.tripModel
+        .find(query)
+        .select(
+          'arrival_time departure_time unload_status is_in_parking_lot is_in_temporary_parking_lot has_gps_tracking parked_at is_trip_canceled createdAt updatedAt notes company driver vehicle status field_photo_path seal_number field_verified_at',
+        )
+        .sort({ arrival_time: 1 })
+        .skip(offset)
+        .limit(limit)
+        .populate('driver', 'full_name phone_number')
+        .populate('company', 'name')
+        .populate('vehicle', 'licence_plate vehicle_type')
+        .lean()
+        .exec() as unknown as Promise<Trip[]>,
+      this.tripModel.countDocuments(query).exec(),
+    ]);
+    return { data, count };
   }
 
   async findOne(id: string, showDeleted = false): Promise<Trip> {
@@ -426,11 +435,10 @@ export class TripsService {
       return true; // Default to true if no status provided (vehicle just arrived)
     }
 
-    const parkingStatuses = [
-      UnloadStatus.WAITING,
-      UnloadStatus.UNLOADING,
-      UnloadStatus.UNLOADED,
+    const nonParkingStatuses = [
+      UnloadStatus.COMPLETED,
+      UnloadStatus.CANCELED,
     ];
-    return parkingStatuses.includes(unloadStatus as UnloadStatus);
+    return !nonParkingStatuses.includes(unloadStatus as UnloadStatus);
   }
 }
