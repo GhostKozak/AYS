@@ -134,15 +134,24 @@ export class UsersService {
       .exec();
   }
 
-  async incrementFailedLogins(id: string): Promise<User | null> {
-    const user = await this.userModel.findById(id).exec();
-    if (!user) return null;
+  async incrementFailedLogins(id: string): Promise<void> {
+    const updated = await this.userModel
+      .findByIdAndUpdate(
+        id,
+        { $inc: { failedLoginAttempts: 1 } },
+        { new: true, select: 'failedLoginAttempts lockedUntil' },
+      )
+      .exec();
 
-    user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
-    if (user.failedLoginAttempts >= 5) {
-      user.lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 dakika kilit
+    if (!updated) return;
+
+    if (updated.failedLoginAttempts >= 5 && !updated.lockedUntil) {
+      await this.userModel
+        .findByIdAndUpdate(id, {
+          lockedUntil: new Date(Date.now() + 15 * 60 * 1000),
+        })
+        .exec();
     }
-    return user.save();
   }
 
   async resetFailedLogins(id: string): Promise<void> {
