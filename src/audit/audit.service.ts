@@ -1,15 +1,33 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, FilterQuery, isValidObjectId, Types } from 'mongoose';
 import { AuditLog, AuditLogDocument } from './schemas/audit-log.schema';
 import { User } from '../users/schemas/user.schema';
 
 @Injectable()
-export class AuditService {
+export class AuditService implements OnModuleInit {
+  private cachedSystemUserId: string | null = null;
+
   constructor(
     @InjectModel(AuditLog.name) private auditLogModel: Model<AuditLogDocument>,
     @InjectModel(User.name) private userModel: Model<User>,
   ) {}
+
+  async onModuleInit() {
+    const systemEmail = process.env.SYSTEM_USER_EMAIL || 'system@internal';
+    try {
+      const systemUser = await this.userModel
+        .findOne({ email: systemEmail })
+        .select('_id')
+        .lean()
+        .exec();
+      if (systemUser) {
+        this.cachedSystemUserId = String(systemUser._id);
+      }
+    } catch {
+      // System user not yet seeded — cache stays null
+    }
+  }
 
   async log(data: {
     user: string | Record<string, unknown> | undefined | null;
@@ -61,21 +79,11 @@ export class AuditService {
       userLabel: undefined as string | undefined,
     };
 
-    // If we couldn't resolve an ObjectId, attempt to use the persistent
-    // system user (if created), otherwise capture a human-readable label.
+    // If we couldn't resolve an ObjectId, use the cached system user
     if (userField === null) {
-      const systemEmail = process.env.SYSTEM_USER_EMAIL || 'system@internal';
-      try {
-        const systemUser = await this.userModel
-          .findOne({ email: systemEmail })
-          .exec();
-        if (systemUser) {
-          const systemUserObj = systemUser as { id?: string; _id?: unknown };
-          payload.user = systemUserObj.id || String(systemUserObj._id);
-        } else {
-          payload.userLabel = this.getUserLabel(u);
-        }
-      } catch {
+      if (this.cachedSystemUserId) {
+        payload.user = this.cachedSystemUserId;
+      } else {
         payload.userLabel = this.getUserLabel(u);
       }
     }
