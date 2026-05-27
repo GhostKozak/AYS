@@ -44,7 +44,7 @@ async function bootstrap() {
   app.use(compression());
   app.use(cookieParser());
 
-  const uploadDir = join(__dirname, '..', 'uploads', 'field-photos');
+  const uploadDir = join(process.cwd(), 'uploads', 'field-photos');
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }

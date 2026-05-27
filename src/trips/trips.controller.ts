@@ -104,7 +104,7 @@ export class TripsController {
   @UseInterceptors(
     FileInterceptor('photo', {
       storage: diskStorage({
-        destination: './uploads/field-photos',
+        destination: join(process.cwd(), 'uploads', 'field-photos'),
         filename: (req, file, callback) => {
           const uniqueSuffix = randomUUID();
           const ext = extname(file.originalname);
