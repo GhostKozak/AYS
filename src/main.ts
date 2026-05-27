@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MongoExceptionFilter } from './filters/mongo-exception.filter';
@@ -15,6 +14,7 @@ import { join } from 'path';
 import * as fs from 'fs';
 
 async function bootstrap() {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   const app = await NestFactory.create(AppModule);
   const i18nService = app.get(I18nService);
 
