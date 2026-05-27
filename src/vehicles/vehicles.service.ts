@@ -5,7 +5,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Vehicle, VehicleDocument } from './schema/vehicles.schema';
 import { Model, FilterQuery } from 'mongoose';
 import { VehicleType } from './enums/vehicleTypes';
-import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { FilterVehicleDto } from './dto/filter-vehicle.dto';
 import { I18nService } from 'nestjs-i18n';
 import { AuditService } from '../audit/audit.service';

@@ -9,7 +9,7 @@ import { UpdateCompanyDto } from './dto/update-company.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, FilterQuery } from 'mongoose';
 import { Company, CompanyDocument } from './schemas/company.schema';
-import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { FilterCompanyDto } from './dto/filter-company.dto';
 import { I18nService } from 'nestjs-i18n';
 import { AuditService } from '../audit/audit.service';
@@ -32,7 +32,7 @@ export class CompaniesService {
       deleted: false,
     };
 
-    const companies = await this.companyModel.find(query).lean().exec();
+    const companies = await this.companyModel.find(query).limit(100).lean().exec();
     const count = await this.companyModel.countDocuments(query);
 
     return {

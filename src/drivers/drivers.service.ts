@@ -10,7 +10,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, FilterQuery } from 'mongoose';
 import { Driver, DriverDocument } from './schemas/driver.schema';
 import { CompaniesService } from '../companies/companies.service';
-import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { FilterDriverDto } from './dto/filter-driver.dto';
 import { I18nService } from 'nestjs-i18n';
 import { AuditService } from '../audit/audit.service';
@@ -61,6 +61,7 @@ export class DriversService {
     const drivers = await this.driverModel
       .find(queryPayload)
       .populate('company')
+      .limit(100)
       .lean()
       .exec();
     const count = await this.driverModel.countDocuments(queryPayload);
