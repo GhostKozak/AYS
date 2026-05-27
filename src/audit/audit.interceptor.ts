@@ -76,8 +76,8 @@ export class AuditInterceptor implements NestInterceptor {
   }
 
   private extractEntity(url: string): string {
-    const parts = url.split('/');
-    return parts[1] || 'Unknown';
+    const parts = url.replace(/^\/api\//, '/').split('/').filter(Boolean);
+    return parts[0] || 'Unknown';
   }
 
   private sanitize(data: unknown): unknown {

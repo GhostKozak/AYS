@@ -43,7 +43,16 @@ import { SearchModule } from './search/search.module';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('MONGODB_URI'),
+        retryAttempts: 0,
         connectionFactory: (connection: Connection) => {
+          connection.on('error', (err) => {
+            console.error('MongoDB connection error:', err);
+            process.exit(1);
+          });
+          connection.on('disconnected', () => {
+            console.error('MongoDB disconnected — shutting down');
+            process.exit(1);
+          });
           connection.plugin(SoftDeletePlugin);
           return connection;
         },
