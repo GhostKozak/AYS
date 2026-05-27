@@ -81,12 +81,12 @@ export class UsersService {
       throw new NotFoundException(this.i18n.translate('user.NOT_FOUND'));
     }
 
-    if (updateUserDto.password) {
-      updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
-    }
+    const updateData = updateUserDto.password
+      ? { ...updateUserDto, password: await bcrypt.hash(updateUserDto.password, 10) }
+      : updateUserDto;
 
     const updatedUser = await this.userModel
-      .findOneAndUpdate({ _id: id }, updateUserDto, { new: true, select: '-password' })
+      .findOneAndUpdate({ _id: id }, updateData, { new: true, select: '-password' })
       .lean()
       .exec();
 
