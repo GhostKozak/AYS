@@ -57,7 +57,6 @@ export class ReportsService {
         $group: {
           _id: '$companyId',
           tripCount: { $sum: 1 },
-          totalRevenue: { $sum: 0 }, // Placeholder for future revenue field
           avgTurnaroundMs: {
             $avg: {
               $cond: [

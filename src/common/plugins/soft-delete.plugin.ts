@@ -31,6 +31,7 @@ export function SoftDeletePlugin(schema: Schema) {
   schema.pre('find', excludeDeleted);
   schema.pre('findOne', excludeDeleted);
   schema.pre('findOneAndUpdate', excludeDeleted);
+  schema.pre('findOneAndDelete', excludeDeleted);
   schema.pre(/^update/, excludeDeleted);
   schema.pre('countDocuments', excludeDeleted);
   schema.pre(

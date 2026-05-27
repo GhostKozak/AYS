@@ -51,7 +51,7 @@ export class ReportsController {
   })
   @ApiQuery({
     name: 'sortBy',
-    enum: ['tripCount', 'revenue', 'avgTurnaround'],
+    enum: ['tripCount', 'avgTurnaround'],
     required: false,
     description: 'Sort criteria (default: tripCount)',
   })

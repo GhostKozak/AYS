@@ -25,7 +25,7 @@ export class AuthService {
     email: string,
     password: string,
     ipAddress?: string,
-  ): Promise<any> {
+  ): Promise<Record<string, unknown> | null> {
     const user = await this.usersService.findForAuth(email);
     if (!user) return null;
 
@@ -40,6 +40,17 @@ export class AuthService {
       // user is already a POJO because of .lean() in findForAuth
       const result = { ...user } as Record<string, unknown>;
       delete result.password;
+      this.auditService
+        .log({
+          user: user._id as string,
+          action: 'LOGIN',
+          entity: 'Auth',
+          entityId: user._id as string,
+          oldValue: null,
+          newValue: { email },
+          ipAddress,
+        })
+        .catch((err) => this.logger.error('Audit log failed', err instanceof Error ? err.stack : err));
       return result;
     }
 
