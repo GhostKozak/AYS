@@ -12,9 +12,9 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Health check endpoint' })
+  @ApiOperation({ summary: 'Root endpoint' })
   getHello(): string {
-    return this.appService.getHello();
+    return 'OK';
   }
 
   @Post('feedback')

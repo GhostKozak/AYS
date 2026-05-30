@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import {
   HealthCheck,
   HealthCheckService,
@@ -6,8 +6,9 @@ import {
   MemoryHealthIndicator,
   DiskHealthIndicator,
 } from '@nestjs/terminus';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('health')
 @SkipThrottle()
@@ -22,13 +23,15 @@ export class HealthController {
 
   @Get()
   @HealthCheck()
-  @ApiOperation({ summary: 'Check application health' })
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Check application health (auth required)' })
   check() {
     return this.health.check([
       // MongoDB check
       () => this.mongoose.pingCheck('mongodb'),
-      // Memory heap check (max 150MB)
-      () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),
+      // Memory heap check (max 300MB — NestJS with PDF/Excel needs headroom)
+      () => this.memory.checkHeap('memory_heap', 300 * 1024 * 1024),
       // Disk storage check
       () =>
         this.disk.checkStorage('storage', { path: '/', thresholdPercent: 0.9 }),

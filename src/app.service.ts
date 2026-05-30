@@ -8,10 +8,6 @@ const sanitize = (s: string): string =>
 export class AppService {
   private readonly logger = new Logger(AppService.name);
 
-  getHello(): string {
-    return 'Hello World! It is working.';
-  }
-
   submitFeedback(body: FeedbackDto) {
     this.logger.log(
       `Feedback from ${sanitize(body.name)} (${sanitize(body.email)}): ${sanitize(body.message)}`,
