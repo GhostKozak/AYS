@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -7,7 +6,11 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
-import { Logger } from '@nestjs/common';
+import { Logger, UnauthorizedException } from '@nestjs/common';
+import { parse as parseCookies } from 'cookie';
+
+const AUTHENTICATED_ROOM = 'authenticated';
+const OPERATIONS_ROOM = 'operations';
 
 @WebSocketGateway({
   cors: {
@@ -32,10 +35,8 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       if (!token) {
         const cookieHeader = client.handshake.headers?.cookie || '';
-        const match = cookieHeader.match(/access_token=([^;]+)/);
-        if (match) {
-          token = match[1];
-        }
+        const cookies = parseCookies(cookieHeader);
+        token = cookies['access_token'] as string | undefined;
       }
 
       if (!token) {
@@ -44,11 +45,22 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      const payload = await this.jwtService.verifyAsync<{ sub: string }>(token);
+      const payload = await this.jwtService.verifyAsync<{
+        sub: string;
+        role?: string;
+      }>(token);
       await client.join(`user:${payload.sub}`);
-      this.logger.log(`Client connected: ${client.id} (user:${payload.sub})`);
-    } catch {
-      this.logger.warn(`Client ${client.id} disconnected: Invalid token`);
+      await client.join(AUTHENTICATED_ROOM);
+      if (payload.role && ['admin', 'editor'].includes(payload.role)) {
+        await client.join(OPERATIONS_ROOM);
+      }
+      this.logger.log(
+        `Client connected: ${client.id} (user:${payload.sub}, role:${payload.role ?? 'unknown'})`,
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Client ${client.id} disconnected: ${err instanceof Error ? err.message : 'Invalid token'}`,
+      );
       client.disconnect();
     }
   }
@@ -58,27 +70,27 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   emitTripCreated(trip: any) {
-    this.server.emit('trip_created', trip);
+    this.server.to(OPERATIONS_ROOM).emit('trip_created', trip);
   }
 
   emitTripUpdated(trip: any) {
-    this.server.emit('trip_updated', trip);
+    this.server.to(OPERATIONS_ROOM).emit('trip_updated', trip);
   }
 
   emitTripDeleted(tripId: string) {
-    this.server.emit('trip_deleted', tripId);
+    this.server.to(OPERATIONS_ROOM).emit('trip_deleted', tripId);
   }
 
   emitVehicleUpdated(vehicle: any) {
-    this.server.emit('vehicle_updated', vehicle);
+    this.server.to(OPERATIONS_ROOM).emit('vehicle_updated', vehicle);
   }
 
   emitDriverUpdated(driver: any) {
-    this.server.emit('driver_updated', driver);
+    this.server.to(OPERATIONS_ROOM).emit('driver_updated', driver);
   }
 
   emitCompanyUpdated(company: any) {
-    this.server.emit('company_updated', company);
+    this.server.to(OPERATIONS_ROOM).emit('company_updated', company);
   }
 
   emitSearchResult(payload: {
@@ -89,7 +101,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     cached: boolean;
     durationMs: number;
   }): void {
-    this.server.emit('search_result', payload);
+    this.server.to(AUTHENTICATED_ROOM).emit('search_result', payload);
   }
 
   emitSearchResultToUser(
@@ -111,7 +123,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     module: string;
     error: string;
   }): void {
-    this.server.emit('search_error', payload);
+    this.server.to(AUTHENTICATED_ROOM).emit('search_error', payload);
   }
 
   emitSearchErrorToUser(
