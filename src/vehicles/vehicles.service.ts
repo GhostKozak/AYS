@@ -203,7 +203,7 @@ export class VehiclesService {
             oldValue: existingVehicle,
             newValue: updatedVehicle,
           })
-          .catch((err) => this.logger.error('Audit log failed', err));
+          .catch((err) => this.logger.error('Audit log failed', err instanceof Error ? err.stack : err));
       });
     }
 
