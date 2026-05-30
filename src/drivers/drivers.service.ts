@@ -147,8 +147,6 @@ export class DriversService {
       }
       return existingDriver;
     }
-      return existingDriver as DriverDocument;
-    }
 
     // Ensure company exists
     await this.companiesService.findOne(companyId);
