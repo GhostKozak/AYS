@@ -76,7 +76,8 @@ export class TripsController {
     @Query('limit', new DefaultValuePipe(200), ParseIntPipe) limit?: number,
     @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset?: number,
   ) {
-    return this.tripsService.findPendingVerification(limit, offset);
+    const cappedLimit = Math.min(limit ?? 200, 200);
+    return this.tripsService.findPendingVerification(cappedLimit, offset);
   }
 
   @Get(':id')

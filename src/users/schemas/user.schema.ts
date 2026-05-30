@@ -36,12 +36,6 @@ export class User extends Document {
 
   @Prop({ type: Date })
   lastLoginAt?: Date;
-
-  @Prop({ type: String })
-  refreshTokenHash?: string;
-
-  @Prop({ type: Date })
-  refreshTokenExpiresAt?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

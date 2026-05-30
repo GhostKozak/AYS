@@ -1,4 +1,4 @@
-import { IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsMongoId, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateDriverDto {
@@ -13,6 +13,7 @@ export class CreateDriverDto {
   @ApiProperty({ description: 'Driver full name', example: 'John Doe' })
   @IsString({ message: 'validation.IS_STRING' })
   @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
+  @MaxLength(100, { message: 'validation.MAX_LENGTH' })
   full_name: string;
 
   @ApiPropertyOptional({
@@ -21,6 +22,6 @@ export class CreateDriverDto {
   })
   @IsOptional()
   @IsString({ message: 'validation.IS_STRING' })
-  @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
+  @Matches(/^\+?[\d\s\-().]{7,20}$/, { message: 'validation.INVALID_PHONE' })
   phone_number: string;
 }

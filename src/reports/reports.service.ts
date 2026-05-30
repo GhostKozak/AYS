@@ -199,7 +199,7 @@ export class ReportsService {
       today: {
         totalTrips,
         waitingToUnload: waitingAll,
-        topCompanies: topCompanies.slice(0, 5),
+        topCompanies,
       },
       totalCompanies,
       totalDrivers,
@@ -522,7 +522,6 @@ export class ReportsService {
     // Get total count of vehicles in parking lot
     const currentCount = await this.tripModel.countDocuments({
       is_in_parking_lot: true,
-      deleted: { $ne: true },
     });
 
     // Get breakdown by unload status
@@ -530,7 +529,6 @@ export class ReportsService {
       {
         $match: {
           is_in_parking_lot: true,
-          deleted: { $ne: true },
         },
       },
       {

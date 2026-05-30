@@ -99,9 +99,10 @@ export class CreateTripDto {
   @IsDateString()
   departure_time?: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'Arrival time',
     example: '2024-03-20T18:00:00Z',
+    required: true,
   })
   @IsDateString()
   arrival_time: string;

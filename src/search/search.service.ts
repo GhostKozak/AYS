@@ -31,6 +31,11 @@ export class SearchService {
     const jobId = randomUUID();
     this.jobOwners.set(jobId, userId);
 
+    // Auto-cleanup after 5 minutes to prevent memory leaks on hanging jobs
+    setTimeout(() => {
+      this.jobOwners.delete(jobId);
+    }, 5 * 60 * 1000).unref();
+
     // Non-blocking async execution
     setImmediate(() => {
       this.executeSearch(jobId, dto).catch((err) => {

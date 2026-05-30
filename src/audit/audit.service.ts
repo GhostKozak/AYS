@@ -1,4 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, FilterQuery, isValidObjectId, Types } from 'mongoose';
 import { AuditLog, AuditLogDocument } from './schemas/audit-log.schema';
@@ -11,10 +12,12 @@ export class AuditService implements OnModuleInit {
   constructor(
     @InjectModel(AuditLog.name) private auditLogModel: Model<AuditLogDocument>,
     @InjectModel(User.name) private userModel: Model<User>,
+    private configService: ConfigService,
   ) {}
 
   async onModuleInit() {
-    const systemEmail = process.env.SYSTEM_USER_EMAIL || 'system@internal';
+    const systemEmail =
+      this.configService.get<string>('SYSTEM_USER_EMAIL') || 'system@internal';
     try {
       const systemUser = await this.userModel
         .findOne({ email: systemEmail })

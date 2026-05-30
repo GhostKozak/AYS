@@ -50,9 +50,10 @@ export class AuditController {
     @Query('limit', new DefaultValuePipe(100), ParseIntPipe) limit?: number,
     @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset?: number,
   ) {
+    const cappedLimit = Math.min(limit ?? 100, 500);
     const query: Record<string, string> = {};
     if (entity) query.entity = entity;
     if (entityId) query.entityId = entityId;
-    return this.auditService.findAll(query, limit, offset);
+    return this.auditService.findAll(query, cappedLimit, offset);
   }
 }

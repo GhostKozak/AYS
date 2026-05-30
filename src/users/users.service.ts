@@ -26,8 +26,14 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
+    const normalizedEmail = createUserDto.email.toLowerCase().trim();
     const existingUser = await this.userModel
-      .findOne({ email: createUserDto.email })
+      .findOne({
+        email: new RegExp(
+          `^${normalizedEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+          'i',
+        ),
+      })
       .setOptions({ skipSoftDelete: true })
       .lean();
     if (existingUser) {
@@ -39,6 +45,7 @@ export class UsersService {
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     const createdUser = new this.userModel({
       ...createUserDto,
+      email: normalizedEmail,
       password: hashedPassword,
     });
     const savedUser = await createdUser.save();
@@ -63,7 +70,11 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<User> {
-    const user = await this.userModel.findOne({ email }).lean().exec();
+    const normalized = email.toLowerCase().trim();
+    const user = await this.userModel
+      .findOne({ email: new RegExp(`^${normalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') })
+      .lean()
+      .exec();
     if (!user) {
       throw new NotFoundException(this.i18n.translate('user.NOT_FOUND'));
     }
@@ -71,7 +82,11 @@ export class UsersService {
   }
 
   async findForAuth(email: string): Promise<User | null> {
-    return this.userModel.findOne({ email }).lean().exec();
+    const normalized = email.toLowerCase().trim();
+    return this.userModel
+      .findOne({ email: new RegExp(`^${normalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') })
+      .lean()
+      .exec();
   }
 
   async findByIdForJwt(id: string): Promise<{ isActive: boolean; role: string } | null> {
