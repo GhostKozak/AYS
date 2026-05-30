@@ -16,10 +16,14 @@ import { AuditModule } from '../audit/audit.module';
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET')!,
-        signOptions: { expiresIn: '24h' },
-      }),
+      useFactory: (configService: ConfigService) => {
+        const secret = configService.get<string>('JWT_SECRET');
+        if (!secret) throw new Error('JWT_SECRET environment variable is not configured');
+        return {
+          secret,
+          signOptions: { expiresIn: '24h' },
+        };
+      },
       inject: [ConfigService],
     }),
     AuditModule,
