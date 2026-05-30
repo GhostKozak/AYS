@@ -1,7 +1,10 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SkipAudit } from './audit/decorators/skip-audit.decorator';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { Throttle } from '@nestjs/throttler';
+import { FeedbackDto } from './app/dto/feedback.dto';
 
 @ApiTags('app')
 @Controller()
@@ -16,8 +19,11 @@ export class AppController {
 
   @Post('feedback')
   @SkipAudit()
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Submit user feedback' })
-  submitFeedback(@Body() body: { name: string; email: string; message: string }) {
+  submitFeedback(@Body() body: FeedbackDto) {
     return this.appService.submitFeedback(body);
   }
 }
