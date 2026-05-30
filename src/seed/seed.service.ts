@@ -7,6 +7,7 @@ import { CompanySeeder } from './seeders/company.seeder';
 import { DriverSeeder } from './seeders/driver.seeder';
 import { VehicleSeeder } from './seeders/vehicle.seeder';
 import { TripSeeder } from './seeders/trip.seeder';
+import { SearchCacheRegistryService } from '../search/search-cache-registry.service';
 
 /**
  * SeedService yalnızca orkestrasyon yapar.
@@ -25,6 +26,7 @@ export class SeedService {
     private readonly driverSeeder: DriverSeeder,
     private readonly vehicleSeeder: VehicleSeeder,
     private readonly tripSeeder: TripSeeder,
+    private readonly searchCacheRegistry: SearchCacheRegistryService,
   ) {}
 
   async seedAdminUser() {
@@ -51,6 +53,8 @@ export class SeedService {
     const drivers = await this.driverSeeder.seed(companies);
     const vehicles = await this.vehicleSeeder.seed(companies);
     await this.tripSeeder.seed(companies, drivers, vehicles);
+
+    await this.searchCacheRegistry.invalidateSearchCache();
 
     this.logger.log('Comprehensive seed completed successfully!');
   }

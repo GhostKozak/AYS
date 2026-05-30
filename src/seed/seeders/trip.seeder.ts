@@ -8,6 +8,8 @@ import { VerificationStatus } from '../../trips/enums/verificationStatus';
 
 const SEED_YEAR = new Date().getFullYear() - 1;
 
+const randomSeal = () => `SEAL-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
 @Injectable()
 export class TripSeeder {
   private readonly logger = new Logger(TripSeeder.name);
@@ -21,48 +23,88 @@ export class TripSeeder {
   async seed(companies: any[], drivers: any[], vehicles: any[]): Promise<void> {
     const trips: any[] = [];
     const now = new Date();
+    const startDate = new Date(2025, 0, 1);
 
-    // Geçmiş yıl için aylık dağılım
-    for (let month = 0; month < 12; month++) {
-      const daysInMonth = new Date(SEED_YEAR, month + 1, 0).getDate();
+    const target = Math.floor(Math.random() * 201) + 300; // 300..500 total trips
+    const pendingNeeded = Math.min(20, Math.max(5, Math.floor(target * 0.05))); // at most 20 pending approvals
+    const waitingNeeded = Math.max(30, Math.floor(target * 0.06)); // at least 30
 
-      for (
-        let day = 1;
-        day <= daysInMonth;
-        day += Math.floor(Math.random() * 3) + 1
-      ) {
-        const tripDate = new Date(SEED_YEAR, month, day);
-        const dailyTrips = Math.floor(Math.random() * 21) + 10;
+    const activeDrivers = drivers.filter((d) => !d.deleted);
+    const activeVehicles = vehicles.filter((v) => !v.deleted);
+    if (!activeDrivers.length || !activeVehicles.length) return;
 
-        for (let i = 0; i < dailyTrips; i++) {
-          const entry = this.buildTripEntry(
-            tripDate,
-            now,
-            companies,
-            drivers,
-            vehicles,
-          );
-          if (entry) trips.push(entry);
+    const baseCount = Math.max(0, target - pendingNeeded - waitingNeeded);
+
+    // create base randomized trips across 2025..now
+    // Keep total vehicles waiting to unload (is_in_parking_lot) under a global cap
+    const MAX_WAITING = 200;
+    const allowedWaitingForBase = Math.max(0, MAX_WAITING - waitingNeeded);
+    let currentWaiting = 0;
+
+    let attempts = 0;
+    while (trips.length < baseCount && attempts < baseCount * 4) {
+      attempts++;
+      const randTime = startDate.getTime() + Math.floor(Math.random() * (now.getTime() - startDate.getTime()));
+      const tripDate = new Date(randTime);
+      const entry = this.buildTripEntry(tripDate, now, companies, drivers, vehicles);
+      if (!entry) continue;
+
+      // If this entry would be parked/waiting but we've already reached the allowed
+      // waiting count for base entries, convert it to an unloaded trip instead.
+      if (entry.is_in_parking_lot) {
+        if (currentWaiting < allowedWaitingForBase) {
+          currentWaiting++;
+        } else {
+          // convert to unloaded to avoid excessive waiting vehicles
+          entry.unload_status = UnloadStatus.UNLOADED;
+          entry.is_in_parking_lot = false;
+          entry.is_trip_canceled = false;
+          // set a small departure_time so it's not treated as parked
+          try {
+            entry.departure_time = new Date(entry.arrival_time.getTime() + 2 * 60 * 60 * 1000);
+          } catch (e) {
+            // ignore if arrival_time missing
+          }
+          entry.notes = (entry.notes || '') + ' (adjusted: converted from WAITING to UNLOADED to respect cap)';
         }
       }
+
+      trips.push(entry);
     }
 
-    // Bugün ve dün için ek seferler
-    const today = new Date();
-    for (let dayOffset = 0; dayOffset < 2; dayOffset++) {
-      const targetDate = new Date(
-        today.getTime() - dayOffset * 24 * 60 * 60 * 1000,
-      );
-      for (let i = 0; i < 30; i++) {
-        const entry = this.buildRecentTripEntry(
-          targetDate,
-          dayOffset,
-          companies,
-          drivers,
-          vehicles,
-        );
-        if (entry) trips.push(entry);
-      }
+    // Ensure waitingNeeded trips within last 2 weeks with UnloadStatus.WAITING
+    const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+    let addedWaiting = 0;
+    attempts = 0;
+    while (addedWaiting < waitingNeeded && attempts < waitingNeeded * 10) {
+      attempts++;
+      const randTime = twoWeeksAgo.getTime() + Math.floor(Math.random() * (now.getTime() - twoWeeksAgo.getTime()));
+      const tripDate = new Date(randTime);
+      const entry = this.buildTripEntry(tripDate, now, companies, drivers, vehicles);
+      if (!entry) continue;
+      entry.unload_status = UnloadStatus.WAITING;
+      entry.is_in_parking_lot = true;
+      entry.departure_time = null;
+      entry.is_trip_canceled = false;
+      // Waiting vehicles should be present but NOT necessarily pending verification
+      entry.status = VerificationStatus.CONFIRMED;
+      trips.push(entry);
+      addedWaiting++;
+    }
+
+    // Ensure pendingNeeded trips within last 7 days with status PENDING
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    let addedPending = 0;
+    attempts = 0;
+    while (addedPending < pendingNeeded && attempts < pendingNeeded * 10) {
+      attempts++;
+      const randTime = oneWeekAgo.getTime() + Math.floor(Math.random() * (now.getTime() - oneWeekAgo.getTime()));
+      const tripDate = new Date(randTime);
+      const entry = this.buildTripEntry(tripDate, now, companies, drivers, vehicles);
+      if (!entry) continue;
+      entry.status = VerificationStatus.PENDING;
+      trips.push(entry);
+      addedPending++;
     }
 
     if (trips.length > 0) {
@@ -98,44 +140,25 @@ export class TripSeeder {
     let isInParkingLot = false;
     let departureTime: Date | null = null;
     let notes = '';
-    let tripStatus: VerificationStatus = VerificationStatus.PENDING;
+    let tripStatus: VerificationStatus = VerificationStatus.CONFIRMED;
 
-    if (statusRandom < 0.25) {
+      if (statusRandom < 0.25) {
       unloadStatus = UnloadStatus.WAITING;
       isInParkingLot = true;
       notes = 'Bekliyor - boşaltma için hazır';
-    } else if (statusRandom < 0.35) {
+      } else if (statusRandom < 0.35) {
       unloadStatus = UnloadStatus.UNLOADING;
       isInParkingLot = false;
       notes = 'Boşaltılıyor - sahada';
-    } else if (statusRandom < 0.7) {
+      } else if (statusRandom < 0.7) {
       unloadStatus = UnloadStatus.UNLOADED;
       isInParkingLot = false;
       const unloadDuration = Math.floor(Math.random() * 8) + 1;
       departureTime = new Date(
         arrivalTime.getTime() + unloadDuration * 60 * 60 * 1000,
       );
-
-      // ~%40 of unloaded trips are field-verified
-      if (Math.random() < 0.4) {
-        tripStatus = VerificationStatus.CONFIRMED;
-        const verifiedAt = new Date(arrivalTime.getTime() + Math.floor(Math.random() * 3600000) + 60000);
-        notes = `Boşaltıldı - ${unloadDuration} saat sürdü (sahada onaylandı)`;
-        return {
-          arrival_time: arrivalTime,
-          departure_time: departureTime,
-          unload_status: unloadStatus,
-          is_trip_canceled: isTripCanceled,
-          is_in_parking_lot: isInParkingLot,
-          status: tripStatus,
-          field_verified_at: verifiedAt,
-          seal_number: `SEAL-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-          notes,
-          company: company._id,
-          driver: driver._id,
-          vehicle: vehicle._id,
-        };
-      }
+      // Unloaded trips are by default confirmed; add a seal for confirmed entries
+      tripStatus = VerificationStatus.CONFIRMED;
       notes = `Boşaltıldı - ${unloadDuration} saat sürdü`;
     } else {
       unloadStatus = UnloadStatus.CANCELED;
@@ -160,6 +183,9 @@ export class TripSeeder {
       is_in_parking_lot: isInParkingLot,
       status: tripStatus,
       notes,
+      ...(tripStatus === VerificationStatus.CONFIRMED && unloadStatus === UnloadStatus.UNLOADED
+        ? { seal_number: randomSeal() }
+        : {}),
       company: company._id,
       driver: driver._id,
       vehicle: vehicle._id,
@@ -193,7 +219,7 @@ export class TripSeeder {
     let isInParkingLot = false;
     let departureTime: Date | null = null;
     let notes = '';
-    let tripStatus: VerificationStatus = VerificationStatus.PENDING;
+    let tripStatus: VerificationStatus = VerificationStatus.CONFIRMED;
 
     if (dayOffset === 0 && statusRandom < 0.35) {
       unloadStatus = UnloadStatus.WAITING;
@@ -210,26 +236,7 @@ export class TripSeeder {
       departureTime = new Date(
         arrivalTime.getTime() + unloadDuration * 60 * 60 * 1000,
       );
-
-      if (Math.random() < 0.4) {
-        tripStatus = VerificationStatus.CONFIRMED;
-        const verifiedAt = new Date(arrivalTime.getTime() + Math.floor(Math.random() * 3600000) + 60000);
-        notes = `Tamamlandı - ${unloadDuration} saat (sahada onaylandı)`;
-        return {
-          arrival_time: arrivalTime,
-          departure_time: departureTime,
-          unload_status: unloadStatus,
-          is_trip_canceled: isTripCanceled,
-          is_in_parking_lot: isInParkingLot,
-          status: tripStatus,
-          field_verified_at: verifiedAt,
-          seal_number: `SEAL-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-          notes,
-          company: company._id,
-          driver: driver._id,
-          vehicle: vehicle._id,
-        };
-      }
+      tripStatus = VerificationStatus.CONFIRMED;
       notes = `Tamamlandı - ${unloadDuration} saat`;
     } else {
       unloadStatus = UnloadStatus.CANCELED;
@@ -246,6 +253,9 @@ export class TripSeeder {
       is_in_parking_lot: isInParkingLot,
       status: tripStatus,
       notes,
+      ...(tripStatus === VerificationStatus.CONFIRMED && unloadStatus === UnloadStatus.UNLOADED
+        ? { seal_number: randomSeal() }
+        : {}),
       company: company._id,
       driver: driver._id,
       vehicle: vehicle._id,

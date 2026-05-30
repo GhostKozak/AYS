@@ -17,19 +17,12 @@ export class CompanySeeder {
 
   async seed(): Promise<any[]> {
     const companies: any[] = [
-      { name: 'ABC Lojistik Ltd.' },
-      { name: 'XYZ Taşımacılık A.Ş.' },
-      { name: 'Global Nakliyat Co.' },
-      { name: 'Mega Transport Inc.' },
-      { name: 'Fast Delivery Ltd.' },
-      { name: 'Prime Logistics A.Ş.' },
-      { name: 'Elite Cargo Co.' },
-      { name: 'Speed Transport Ltd.' },
-      { name: 'Reliable Shipping A.Ş.' },
-      { name: 'Pro Express Co.' },
-      { name: 'Silinen Firma Ltd.', deleted: true },
-      { name: 'Eski Firma A.Ş.', deleted: true },
-      { name: 'Kapanmış Nakliyat Co.', deleted: true },
+      { name: 'Alpha Transport Ltd.' },
+      { name: 'Beta Logistics A.Ş.' },
+      { name: 'Gamma Carriers Co.' },
+      { name: 'Delta Freight Inc.' },
+      { name: 'Epsilon Express Ltd.' },
+      { name: 'Zeta Closed Co.', deleted: true },
     ];
 
     const createdCompanies: any[] = [];

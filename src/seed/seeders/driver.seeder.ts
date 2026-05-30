@@ -94,14 +94,25 @@ export class DriverSeeder {
       companyIndex++
     ) {
       const company = companies[companyIndex];
-      const driverCount = Math.floor(Math.random() * 16) + 15;
+      const driverCount = Math.floor(Math.random() * 11) + 5; // 5..15 per company
+      const maxInactive = Math.min(4, Math.max(0, driverCount - 1));
+      let inactiveAssigned = 0;
 
       for (
         let i = 0;
-        i < driverCount && driverIndex < DRIVER_NAMES.length * 3;
+        i < driverCount && driverIndex < DRIVER_NAMES.length * 5;
         i++
       ) {
-        const isDeleted = company.deleted || Math.random() < 0.1;
+        // determine isDeleted per-company with cap
+        let isDeleted = false;
+        if (company.deleted) {
+          isDeleted = true;
+        } else {
+          if (inactiveAssigned < maxInactive && Math.random() < 0.25) {
+            isDeleted = true;
+            inactiveAssigned++;
+          }
+        }
 
         let country;
         if (Math.random() < 0.7) {
