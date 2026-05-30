@@ -79,12 +79,11 @@ export class AuditService implements OnModuleInit {
       userLabel: undefined as string | undefined,
     };
 
-    // If we couldn't resolve an ObjectId, use the cached system user
+    // If we couldn't resolve an ObjectId, always keep the original label
     if (userField === null) {
+      payload.userLabel = this.getUserLabel(u);
       if (this.cachedSystemUserId) {
         payload.user = this.cachedSystemUserId;
-      } else {
-        payload.userLabel = this.getUserLabel(u);
       }
     }
 

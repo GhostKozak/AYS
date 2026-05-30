@@ -8,7 +8,7 @@ import {
   DefaultValuePipe,
   UseGuards,
 } from '@nestjs/common';
-import { CacheInterceptor } from '@nestjs/cache-manager';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { ReportsService } from './reports.service';
 import { ReportQueryDto, ReportPeriod } from './dto/report-query.dto';
 import { DashboardSummaryDto } from './dto/dashboard-summary.dto';
@@ -99,6 +99,7 @@ export class ReportsController {
 
   @Get('dashboard-summary')
   @UseInterceptors(CacheInterceptor)
+  @CacheTTL(5)
   @ApiOperation({ summary: 'Get general dashboard summary' })
   @ApiQuery({
     name: 'period',
@@ -119,6 +120,7 @@ export class ReportsController {
 
   @Get('parking-lot-dashboard')
   @UseInterceptors(CacheInterceptor)
+  @CacheTTL(5)
   @ApiOperation({
     summary: 'Get parking lot vehicle status breakdown for dashboard widget',
   })

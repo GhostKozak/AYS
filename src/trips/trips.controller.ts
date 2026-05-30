@@ -18,7 +18,7 @@ import {
 import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { extname, join, basename } from 'path';
 import { randomUUID } from 'crypto';
 import { promises as fsPromises, unlink } from 'fs';
 import { TripsService } from './trips.service';
@@ -171,7 +171,8 @@ export class TripsController {
   @SkipAudit()
   serveFieldPhoto(@Param('filename') filename: string, @Res() res: Response) {
     const uploadDir = join(process.cwd(), 'uploads', 'field-photos');
-    res.sendFile(filename, { root: uploadDir });
+    const safeFilename = basename(filename);
+    res.sendFile(safeFilename, { root: uploadDir });
   }
 
   @Delete(':id')

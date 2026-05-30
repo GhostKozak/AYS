@@ -323,7 +323,7 @@ export class TripsService {
       .findOneAndUpdate(
         { _id: id },
         {
-          status: 'CONFIRMED',
+          status: VerificationStatus.CONFIRMED,
           seal_number: sealNumber,
           field_photo_path: photoPath,
           field_verified_at: new Date(),
