@@ -9,6 +9,12 @@ export enum ReportPeriod {
   ALL = 'all',
 }
 
+export enum GroupByOption {
+  COMPANY = 'company',
+  DRIVER = 'driver',
+  VEHICLE = 'vehicle',
+}
+
 export class ReportQueryDto {
   @ApiPropertyOptional({ enum: ReportPeriod, default: ReportPeriod.MONTH })
   @IsEnum(ReportPeriod)
@@ -25,4 +31,9 @@ export class ReportQueryDto {
   @ApiPropertyOptional({ type: [String], description: 'Statuses to exclude' })
   @IsOptional()
   excludeStatus?: string | string[];
+
+  @ApiPropertyOptional({ enum: GroupByOption, description: 'Group results by field' })
+  @IsEnum(GroupByOption)
+  @IsOptional()
+  groupBy?: GroupByOption = GroupByOption.COMPANY;
 }

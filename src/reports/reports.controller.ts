@@ -89,11 +89,10 @@ export class ReportsController {
   })
   getUnloadWaiting(
     @Query() query: ReportQueryDto,
-    @Query('groupBy') groupBy?: string,
   ) {
     return this.reportsService.getUnloadWaitingStats(
       query.period || ReportPeriod.MONTH,
-      groupBy,
+      query.groupBy,
     );
   }
 

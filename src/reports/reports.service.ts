@@ -6,7 +6,7 @@ import { Model, PipelineStage, FilterQuery, Types } from 'mongoose';
 import { Trip, TripDocument } from '../trips/schema/trips.schema';
 import { Company, CompanyDocument } from '../companies/schemas/company.schema';
 import { Driver, DriverDocument } from '../drivers/schemas/driver.schema';
-import { ReportPeriod } from './dto/report-query.dto';
+import { GroupByOption, ReportPeriod } from './dto/report-query.dto';
 import { DashboardSummaryDto } from './dto/dashboard-summary.dto';
 import dayjs from 'dayjs';
 import * as ExcelJS from 'exceljs';
@@ -104,26 +104,26 @@ export class ReportsService {
 
   async getUnloadWaitingStats(
     period: ReportPeriod,
-    groupBy: string = 'company',
+    groupBy: GroupByOption = GroupByOption.COMPANY,
   ) {
     const dateQuery = this.getDateRange(period);
 
     const groupField =
-      groupBy === 'driver'
+      groupBy === GroupByOption.DRIVER
         ? '$driver'
-        : groupBy === 'vehicle'
+        : groupBy === GroupByOption.VEHICLE
           ? '$vehicle'
           : '$company';
     const collectionName =
-      groupBy === 'driver'
+      groupBy === GroupByOption.DRIVER
         ? 'drivers'
-        : groupBy === 'vehicle'
+        : groupBy === GroupByOption.VEHICLE
           ? 'vehicles'
           : 'companies';
     const nameField =
-      groupBy === 'driver'
+      groupBy === GroupByOption.DRIVER
         ? 'full_name'
-        : groupBy === 'vehicle'
+        : groupBy === GroupByOption.VEHICLE
           ? 'licence_plate'
           : 'name';
 
