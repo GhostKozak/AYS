@@ -15,6 +15,7 @@ import {
 import { I18nService } from 'nestjs-i18n';
 import { AuditService } from '../audit/audit.service';
 import { EventsGateway } from '../events/events.gateway';
+import { SearchCacheRegistryService } from '../search/search-cache-registry.service';
 
 const mockEventsGateway = {
   emitVehicleUpdated: jest.fn(),
@@ -39,6 +40,12 @@ describe('VehiclesService', () => {
         {
           provide: EventsGateway,
           useValue: mockEventsGateway,
+        },
+        {
+          provide: SearchCacheRegistryService,
+          useValue: {
+            invalidateSearchCache: jest.fn().mockResolvedValue(undefined),
+          },
         },
       ],
     }).compile();

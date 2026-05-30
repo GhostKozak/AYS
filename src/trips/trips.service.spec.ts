@@ -7,6 +7,7 @@ import { TripEntityResolverService } from './trip-entity-resolver.service';
 import { CompaniesService } from '../companies/companies.service';
 import { DriversService } from '../drivers/drivers.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
+import { SearchCacheRegistryService } from '../search/search-cache-registry.service';
 import { CreateTripDto } from './dto/create-trip.dto';
 import {
   BadRequestException,
@@ -95,6 +96,13 @@ describe('TripsService', () => {
         {
           provide: EventsGateway,
           useValue: mockEventsGateway,
+        },
+        {
+          provide: SearchCacheRegistryService,
+          useValue: {
+            registerCacheKey: jest.fn(),
+            invalidateSearchCache: jest.fn().mockResolvedValue(undefined),
+          },
         },
       ],
     }).compile();
