@@ -20,7 +20,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { randomUUID } from 'crypto';
-import * as fs from 'fs';
+import { promises as fsPromises, unlink } from 'fs';
 import { TripsService } from './trips.service';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
@@ -146,8 +146,8 @@ export class TripsController {
     }
 
     // Validate file content via magic bytes (not just MIME type)
-    if (!isValidImageFile(file.path)) {
-      fs.unlink(file.path, () => {});
+    if (!(await isValidImageFile(file.path))) {
+      unlink(file.path, () => {});
       throw new BadRequestException(
         'Invalid file content: not a valid JPEG or PNG image.',
       );
@@ -185,16 +185,21 @@ export class TripsController {
 }
 
 /** JPEG: FF D8 FF — PNG: 89 50 4E 47 0D 0A 1A 0A */
-function isValidImageFile(filePath: string): boolean {
-  const fd = fs.openSync(filePath, 'r');
-  const buf = Buffer.alloc(8);
-  fs.readSync(fd, buf, 0, 8, 0);
-  fs.closeSync(fd);
+async function isValidImageFile(filePath: string): Promise<boolean> {
+  let fileHandle;
+  try {
+    fileHandle = await fsPromises.open(filePath, 'r');
+    const { buffer } = await fileHandle.read(Buffer.alloc(8), 0, 8, 0);
 
-  // JPEG: starts with FF D8 FF
-  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return true;
+    // JPEG: starts with FF D8 FF
+    if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return true;
 
-  // PNG: 89 50 4E 47 0D 0A 1A 0A
-  const pngSig = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-  return buf.equals(pngSig);
+    // PNG: 89 50 4E 47 0D 0A 1A 0A
+    const pngSig = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    return buffer.equals(pngSig);
+  } catch {
+    return false;
+  } finally {
+    if (fileHandle) await fileHandle.close();
+  }
 }
