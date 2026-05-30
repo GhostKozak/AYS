@@ -495,6 +495,9 @@ export class ReportsService {
       rows: tableRows,
     };
 
+    if (typeof (doc as any).table !== 'function') {
+      throw new Error('pdfkit-table plugin not loaded — doc.table() is unavailable');
+    }
     await doc.table(table, {
       prepareHeader: () => {
         try {
