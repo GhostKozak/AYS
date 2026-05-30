@@ -106,7 +106,7 @@ export class AuthController {
   ) {
     await this.authService.clearRefreshToken(userId);
     if (jti && exp) {
-      this.tokenBlacklistService.add(jti, exp);
+      await this.tokenBlacklistService.add(jti, exp);
     }
 
     res.clearCookie('access_token', {
