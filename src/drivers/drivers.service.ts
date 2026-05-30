@@ -134,15 +134,19 @@ export class DriversService {
 
     if (existingDriver) {
       if (existingDriver.deleted) {
-        return (await this.driverModel
+        const restored = await this.driverModel
           .findOneAndUpdate(
             { _id: existingDriver._id },
             { deleted: false },
             { new: true },
           )
           .populate('company')
-          .exec()) as DriverDocument;
+          .exec();
+        void this.searchCacheRegistry.invalidateSearchCache();
+        return restored as DriverDocument;
       }
+      return existingDriver;
+    }
       return existingDriver as DriverDocument;
     }
 

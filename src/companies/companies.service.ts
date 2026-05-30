@@ -51,13 +51,15 @@ export class CompaniesService {
 
     if (existingCompany) {
       if (existingCompany.deleted) {
-        return (await this.companyModel
+        const restored = await this.companyModel
           .findOneAndUpdate(
             { _id: existingCompany._id },
             { deleted: false },
             { new: true },
           )
-          .exec()) as CompanyDocument;
+          .exec();
+        void this.searchCacheRegistry.invalidateSearchCache();
+        return restored as CompanyDocument;
       }
       return existingCompany as CompanyDocument;
     }

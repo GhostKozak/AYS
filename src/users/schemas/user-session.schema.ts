@@ -6,7 +6,7 @@ export class UserSession extends Document {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
   userId: Types.ObjectId;
 
-  @Prop({ required: true })
+  @Prop({ required: true, index: true })
   refreshTokenHash: string;
 
   @Prop({ type: Date, required: true, index: { expireAfterSeconds: 0 } })

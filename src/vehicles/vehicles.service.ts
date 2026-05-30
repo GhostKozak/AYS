@@ -61,6 +61,7 @@ export class VehiclesService {
             { new: true },
           )
           .exec();
+        void this.searchCacheRegistry.invalidateSearchCache();
         return savedVehicle as VehicleDocument;
       }
       return existingVehicle;

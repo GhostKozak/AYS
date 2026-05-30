@@ -99,7 +99,7 @@ export class ReportsController {
 
   @Get('dashboard-summary')
   @UseInterceptors(CacheInterceptor)
-  @CacheTTL(5)
+  @CacheTTL(5000)
   @ApiOperation({ summary: 'Get general dashboard summary' })
   @ApiQuery({
     name: 'period',
@@ -120,7 +120,7 @@ export class ReportsController {
 
   @Get('parking-lot-dashboard')
   @UseInterceptors(CacheInterceptor)
-  @CacheTTL(5)
+  @CacheTTL(5000)
   @ApiOperation({
     summary: 'Get parking lot vehicle status breakdown for dashboard widget',
   })
