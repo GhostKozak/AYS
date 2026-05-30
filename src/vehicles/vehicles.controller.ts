@@ -22,8 +22,8 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
-import { GetUser } from '../auth/decorators/get-user.decorator';
-import { User, UserRole } from '../users/schemas/user.schema';
+import { GetUser, AuthenticatedUser } from '../auth/decorators/get-user.decorator';
+import { UserRole } from '../users/schemas/user.schema';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
 import { Throttle } from '@nestjs/throttler';
 import { AuthenticatedController } from '../common/decorators/authenticated-controller.decorator';
@@ -51,7 +51,7 @@ export class VehiclesController {
   @ApiQuery({ name: 'vehicle_type', required: false, description: 'Filter by vehicle type', enum: ['TRUCK', 'LORRY', 'VAN', 'TRAILER'] })
   @ApiQuery({ name: 'search', required: false, description: 'Search term for licence plate' })
   @ApiResponse({ status: 200, description: 'Return paged vehicles' })
-  findAll(@Query() filterVehicleDto: FilterVehicleDto, @GetUser() user: User) {
+  findAll(@Query() filterVehicleDto: FilterVehicleDto, @GetUser() user: AuthenticatedUser) {
     const { limit, offset, ...filters } = filterVehicleDto;
     const paginationQuery = { limit, offset };
     const showDeleted = user.role === UserRole.ADMIN;
@@ -64,7 +64,7 @@ export class VehiclesController {
   @ApiParam({ name: 'id', description: 'Vehicle MongoDB ID' })
   @ApiResponse({ status: 200, description: 'Return vehicle details' })
   @ApiResponse({ status: 404, description: 'Vehicle not found' })
-  findOne(@Param('id', ParseMongoIdPipe) id: string, @GetUser() user: User) {
+  findOne(@Param('id', ParseMongoIdPipe) id: string, @GetUser() user: AuthenticatedUser) {
     const showDeleted = user.role === UserRole.ADMIN;
     return this.vehiclesService.findOne(id, showDeleted);
   }
@@ -78,9 +78,9 @@ export class VehiclesController {
   update(
     @Param('id', ParseMongoIdPipe) id: string,
     @Body() updateVehicleDto: UpdateVehicleDto,
-    @GetUser() user: User,
+    @GetUser() user: AuthenticatedUser,
   ) {
-    return this.vehiclesService.update(id, updateVehicleDto, user as any);
+    return this.vehiclesService.update(id, updateVehicleDto, user);
   }
 
   @Delete(':id')

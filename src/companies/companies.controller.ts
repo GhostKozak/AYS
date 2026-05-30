@@ -22,8 +22,8 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { GetUser } from '../auth/decorators/get-user.decorator';
-import { User, UserRole } from '../users/schemas/user.schema';
+import { GetUser, AuthenticatedUser } from '../auth/decorators/get-user.decorator';
+import { UserRole } from '../users/schemas/user.schema';
 import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
 import { AuthenticatedController } from '../common/decorators/authenticated-controller.decorator';
 import { Throttle } from '@nestjs/throttler';
@@ -59,7 +59,7 @@ export class CompaniesController {
   @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Number of items to skip' })
   @ApiQuery({ name: 'search', required: false, description: 'Search term for company name' })
   @ApiResponse({ status: 200, description: 'Return paged companies' })
-  findAll(@Query() filterCompanyDto: FilterCompanyDto, @GetUser() user: User) {
+  findAll(@Query() filterCompanyDto: FilterCompanyDto, @GetUser() user: AuthenticatedUser) {
     const { limit, offset, ...filters } = filterCompanyDto;
     const paginationQuery = { limit, offset };
     const showDeleted = user.role === UserRole.ADMIN;
@@ -72,7 +72,7 @@ export class CompaniesController {
   @ApiParam({ name: 'id', description: 'Company MongoDB ID' })
   @ApiResponse({ status: 200, description: 'Return company details' })
   @ApiResponse({ status: 404, description: 'Company not found' })
-  findOne(@Param('id', ParseMongoIdPipe) id: string, @GetUser() user: User) {
+  findOne(@Param('id', ParseMongoIdPipe) id: string, @GetUser() user: AuthenticatedUser) {
     const showDeleted = user.role === UserRole.ADMIN;
     return this.companiesService.findOne(id, showDeleted);
   }
@@ -86,9 +86,9 @@ export class CompaniesController {
   update(
     @Param('id', ParseMongoIdPipe) id: string,
     @Body() updateCompanyDto: UpdateCompanyDto,
-    @GetUser() user: User,
+    @GetUser() user: AuthenticatedUser,
   ) {
-    return this.companiesService.update(id, updateCompanyDto, user as any);
+    return this.companiesService.update(id, updateCompanyDto, user);
   }
 
   @Delete(':id')

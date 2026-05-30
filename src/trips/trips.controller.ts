@@ -27,8 +27,8 @@ import { UpdateTripDto } from './dto/update-trip.dto';
 import { FilterTripDto } from './dto/filter-trip.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { ApiOperation, ApiResponse, ApiTags, ApiParam, ApiQuery } from '@nestjs/swagger';
-import { GetUser } from '../auth/decorators/get-user.decorator';
-import { User, UserRole } from '../users/schemas/user.schema';
+import { GetUser, AuthenticatedUser } from '../auth/decorators/get-user.decorator';
+import { UserRole } from '../users/schemas/user.schema';
 import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
 import { ParseMongoIdPipe } from '../pipes/parse-mongo-id.pipe';
 import { AuthenticatedController } from '../common/decorators/authenticated-controller.decorator';
@@ -61,7 +61,7 @@ export class TripsController {
   @ApiQuery({ name: 'status', required: false, description: 'Filter by verification status', enum: ['PENDING', 'CONFIRMED', 'CANCELED'] })
   @ApiQuery({ name: 'search', required: false, description: 'Search term for notes, driver, company, or plate' })
   @ApiResponse({ status: 200, description: 'Return paged trips' })
-  findAll(@Query() filterTripDto: FilterTripDto, @GetUser() user: User) {
+  findAll(@Query() filterTripDto: FilterTripDto, @GetUser() user: AuthenticatedUser) {
     const { limit, offset, ...filters } = filterTripDto;
     const paginationQuery = { limit, offset };
     const showDeleted = user.role === UserRole.ADMIN;
@@ -85,7 +85,7 @@ export class TripsController {
   @ApiParam({ name: 'id', description: 'Trip MongoDB ID' })
   @ApiResponse({ status: 200, description: 'Return trip details' })
   @ApiResponse({ status: 404, description: 'Trip not found' })
-  findOne(@Param('id', ParseMongoIdPipe) id: string, @GetUser() user: User) {
+  findOne(@Param('id', ParseMongoIdPipe) id: string, @GetUser() user: AuthenticatedUser) {
     const showDeleted = user.role === UserRole.ADMIN;
     return this.tripsService.findOne(id, showDeleted);
   }
@@ -99,9 +99,9 @@ export class TripsController {
   update(
     @Param('id', ParseMongoIdPipe) id: string,
     @Body() updateTripDto: UpdateTripDto,
-    @GetUser() user: User,
+    @GetUser() user: AuthenticatedUser,
   ) {
-    return this.tripsService.update(id, updateTripDto, user as any);
+    return this.tripsService.update(id, updateTripDto, user);
   }
 
   @Post(':id/field-verify')
@@ -139,7 +139,7 @@ export class TripsController {
     @Param('id', ParseMongoIdPipe) id: string,
     @Body('seal_number') sealNumber: string,
     @UploadedFile() file: Express.Multer.File,
-    @GetUser() user: User,
+    @GetUser() user: AuthenticatedUser,
   ) {
     if (!file) {
       throw new BadRequestException('Vehicle/plate photo is required.');
@@ -158,7 +158,7 @@ export class TripsController {
       id,
       sealNumber,
       photoPath,
-      user as any,
+      user,
     );
   }
 

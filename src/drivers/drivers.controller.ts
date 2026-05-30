@@ -22,8 +22,8 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { GetUser } from '../auth/decorators/get-user.decorator';
-import { User, UserRole } from '../users/schemas/user.schema';
+import { GetUser, AuthenticatedUser } from '../auth/decorators/get-user.decorator';
+import { UserRole } from '../users/schemas/user.schema';
 import { SkipAudit } from '../audit/decorators/skip-audit.decorator';
 import { AuthenticatedController } from '../common/decorators/authenticated-controller.decorator';
 import { Throttle } from '@nestjs/throttler';
@@ -70,7 +70,7 @@ export class DriversController {
   @ApiQuery({ name: 'companyId', required: false, description: 'Filter by company ID' })
   @ApiQuery({ name: 'search', required: false, description: 'Search term for driver name or phone' })
   @ApiResponse({ status: 200, description: 'Return paged drivers' })
-  findAll(@Query() filterDriverDto: FilterDriverDto, @GetUser() user: User) {
+  findAll(@Query() filterDriverDto: FilterDriverDto, @GetUser() user: AuthenticatedUser) {
     const { limit, offset, ...filters } = filterDriverDto;
     const paginationQuery = { limit, offset };
     const showDeleted = user.role === UserRole.ADMIN;
@@ -83,7 +83,7 @@ export class DriversController {
   @ApiParam({ name: 'id', description: 'Driver MongoDB ID' })
   @ApiResponse({ status: 200, description: 'Return driver details' })
   @ApiResponse({ status: 404, description: 'Driver not found' })
-  findOne(@Param('id', ParseMongoIdPipe) id: string, @GetUser() user: User) {
+  findOne(@Param('id', ParseMongoIdPipe) id: string, @GetUser() user: AuthenticatedUser) {
     const showDeleted = user.role === UserRole.ADMIN;
     return this.driversService.findOne(id, showDeleted);
   }
@@ -97,9 +97,9 @@ export class DriversController {
   update(
     @Param('id', ParseMongoIdPipe) id: string,
     @Body() updateDriverDto: UpdateDriverDto,
-    @GetUser() user: User,
+    @GetUser() user: AuthenticatedUser,
   ) {
-    return this.driversService.update(id, updateDriverDto, user as any);
+    return this.driversService.update(id, updateDriverDto, user);
   }
 
   @Delete(':id')
