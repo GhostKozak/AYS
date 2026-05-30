@@ -28,6 +28,7 @@ export class UsersService {
   async create(createUserDto: CreateUserDto): Promise<User> {
     const existingUser = await this.userModel
       .findOne({ email: createUserDto.email })
+      .setOptions({ skipSoftDelete: true })
       .lean();
     if (existingUser) {
       throw new ConflictException(
