@@ -73,7 +73,7 @@ export class VehiclesService {
     try {
       const newVehicle = new this.vehicleModel({
         licence_plate: normalizedPlate,
-        type: type || VehicleType.TRUCK,
+        vehicle_type: type || VehicleType.TRUCK,
       });
 
       const savedVehicle = await newVehicle.save();
