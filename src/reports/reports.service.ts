@@ -266,7 +266,7 @@ export class ReportsService {
       if (!Types.ObjectId.isValid(companyId)) {
         throw new BadRequestException('Invalid companyId');
       }
-      matchQuery.company = companyId;
+      matchQuery.company = new Types.ObjectId(companyId);
     }
 
     const result = await this.tripModel.aggregate([
@@ -307,7 +307,7 @@ export class ReportsService {
       if (!Types.ObjectId.isValid(companyId)) {
         throw new BadRequestException('Invalid companyId');
       }
-      matchQuery.company = companyId;
+      matchQuery.company = new Types.ObjectId(companyId);
     }
 
     // Determine the grouping format based on the period
