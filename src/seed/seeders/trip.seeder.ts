@@ -140,7 +140,7 @@ export class TripSeeder {
     } else {
       unloadStatus = UnloadStatus.CANCELED;
       isTripCanceled = true;
-      isInParkingLot = true;
+      isInParkingLot = false;
       notes = 'İptal edildi - çeşitli nedenler';
     }
 
@@ -234,7 +234,7 @@ export class TripSeeder {
     } else {
       unloadStatus = UnloadStatus.CANCELED;
       isTripCanceled = true;
-      isInParkingLot = true;
+      isInParkingLot = false;
       notes = 'İptal edildi';
     }
 

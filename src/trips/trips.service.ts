@@ -382,23 +382,15 @@ export class TripsService {
   }
 
   /**
-   * Determine if a vehicle is still in the parking lot based on trip status and cancellation
-   * Vehicle is in parking lot if:
-   * - Trip is not canceled AND status is WAITING, UNLOADING, or UNLOADED
-   * - Trip is canceled AND vehicle hasn't left yet
+   * Vehicle is in the parking lot ONLY if waiting to unload.
+   * Schema default is WAITING so new trips start as parked.
+   * Canceled, UNKNOWN, or any other status means not in lot.
    */
   private isVehicleInParkingLot(
-    unloadStatus: UnloadStatus | string | undefined,
+    unloadStatus: UnloadStatus | string | undefined | null,
     isTripCanceled?: boolean,
   ): boolean {
-    if (isTripCanceled) {
-      return true; // Canceled vehicles are still in parking lot until removed
-    }
-
-    if (!unloadStatus || unloadStatus === UnloadStatus.UNKNOWN) {
-      return true; // Default to true if no status provided (vehicle just arrived)
-    }
-
+    if (isTripCanceled) return false;
     return unloadStatus === UnloadStatus.WAITING;
   }
 }
