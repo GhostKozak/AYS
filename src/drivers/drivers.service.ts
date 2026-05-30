@@ -15,6 +15,7 @@ import { FilterDriverDto } from './dto/filter-driver.dto';
 import { I18nService } from 'nestjs-i18n';
 import { AuditService } from '../audit/audit.service';
 import { EventsGateway } from '../events/events.gateway';
+import { SearchCacheRegistryService } from '../search/search-cache-registry.service';
 
 @Injectable()
 export class DriversService {
@@ -25,6 +26,7 @@ export class DriversService {
     private readonly i18n: I18nService,
     private readonly auditService: AuditService,
     private readonly eventsGateway: EventsGateway,
+    private readonly searchCacheRegistry: SearchCacheRegistryService,
   ) {}
 
   async findByPhone(phone: string): Promise<DriverDocument | null> {
@@ -95,6 +97,7 @@ export class DriversService {
             { new: true },
           )
           .exec();
+        void this.searchCacheRegistry.invalidateSearchCache();
         return savedDriver as DriverDocument;
       }
 
@@ -112,6 +115,7 @@ export class DriversService {
       phone_number: normalizedPhone,
     });
     const savedDriver = await newDriver.save();
+    void this.searchCacheRegistry.invalidateSearchCache();
     return savedDriver;
   }
 
@@ -302,6 +306,7 @@ export class DriversService {
     }
 
     this.eventsGateway.emitDriverUpdated(updatedDriver);
+    void this.searchCacheRegistry.invalidateSearchCache();
     return updatedDriver;
   }
 
@@ -316,6 +321,7 @@ export class DriversService {
       );
     }
 
+    void this.searchCacheRegistry.invalidateSearchCache();
     return deletedDriver;
   }
 }

@@ -14,6 +14,7 @@ import { FilterCompanyDto } from './dto/filter-company.dto';
 import { I18nService } from 'nestjs-i18n';
 import { AuditService } from '../audit/audit.service';
 import { EventsGateway } from '../events/events.gateway';
+import { SearchCacheRegistryService } from '../search/search-cache-registry.service';
 
 @Injectable()
 export class CompaniesService {
@@ -23,6 +24,7 @@ export class CompaniesService {
     private readonly i18n: I18nService,
     private readonly auditService: AuditService,
     private readonly eventsGateway: EventsGateway,
+    private readonly searchCacheRegistry: SearchCacheRegistryService,
   ) {}
 
   async searchByName(name: string) {
@@ -105,18 +107,14 @@ export class CompaniesService {
             { new: true },
           )
           .exec();
+        void this.searchCacheRegistry.invalidateSearchCache();
         return savedCompany as Company;
       }
-
-      throw new ConflictException(
-        this.i18n.translate('database.DUPLICATE_KEY', {
-          args: { field: 'name', value: createCompanyDto.name },
-        }),
-      );
     }
 
     const newCompany = new this.companyModel(createCompanyDto);
     const savedCompany = await newCompany.save();
+    void this.searchCacheRegistry.invalidateSearchCache();
     return savedCompany;
   }
 
@@ -216,6 +214,7 @@ export class CompaniesService {
     }
 
     this.eventsGateway.emitCompanyUpdated(updatedCompany);
+    void this.searchCacheRegistry.invalidateSearchCache();
     return updatedCompany;
   }
 
@@ -230,6 +229,7 @@ export class CompaniesService {
       );
     }
 
+    void this.searchCacheRegistry.invalidateSearchCache();
     return deletedCompany;
   }
 }

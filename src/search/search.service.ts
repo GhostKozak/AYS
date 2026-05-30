@@ -8,6 +8,7 @@ import { CompaniesService } from '../companies/companies.service';
 import { DriversService } from '../drivers/drivers.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
 import { TripsService } from '../trips/trips.service';
+import { SearchCacheRegistryService } from './search-cache-registry.service';
 
 @Injectable()
 export class SearchService {
@@ -23,6 +24,7 @@ export class SearchService {
     private readonly driversService: DriversService,
     private readonly vehiclesService: VehiclesService,
     private readonly tripsService: TripsService,
+    private readonly searchCacheRegistry: SearchCacheRegistryService,
   ) {}
 
   async createSearchJob(dto: AsyncSearchDto, userId: string) {
@@ -127,9 +129,9 @@ export class SearchService {
     // Cache the result. TTL uses the CACHE_MANAGER global config.
     await this.cacheManager.set(cacheKey, result);
 
-    // Register key in TripsService so it can be invalidated on trip mutations
-    // without needing to store the key list in the cache itself.
-    this.tripsService.registerSearchCacheKey(cacheKey);
+    // Register key in SearchCacheRegistryService so it can be invalidated
+    // on entity mutations without circular dependencies.
+    this.searchCacheRegistry.registerCacheKey(cacheKey);
 
     // Emit result to the requesting user only
     this.eventsGateway.emitSearchResultToUser(userId, {

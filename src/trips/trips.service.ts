@@ -2,11 +2,8 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
-  Inject,
   Logger,
 } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { UpdateTripDto } from './dto/update-trip.dto';
 import { Model, FilterQuery } from 'mongoose';
@@ -23,21 +20,11 @@ import { TripEntityResolverService } from './trip-entity-resolver.service';
 import { DriversService } from '../drivers/drivers.service';
 import { CompaniesService } from '../companies/companies.service';
 import { VehiclesService } from '../vehicles/vehicles.service';
+import { SearchCacheRegistryService } from '../search/search-cache-registry.service';
 
 @Injectable()
 export class TripsService {
   private readonly logger = new Logger(TripsService.name);
-
-  /**
-   * In-memory registry of active search cache keys.
-   * Using a Set instead of storing keys in the cache itself avoids:
-   *  - Race conditions (Set mutations are synchronous)
-   *  - TTL expiry causing the registry to disappear while keys linger
-   *  - An extra cache round-trip on every write
-   * Trade-off: keys are lost on process restart, but the cache itself is
-   * also in-memory so it resets too — no consistency problem.
-   */
-  private readonly searchCacheKeys = new Set<string>();
 
   constructor(
     @InjectModel(Trip.name) private tripModel: Model<TripDocument>,
@@ -48,31 +35,8 @@ export class TripsService {
     private readonly i18n: I18nService,
     private readonly auditService: AuditService,
     private readonly eventsGateway: EventsGateway,
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly searchCacheRegistry: SearchCacheRegistryService,
   ) {}
-
-  /**
-   * Called by SearchService after caching a result so we can
-   * track which keys to invalidate when trip data changes.
-   */
-  registerSearchCacheKey(key: string): void {
-    this.searchCacheKeys.add(key);
-  }
-
-  /**
-   * Deletes only the search-related cache entries tracked in the
-   * in-memory registry. Does NOT touch report or dashboard cache.
-   */
-  private async invalidateSearchCache(): Promise<void> {
-    if (this.searchCacheKeys.size === 0) return;
-    const keys = [...this.searchCacheKeys];
-    this.searchCacheKeys.clear(); // clear first — if del fails we still reset
-    try {
-      await Promise.all(keys.map((key) => this.cacheManager.del(key)));
-    } catch (err) {
-      this.logger.warn('Search cache invalidation failed', err as string);
-    }
-  }
 
   async create(createTripDto: CreateTripDto): Promise<Trip> {
     if (createTripDto.licence_plate) {
@@ -131,7 +95,7 @@ export class TripsService {
       });
       const savedTrip = await newTrip.save();
       this.eventsGateway.emitTripCreated(savedTrip);
-      void this.invalidateSearchCache();
+      void this.searchCacheRegistry.invalidateSearchCache();
       return savedTrip;
     } catch (error: unknown) {
       if ((error as any).code === 11000) {
@@ -394,7 +358,7 @@ export class TripsService {
     }
 
     this.eventsGateway.emitTripUpdated(updatedTrip as unknown as Trip);
-    void this.invalidateSearchCache();
+    void this.searchCacheRegistry.invalidateSearchCache();
 
     return updatedTrip as unknown as Trip;
   }
@@ -412,7 +376,7 @@ export class TripsService {
 
     // Broadcast real-time event
     this.eventsGateway.emitTripDeleted(id);
-    void this.invalidateSearchCache();
+    void this.searchCacheRegistry.invalidateSearchCache();
 
     return deletedTrip;
   }

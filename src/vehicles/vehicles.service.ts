@@ -10,6 +10,7 @@ import { FilterVehicleDto } from './dto/filter-vehicle.dto';
 import { I18nService } from 'nestjs-i18n';
 import { AuditService } from '../audit/audit.service';
 import { EventsGateway } from '../events/events.gateway';
+import { SearchCacheRegistryService } from '../search/search-cache-registry.service';
 
 @Injectable()
 export class VehiclesService {
@@ -20,6 +21,7 @@ export class VehiclesService {
     private readonly i18n: I18nService,
     private readonly auditService: AuditService,
     private readonly eventsGateway: EventsGateway,
+    private readonly searchCacheRegistry: SearchCacheRegistryService,
   ) {}
 
   async create(createVehicleDto: CreateVehicleDto) {
@@ -34,6 +36,7 @@ export class VehiclesService {
 
     const createdVehicle = new this.vehicleModel(vehicleToCreate);
     const savedVehicle = await createdVehicle.save();
+    void this.searchCacheRegistry.invalidateSearchCache();
     return savedVehicle;
   }
 
@@ -204,6 +207,7 @@ export class VehiclesService {
     }
 
     this.eventsGateway.emitVehicleUpdated(updatedVehicle);
+    void this.searchCacheRegistry.invalidateSearchCache();
     return updatedVehicle;
   }
 
@@ -218,6 +222,7 @@ export class VehiclesService {
       );
     }
 
+    void this.searchCacheRegistry.invalidateSearchCache();
     return deletedVehicle;
   }
 }
