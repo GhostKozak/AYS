@@ -41,7 +41,7 @@ export class SeedController {
       throw new UnauthorizedException('Seed secret is not configured');
     }
 
-    const secretBuf = Buffer.from(secret);
+    const secretBuf = Buffer.from(secret ?? '');
     const expectedBuf = Buffer.from(expectedSecret);
 
     if (
@@ -81,7 +81,7 @@ export class SeedController {
       throw new UnauthorizedException('Seed secret is not configured');
     }
 
-    const secretBuf = Buffer.from(secret);
+    const secretBuf = Buffer.from(secret ?? '');
     const expectedBuf = Buffer.from(expectedSecret);
 
     if (
