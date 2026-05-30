@@ -126,17 +126,19 @@ export class VehiclesService {
       };
     }
 
-    const vehicles = await this.vehicleModel
-      .find(query)
-      .setOptions({ skipSoftDelete: showDeleted })
-      .skip(offset ?? 0)
-      .limit(limit ?? 10)
-      .lean()
-      .exec();
-
-    const count = await this.vehicleModel
-      .countDocuments(query)
-      .setOptions({ skipSoftDelete: showDeleted });
+    const [vehicles, count] = await Promise.all([
+      this.vehicleModel
+        .find(query)
+        .setOptions({ skipSoftDelete: showDeleted })
+        .skip(offset ?? 0)
+        .limit(limit ?? 10)
+        .lean()
+        .exec(),
+      this.vehicleModel
+        .countDocuments(query)
+        .setOptions({ skipSoftDelete: showDeleted })
+        .exec(),
+    ]);
 
     return {
       data: vehicles,

@@ -29,7 +29,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: Socket) {
     try {
-      let token =
+      let token: string | undefined =
         (client.handshake.auth?.token as string) ||
         (client.handshake.headers?.authorization?.split(' ')[1] as string);
 

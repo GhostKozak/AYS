@@ -8,11 +8,12 @@ import {
   IsOptional,
   IsString,
   MinLength,
+  MaxLength,
   ValidateIf,
 } from 'class-validator';
 import { VehicleType } from '../../vehicles/enums/vehicleTypes';
 import { UnloadStatus } from '../enums/unloadStatus';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateTripDto {
   // --- DRIVER ---
@@ -32,11 +33,13 @@ export class CreateTripDto {
   @IsDefined({ message: 'validation.DRIVER_PHONE_NUMBER_REQUIRED' })
   @IsString({ message: 'validation.IS_STRING' })
   @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
+  @MaxLength(30, { message: 'validation.MAX_LENGTH' })
   driver_phone_number?: string;
 
   @ApiPropertyOptional({ description: 'Driver full name', example: 'John Doe' })
   @IsOptional()
   @IsString({ message: 'validation.IS_STRING' })
+  @MaxLength(100, { message: 'validation.MAX_LENGTH' })
   driver_full_name?: string;
 
   // --- COMPANY ---
@@ -57,6 +60,7 @@ export class CreateTripDto {
   @IsDefined({ message: 'validation.COMPANY_NAME_REQUIRED' })
   @IsString({ message: 'validation.IS_STRING' })
   @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
+  @MaxLength(255, { message: 'validation.MAX_LENGTH' })
   company_name?: string;
 
   // --- Vehicle ---
@@ -77,6 +81,7 @@ export class CreateTripDto {
   @IsString({ message: 'validation.IS_STRING' })
   @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
   @MinLength(4, { message: 'validation.MIN_LENGTH' })
+  @MaxLength(30, { message: 'validation.MAX_LENGTH' })
   licence_plate?: string;
 
   @ApiPropertyOptional({ description: 'Vehicle type', enum: VehicleType })
@@ -89,6 +94,7 @@ export class CreateTripDto {
   @ApiPropertyOptional({ description: 'Additional notes' })
   @IsOptional()
   @IsString({ message: 'validation.IS_STRING' })
+  @MaxLength(2000, { message: 'validation.MAX_LENGTH' })
   notes?: string;
 
   @ApiPropertyOptional({

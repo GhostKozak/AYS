@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   IsStrongPassword,
+  MaxLength,
 } from 'class-validator';
 import { UserRole } from '../schemas/user.schema';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -16,6 +17,7 @@ export class CreateUserDto {
   })
   @IsEmail({}, { message: 'validation.IS_EMAIL' })
   @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
+  @MaxLength(255, { message: 'validation.MAX_LENGTH' })
   email: string;
 
   @ApiProperty({
@@ -38,11 +40,13 @@ export class CreateUserDto {
   @ApiProperty({ description: 'User first name', example: 'Jane' })
   @IsString({ message: 'validation.IS_STRING' })
   @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
+  @MaxLength(100, { message: 'validation.MAX_LENGTH' })
   firstName: string;
 
   @ApiProperty({ description: 'User last name', example: 'Smith' })
   @IsString({ message: 'validation.IS_STRING' })
   @IsNotEmpty({ message: 'validation.IS_NOT_EMPTY' })
+  @MaxLength(100, { message: 'validation.MAX_LENGTH' })
   lastName: string;
 
   @ApiPropertyOptional({

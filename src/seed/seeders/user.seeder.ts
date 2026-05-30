@@ -71,7 +71,7 @@ export class UserSeeder {
     const users = [
       {
         email: 'editor@test.com',
-        password: await bcrypt.hash('Editor.123', 10),
+        password: await bcrypt.hash(process.env.TEST_EDITOR_PASSWORD || 'Editor.123', 10),
         firstName: 'Editor',
         lastName: 'User',
         role: UserRole.EDITOR,
@@ -79,7 +79,7 @@ export class UserSeeder {
       },
       {
         email: 'viewer@test.com',
-        password: await bcrypt.hash('Viewer.123', 10),
+        password: await bcrypt.hash(process.env.TEST_VIEWER_PASSWORD || 'Viewer.123', 10),
         firstName: 'Viewer',
         lastName: 'User',
         role: UserRole.VIEWER,
@@ -87,7 +87,7 @@ export class UserSeeder {
       },
       {
         email: 'inactive@test.com',
-        password: await bcrypt.hash('Inactive.123', 10),
+        password: await bcrypt.hash(process.env.TEST_INACTIVE_PASSWORD || 'Inactive.123', 10),
         firstName: 'Inactive',
         lastName: 'User',
         role: UserRole.VIEWER,

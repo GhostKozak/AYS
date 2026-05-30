@@ -60,13 +60,15 @@ export class DriversService {
     }
     queryPayload.$or = orClauses;
 
-    const drivers = await this.driverModel
-      .find(queryPayload)
-      .populate('company')
-      .limit(100)
-      .lean()
-      .exec();
-    const count = await this.driverModel.countDocuments(queryPayload);
+    const [drivers, count] = await Promise.all([
+      this.driverModel
+        .find(queryPayload)
+        .populate('company')
+        .limit(100)
+        .lean()
+        .exec(),
+      this.driverModel.countDocuments(queryPayload).exec(),
+    ]);
 
     return {
       data: drivers,
@@ -218,18 +220,20 @@ export class DriversService {
       query.$or = orClauses;
     }
 
-    const drivers = await this.driverModel
-      .find(query)
-      .setOptions({ skipSoftDelete: showDeleted })
-      .skip(offset ?? 0)
-      .limit(limit ?? 10)
-      .populate('company', 'name')
-      .lean()
-      .exec();
-
-    const count = await this.driverModel
-      .countDocuments(query)
-      .setOptions({ skipSoftDelete: showDeleted });
+    const [drivers, count] = await Promise.all([
+      this.driverModel
+        .find(query)
+        .setOptions({ skipSoftDelete: showDeleted })
+        .skip(offset ?? 0)
+        .limit(limit ?? 10)
+        .populate('company', 'name')
+        .lean()
+        .exec(),
+      this.driverModel
+        .countDocuments(query)
+        .setOptions({ skipSoftDelete: showDeleted })
+        .exec(),
+    ]);
 
     return {
       data: drivers,

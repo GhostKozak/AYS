@@ -34,8 +34,10 @@ export class CompaniesService {
       deleted: false,
     };
 
-    const companies = await this.companyModel.find(query).limit(100).lean().exec();
-    const count = await this.companyModel.countDocuments(query);
+    const [companies, count] = await Promise.all([
+      this.companyModel.find(query).limit(100).lean().exec(),
+      this.companyModel.countDocuments(query).exec(),
+    ]);
 
     return {
       data: companies,
@@ -134,17 +136,19 @@ export class CompaniesService {
       query.name = { $regex: escapedSearch, $options: 'i' };
     }
 
-    const companies = await this.companyModel
-      .find(query)
-      .setOptions({ skipSoftDelete: showDeleted })
-      .skip(offset ?? 0)
-      .limit(limit ?? 10)
-      .lean()
-      .exec();
-
-    const count = await this.companyModel
-      .countDocuments(query)
-      .setOptions({ skipSoftDelete: showDeleted });
+    const [companies, count] = await Promise.all([
+      this.companyModel
+        .find(query)
+        .setOptions({ skipSoftDelete: showDeleted })
+        .skip(offset ?? 0)
+        .limit(limit ?? 10)
+        .lean()
+        .exec(),
+      this.companyModel
+        .countDocuments(query)
+        .setOptions({ skipSoftDelete: showDeleted })
+        .exec(),
+    ]);
 
     return {
       data: companies,

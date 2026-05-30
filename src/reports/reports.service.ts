@@ -360,6 +360,7 @@ export class ReportsService {
       .populate('driver', 'full_name')
       .populate('vehicle', 'licence_plate')
       .sort({ arrival_time: -1 })
+      .limit(5000)
       .lean()
       .cursor();
 
@@ -425,6 +426,7 @@ export class ReportsService {
       .populate('driver', 'full_name')
       .populate('vehicle', 'licence_plate')
       .sort({ arrival_time: -1 })
+      .limit(5000)
       .lean()
       .cursor();
 

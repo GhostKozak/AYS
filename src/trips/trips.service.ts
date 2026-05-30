@@ -149,24 +149,26 @@ export class TripsService {
       ];
     }
 
-    const trips = await this.tripModel
-      .find(query)
-      .setOptions({ skipSoftDelete: showDeleted })
-      .select(
-        'arrival_time departure_time unload_status is_in_parking_lot is_in_temporary_parking_lot has_gps_tracking parked_at notes company driver vehicle status field_photo_path seal_number field_verified_at',
-      )
-      .sort({ arrival_time: -1 })
-      .skip(offset ?? 0)
-      .limit(limit ?? 10)
-      .populate('driver', 'full_name phone_number')
-      .populate('company', 'name')
-      .populate('vehicle', 'licence_plate vehicle_type')
-      .lean()
-      .exec();
-
-    const count = await this.tripModel
-      .countDocuments(query)
-      .setOptions({ skipSoftDelete: showDeleted });
+    const [trips, count] = await Promise.all([
+      this.tripModel
+        .find(query)
+        .setOptions({ skipSoftDelete: showDeleted })
+        .select(
+          'arrival_time departure_time unload_status is_in_parking_lot is_in_temporary_parking_lot has_gps_tracking parked_at notes company driver vehicle status field_photo_path seal_number field_verified_at',
+        )
+        .sort({ arrival_time: -1 })
+        .skip(offset ?? 0)
+        .limit(limit ?? 10)
+        .populate('driver', 'full_name phone_number')
+        .populate('company', 'name')
+        .populate('vehicle', 'licence_plate vehicle_type')
+        .lean()
+        .exec(),
+      this.tripModel
+        .countDocuments(query)
+        .setOptions({ skipSoftDelete: showDeleted })
+        .exec(),
+    ]);
 
     return {
       data: trips,
