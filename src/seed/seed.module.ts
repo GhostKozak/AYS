@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { SeedService } from './seed.service';
 import { SeedController } from './seed.controller';
 import { User, UserSchema } from '../users/schemas/user.schema';
+import { UserSession, UserSessionSchema } from '../users/schemas/user-session.schema';
 import { Company, CompanySchema } from '../companies/schemas/company.schema';
 import { Driver, DriverSchema } from '../drivers/schemas/driver.schema';
 import { Vehicle, VehicleSchema } from '../vehicles/schema/vehicles.schema';
@@ -17,6 +18,7 @@ import { TripSeeder } from './seeders/trip.seeder';
   imports: [
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
+      { name: UserSession.name, schema: UserSessionSchema },
       { name: Company.name, schema: CompanySchema },
       { name: Driver.name, schema: DriverSchema },
       { name: Vehicle.name, schema: VehicleSchema },

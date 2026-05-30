@@ -63,6 +63,8 @@ export class Trip {
 
   @Prop()
   notes: string;
+
+  deleted?: boolean;
 }
 
 export const TripSchema = SchemaFactory.createForClass(Trip);

@@ -4,6 +4,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Trip } from '../../trips/schema/trips.schema';
 import { UnloadStatus } from '../../trips/enums/unloadStatus';
+import { VerificationStatus } from '../../trips/enums/verificationStatus';
+
+const SEED_YEAR = new Date().getFullYear() - 1;
 
 @Injectable()
 export class TripSeeder {
@@ -19,16 +22,16 @@ export class TripSeeder {
     const trips: any[] = [];
     const now = new Date();
 
-    // 2025 yılı için aylık dağılım
+    // Geçmiş yıl için aylık dağılım
     for (let month = 0; month < 12; month++) {
-      const daysInMonth = new Date(2025, month + 1, 0).getDate();
+      const daysInMonth = new Date(SEED_YEAR, month + 1, 0).getDate();
 
       for (
         let day = 1;
         day <= daysInMonth;
         day += Math.floor(Math.random() * 3) + 1
       ) {
-        const tripDate = new Date(2025, month, day);
+        const tripDate = new Date(SEED_YEAR, month, day);
         const dailyTrips = Math.floor(Math.random() * 21) + 10;
 
         for (let i = 0; i < dailyTrips; i++) {
@@ -50,7 +53,7 @@ export class TripSeeder {
       const targetDate = new Date(
         today.getTime() - dayOffset * 24 * 60 * 60 * 1000,
       );
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 30; i++) {
         const entry = this.buildRecentTripEntry(
           targetDate,
           dayOffset,
@@ -95,11 +98,16 @@ export class TripSeeder {
     let isInParkingLot = false;
     let departureTime: Date | null = null;
     let notes = '';
+    let tripStatus: VerificationStatus = VerificationStatus.PENDING;
 
-    if (statusRandom < 0.3) {
+    if (statusRandom < 0.25) {
       unloadStatus = UnloadStatus.WAITING;
       isInParkingLot = true;
       notes = 'Bekliyor - boşaltma için hazır';
+    } else if (statusRandom < 0.35) {
+      unloadStatus = UnloadStatus.UNLOADING;
+      isInParkingLot = false;
+      notes = 'Boşaltılıyor - sahada';
     } else if (statusRandom < 0.7) {
       unloadStatus = UnloadStatus.UNLOADED;
       isInParkingLot = false;
@@ -107,11 +115,32 @@ export class TripSeeder {
       departureTime = new Date(
         arrivalTime.getTime() + unloadDuration * 60 * 60 * 1000,
       );
+
+      // ~%40 of unloaded trips are field-verified
+      if (Math.random() < 0.4) {
+        tripStatus = VerificationStatus.CONFIRMED;
+        const verifiedAt = new Date(arrivalTime.getTime() + Math.floor(Math.random() * 3600000) + 60000);
+        notes = `Boşaltıldı - ${unloadDuration} saat sürdü (sahada onaylandı)`;
+        return {
+          arrival_time: arrivalTime,
+          departure_time: departureTime,
+          unload_status: unloadStatus,
+          is_trip_canceled: isTripCanceled,
+          is_in_parking_lot: isInParkingLot,
+          status: tripStatus,
+          field_verified_at: verifiedAt,
+          seal_number: `SEAL-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+          notes,
+          company: company._id,
+          driver: driver._id,
+          vehicle: vehicle._id,
+        };
+      }
       notes = `Boşaltıldı - ${unloadDuration} saat sürdü`;
     } else {
       unloadStatus = UnloadStatus.CANCELED;
       isTripCanceled = true;
-      isInParkingLot = false;
+      isInParkingLot = true;
       notes = 'İptal edildi - çeşitli nedenler';
     }
 
@@ -129,7 +158,7 @@ export class TripSeeder {
       unload_status: unloadStatus,
       is_trip_canceled: isTripCanceled,
       is_in_parking_lot: isInParkingLot,
-      status: 'PENDING',
+      status: tripStatus,
       notes,
       company: company._id,
       driver: driver._id,
@@ -164,23 +193,48 @@ export class TripSeeder {
     let isInParkingLot = false;
     let departureTime: Date | null = null;
     let notes = '';
+    let tripStatus: VerificationStatus = VerificationStatus.PENDING;
 
-    if (dayOffset === 0 && statusRandom < 0.4) {
+    if (dayOffset === 0 && statusRandom < 0.35) {
       unloadStatus = UnloadStatus.WAITING;
       isInParkingLot = true;
       notes = 'Bugün gelen - bekliyor';
-    } else if (statusRandom < 0.6) {
+    } else if (statusRandom < 0.45) {
+      unloadStatus = UnloadStatus.UNLOADING;
+      isInParkingLot = false;
+      notes = 'Boşaltılıyor - sahada';
+    } else if (statusRandom < 0.75) {
       unloadStatus = UnloadStatus.UNLOADED;
       isInParkingLot = false;
       const unloadDuration = Math.floor(Math.random() * 6) + 1;
       departureTime = new Date(
         arrivalTime.getTime() + unloadDuration * 60 * 60 * 1000,
       );
+
+      if (Math.random() < 0.4) {
+        tripStatus = VerificationStatus.CONFIRMED;
+        const verifiedAt = new Date(arrivalTime.getTime() + Math.floor(Math.random() * 3600000) + 60000);
+        notes = `Tamamlandı - ${unloadDuration} saat (sahada onaylandı)`;
+        return {
+          arrival_time: arrivalTime,
+          departure_time: departureTime,
+          unload_status: unloadStatus,
+          is_trip_canceled: isTripCanceled,
+          is_in_parking_lot: isInParkingLot,
+          status: tripStatus,
+          field_verified_at: verifiedAt,
+          seal_number: `SEAL-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+          notes,
+          company: company._id,
+          driver: driver._id,
+          vehicle: vehicle._id,
+        };
+      }
       notes = `Tamamlandı - ${unloadDuration} saat`;
     } else {
       unloadStatus = UnloadStatus.CANCELED;
       isTripCanceled = true;
-      isInParkingLot = false;
+      isInParkingLot = true;
       notes = 'İptal edildi';
     }
 
@@ -190,7 +244,7 @@ export class TripSeeder {
       unload_status: unloadStatus,
       is_trip_canceled: isTripCanceled,
       is_in_parking_lot: isInParkingLot,
-      status: 'PENDING',
+      status: tripStatus,
       notes,
       company: company._id,
       driver: driver._id,

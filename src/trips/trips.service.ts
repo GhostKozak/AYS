@@ -395,14 +395,10 @@ export class TripsService {
       return true; // Canceled vehicles are still in parking lot until removed
     }
 
-    if (!unloadStatus) {
+    if (!unloadStatus || unloadStatus === UnloadStatus.UNKNOWN) {
       return true; // Default to true if no status provided (vehicle just arrived)
     }
 
-    const nonParkingStatuses = [
-      UnloadStatus.COMPLETED,
-      UnloadStatus.CANCELED,
-    ];
-    return !nonParkingStatuses.includes(unloadStatus as UnloadStatus);
+    return unloadStatus === UnloadStatus.WAITING;
   }
 }

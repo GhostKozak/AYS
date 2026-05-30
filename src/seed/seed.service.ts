@@ -1,4 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { UserSession } from '../users/schemas/user-session.schema';
 import { UserSeeder } from './seeders/user.seeder';
 import { CompanySeeder } from './seeders/company.seeder';
 import { DriverSeeder } from './seeders/driver.seeder';
@@ -16,6 +19,7 @@ export class SeedService {
   private readonly logger = new Logger(SeedService.name);
 
   constructor(
+    @InjectModel(UserSession.name) private userSessionModel: Model<UserSession>,
     private readonly userSeeder: UserSeeder,
     private readonly companySeeder: CompanySeeder,
     private readonly driverSeeder: DriverSeeder,
@@ -31,6 +35,7 @@ export class SeedService {
     this.logger.log('Starting comprehensive seed...');
 
     // Temizle
+    await this.userSessionModel.deleteMany({});
     await this.tripSeeder.clear();
     await this.driverSeeder.clear();
     await this.vehicleSeeder.clear();
