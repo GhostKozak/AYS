@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
@@ -151,6 +152,7 @@ export class CreateTripDto {
   @IsOptional()
   @IsString()
   @MaxLength(50)
+  @Transform(({ value }) => value?.trim())
   seal_number?: string;
 
   @ApiPropertyOptional({ description: 'Verification status', enum: VerificationStatus })
