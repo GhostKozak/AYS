@@ -12,6 +12,7 @@ import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import { join } from 'path';
 import * as fs from 'fs';
+import express from 'express';
 
 async function bootstrap() {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -51,6 +52,8 @@ async function bootstrap() {
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
+
+  app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
 
   app.enableCors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',

@@ -156,7 +156,19 @@ export class TripsController {
       );
     }
 
-    const photoPath = `/uploads/field-photos/${file.filename}`;
+    // Rename file to include plate and date: photo-PLATE-YYYYMMDD-UUID.ext
+    const trip = await this.tripsService.findOne(id);
+    const plate = ((trip.vehicle as any)?.licence_plate ?? 'unknown')
+      .replace(/\s+/g, '')
+      .replace(/[^a-zA-Z0-9]/g, '');
+    const ext = extname(file.filename);
+    const uuid = file.filename.replace('photo-', '').replace(ext, '');
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const newFilename = `photo-${plate}-${dateStr}-${uuid}${ext}`;
+    const newPath = join(file.destination, newFilename);
+    await fsPromises.rename(file.path, newPath);
+
+    const photoPath = `/uploads/field-photos/${newFilename}`;
     return this.tripsService.fieldVerify(
       id,
       sealNumber,

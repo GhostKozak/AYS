@@ -13,6 +13,7 @@ import {
 } from 'class-validator';
 import { VehicleType } from '../../vehicles/enums/vehicleTypes';
 import { UnloadStatus } from '../enums/unloadStatus';
+import { VerificationStatus } from '../enums/verificationStatus';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateTripDto {
@@ -145,4 +146,20 @@ export class CreateTripDto {
   @IsOptional()
   @IsDateString()
   parked_at?: string;
+
+  @ApiPropertyOptional({ description: 'Seal number', example: 'SEAL-ABC123' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  seal_number?: string;
+
+  @ApiPropertyOptional({ description: 'Verification status', enum: VerificationStatus })
+  @IsOptional()
+  @IsEnum(VerificationStatus)
+  status?: VerificationStatus;
+
+  @ApiPropertyOptional({ description: 'Soft delete flag' })
+  @IsOptional()
+  @IsBoolean()
+  deleted?: boolean;
 }
