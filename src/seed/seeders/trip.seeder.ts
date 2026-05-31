@@ -84,6 +84,7 @@ export class TripSeeder {
       if (!entry) continue;
       entry.unload_status = UnloadStatus.WAITING;
       entry.is_in_parking_lot = true;
+      entry.parked_at = entry.arrival_time;
       entry.departure_time = null;
       entry.is_trip_canceled = false;
       // Waiting vehicles should be present but NOT necessarily pending verification
@@ -145,6 +146,7 @@ export class TripSeeder {
       if (statusRandom < 0.25) {
       unloadStatus = UnloadStatus.WAITING;
       isInParkingLot = true;
+      departureTime = null;
       notes = 'Bekliyor - boşaltma için hazır';
       } else if (statusRandom < 0.35) {
       unloadStatus = UnloadStatus.UNLOADING;
@@ -181,6 +183,7 @@ export class TripSeeder {
       unload_status: unloadStatus,
       is_trip_canceled: isTripCanceled,
       is_in_parking_lot: isInParkingLot,
+      parked_at: isInParkingLot ? arrivalTime : undefined,
       status: tripStatus,
       notes,
       ...(tripStatus === VerificationStatus.CONFIRMED && unloadStatus === UnloadStatus.UNLOADED
@@ -251,6 +254,7 @@ export class TripSeeder {
       unload_status: unloadStatus,
       is_trip_canceled: isTripCanceled,
       is_in_parking_lot: isInParkingLot,
+      parked_at: isInParkingLot ? arrivalTime : undefined,
       status: tripStatus,
       notes,
       ...(tripStatus === VerificationStatus.CONFIRMED && unloadStatus === UnloadStatus.UNLOADED
