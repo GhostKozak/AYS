@@ -54,15 +54,20 @@ export class UsersService {
     return userObj;
   }
 
-  async findAll(): Promise<User[]> {
-    return this.userModel.find({}, { password: 0 }).lean().exec();
+  async findAll(showDeleted = false): Promise<User[]> {
+    const query = this.userModel.find({}, { password: 0 });
+    if (showDeleted) {
+      query.setOptions({ skipSoftDelete: true });
+    }
+    return query.lean().exec();
   }
 
-  async findOne(id: string): Promise<User> {
-    const user = await this.userModel
-      .findById(id, { password: 0 })
-      .lean()
-      .exec();
+  async findOne(id: string, showDeleted = false): Promise<User> {
+    const query = this.userModel.findById(id, { password: 0 });
+    if (showDeleted) {
+      query.setOptions({ skipSoftDelete: true });
+    }
+    const user = await query.lean().exec();
     if (!user) {
       throw new NotFoundException(this.i18n.translate('user.NOT_FOUND'));
     }

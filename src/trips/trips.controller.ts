@@ -75,9 +75,11 @@ export class TripsController {
   async getPendingVerification(
     @Query('limit', new DefaultValuePipe(200), ParseIntPipe) limit?: number,
     @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset?: number,
+    @GetUser() user?: AuthenticatedUser,
   ) {
     const cappedLimit = Math.min(limit ?? 200, 200);
-    return this.tripsService.findPendingVerification(cappedLimit, offset);
+    const showDeleted = user?.role === UserRole.ADMIN;
+    return this.tripsService.findPendingVerification(cappedLimit, offset, showDeleted);
   }
 
   @Get(':id')

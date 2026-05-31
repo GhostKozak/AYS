@@ -31,7 +31,7 @@ export class SearchController {
     description: 'Search job accepted. Results will be pushed via WebSocket.',
   })
   @SkipThrottle({ default: true, auth: true }) // Skip default and auth throttlers so only search throttler applies
-  async createAsyncSearch(@Body() dto: AsyncSearchDto, @GetUser('userId') userId: string) {
-    return this.searchService.createSearchJob(dto, userId);
+  async createAsyncSearch(@Body() dto: AsyncSearchDto, @GetUser() user: { userId: string; role: string }) {
+    return this.searchService.createSearchJob(dto, user.userId, user.role);
   }
 }

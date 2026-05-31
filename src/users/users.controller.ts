@@ -55,8 +55,9 @@ export class UsersController {
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({ status: 200, description: 'Return all users' })
-  async findAll() {
-    const users = await this.usersService.findAll();
+  async findAll(@GetUser() user: JwtUser) {
+    const showDeleted = user.role === UserRole.ADMIN;
+    const users = await this.usersService.findAll(showDeleted);
     return { data: users, count: users.length };
   }
 
@@ -87,8 +88,9 @@ export class UsersController {
   @ApiParam({ name: 'id', description: 'User MongoDB ID' })
   @ApiResponse({ status: 200, description: 'Return user details' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  findOne(@Param('id', ParseMongoIdPipe) id: string) {
-    return this.usersService.findOne(id);
+  findOne(@Param('id', ParseMongoIdPipe) id: string, @GetUser() user: JwtUser) {
+    const showDeleted = user.role === UserRole.ADMIN;
+    return this.usersService.findOne(id, showDeleted);
   }
 
   @Patch(':id')

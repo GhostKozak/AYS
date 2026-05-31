@@ -179,6 +179,7 @@ export class TripsService {
   async findPendingVerification(
     limit = 200,
     offset = 0,
+    showDeleted = false,
   ): Promise<{ data: Trip[]; count: number }> {
     const query = {
       $or: [
@@ -187,9 +188,12 @@ export class TripsService {
       ],
       is_trip_canceled: false,
     };
+    const baseQuery = this.tripModel.find(query);
+    if (showDeleted) {
+      baseQuery.setOptions({ skipSoftDelete: true });
+    }
     const [data, count] = await Promise.all([
-      this.tripModel
-        .find(query)
+      baseQuery
         .select(
           'arrival_time departure_time unload_status is_in_parking_lot is_in_temporary_parking_lot has_gps_tracking parked_at is_trip_canceled createdAt updatedAt notes company driver vehicle status field_photo_path seal_number field_verified_at',
         )
@@ -201,7 +205,7 @@ export class TripsService {
         .populate('vehicle', 'licence_plate vehicle_type')
         .lean()
         .exec() as unknown as Promise<Trip[]>,
-      this.tripModel.countDocuments(query).exec(),
+      this.tripModel.countDocuments(query).setOptions({ skipSoftDelete: showDeleted }).exec(),
     ]);
     return { data, count };
   }

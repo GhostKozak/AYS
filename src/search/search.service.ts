@@ -15,7 +15,7 @@ export class SearchService {
   private readonly logger = new Logger(SearchService.name);
 
   /** Tracks which user owns which async search job */
-  private readonly jobOwners = new Map<string, string>();
+  private readonly jobOwners = new Map<string, { userId: string; role: string }>();
 
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -27,9 +27,9 @@ export class SearchService {
     private readonly searchCacheRegistry: SearchCacheRegistryService,
   ) {}
 
-  async createSearchJob(dto: AsyncSearchDto, userId: string) {
+  async createSearchJob(dto: AsyncSearchDto, userId: string, role: string) {
     const jobId = randomUUID();
-    this.jobOwners.set(jobId, userId);
+    this.jobOwners.set(jobId, { userId, role });
 
     // Auto-cleanup after 5 minutes to prevent memory leaks on hanging jobs
     setTimeout(() => {
@@ -61,17 +61,19 @@ export class SearchService {
   }
 
   private async executeSearch(jobId: string, dto: AsyncSearchDto) {
-    const userId = this.jobOwners.get(jobId);
-    if (!userId) {
+    const owner = this.jobOwners.get(jobId);
+    if (!owner) {
       this.logger.warn(`No owner found for job ${jobId}, skipping emit`);
       return;
     }
+    const { userId, role } = owner;
+    const showDeleted = role === 'admin';
 
     const startTime = Date.now();
 
     // Sort and clean filters to create a deterministic cache key
     const { module, limit, offset, ...filters } = dto;
-    const cacheKey = `search:${module}:l:${limit}:o:${offset}:${Buffer.from(JSON.stringify(filters)).toString('base64')}`;
+    const cacheKey = `search:${module}:l:${limit}:o:${offset}:sd:${showDeleted}:${Buffer.from(JSON.stringify(filters)).toString('base64')}`;
 
     // Check cache
     const cachedData = await this.cacheManager.get<{
@@ -99,19 +101,19 @@ export class SearchService {
       case SearchModuleEnum.COMPANIES:
         result = await this.companiesService.findAll(pagination, {
           search: dto.search,
-        });
+        }, showDeleted);
         break;
       case SearchModuleEnum.DRIVERS:
         result = await this.driversService.findAll(pagination, {
           companyId: dto.companyId,
           search: dto.search,
-        });
+        }, showDeleted);
         break;
       case SearchModuleEnum.VEHICLES:
         result = await this.vehiclesService.findAll(pagination, {
           vehicle_type: dto.vehicle_type,
           search: dto.search,
-        });
+        }, showDeleted);
         break;
       case SearchModuleEnum.TRIPS:
         result = await this.tripsService.findAll(
@@ -124,7 +126,7 @@ export class SearchService {
             unload_status: dto.unload_status,
             search: dto.search,
           },
-          false, // showDeleted (assuming false)
+          showDeleted,
         );
         break;
       default:
