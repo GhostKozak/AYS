@@ -154,7 +154,7 @@ export class TripsService {
         .find(query)
         .setOptions({ skipSoftDelete: showDeleted })
         .select(
-          'arrival_time departure_time unload_status is_in_parking_lot is_in_temporary_parking_lot has_gps_tracking parked_at notes company driver vehicle status field_photo_path seal_number field_verified_at',
+          'arrival_time departure_time unload_status is_in_parking_lot is_in_temporary_parking_lot has_gps_tracking parked_at notes company driver vehicle status field_photo_path field_photo_paths seal_number field_verified_at',
         )
         .sort({ arrival_time: -1 })
         .skip(offset ?? 0)
@@ -195,7 +195,7 @@ export class TripsService {
     const [data, count] = await Promise.all([
       baseQuery
         .select(
-          'arrival_time departure_time unload_status is_in_parking_lot is_in_temporary_parking_lot has_gps_tracking parked_at is_trip_canceled createdAt updatedAt notes company driver vehicle status field_photo_path seal_number field_verified_at',
+          'arrival_time departure_time unload_status is_in_parking_lot is_in_temporary_parking_lot has_gps_tracking parked_at is_trip_canceled createdAt updatedAt notes company driver vehicle status field_photo_path field_photo_paths seal_number field_verified_at',
         )
         .sort({ arrival_time: 1 })
         .skip(offset)
@@ -300,7 +300,7 @@ export class TripsService {
   async fieldVerify(
     id: string,
     sealNumber: string | undefined,
-    photoPath: string,
+    photoPaths: string[],
     user?: { userId?: string; _id?: string },
   ): Promise<Trip> {
     const existingTrip = await this.tripModel
@@ -331,7 +331,8 @@ export class TripsService {
         {
           status: VerificationStatus.CONFIRMED,
           seal_number: sealNumber,
-          field_photo_path: photoPath,
+          field_photo_path: photoPaths[0] ?? null,
+          field_photo_paths: photoPaths,
           field_verified_at: new Date(),
         },
         { new: true, returnDocument: 'after' },

@@ -10,13 +10,13 @@ import {
   Query,
   Res,
   UseInterceptors,
-  UploadedFile,
+  UploadedFiles,
   BadRequestException,
   DefaultValuePipe,
   ParseIntPipe,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join, basename } from 'path';
 import { randomUUID } from 'crypto';
@@ -109,7 +109,7 @@ export class TripsController {
 
   @Post(':id/field-verify')
   @UseInterceptors(
-    FileInterceptor('photo', {
+    FilesInterceptor('photos', 10, {
       storage: diskStorage({
         destination: join(process.cwd(), 'uploads', 'field-photos'),
         filename: (req, file, callback) => {
@@ -141,38 +141,44 @@ export class TripsController {
   async fieldVerify(
     @Param('id', ParseMongoIdPipe) id: string,
     @Body('seal_number') sealNumber: string,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFiles() files: Express.Multer.File[],
     @GetUser() user: AuthenticatedUser,
   ) {
-    if (!file) {
-      throw new BadRequestException('Vehicle/plate photo is required.');
+    if (!files?.length) {
+      throw new BadRequestException('At least one vehicle/plate photo is required.');
     }
 
     // Validate file content via magic bytes (not just MIME type)
-    if (!(await isValidImageFile(file.path))) {
-      unlink(file.path, () => {});
-      throw new BadRequestException(
-        'Invalid file content: not a valid JPEG or PNG image.',
-      );
+    for (const file of files) {
+      if (!(await isValidImageFile(file.path))) {
+        unlink(file.path, () => {});
+        throw new BadRequestException(
+          'Invalid file content: not a valid JPEG or PNG image.',
+        );
+      }
     }
 
-    // Rename file to include plate and date: photo-PLATE-YYYYMMDD-UUID.ext
+    // Rename each file to include plate and date: photo-PLATE-YYYYMMDD-UUID.ext
     const trip = await this.tripsService.findOne(id);
     const plate = ((trip.vehicle as any)?.licence_plate ?? 'unknown')
       .replace(/\s+/g, '')
       .replace(/[^a-zA-Z0-9]/g, '');
-    const ext = extname(file.filename);
-    const uuid = file.filename.replace('photo-', '').replace(ext, '');
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const newFilename = `photo-${plate}-${dateStr}-${uuid}${ext}`;
-    const newPath = join(file.destination, newFilename);
-    await fsPromises.rename(file.path, newPath);
+    const photoPaths: string[] = [];
 
-    const photoPath = `/uploads/field-photos/${newFilename}`;
+    for (const file of files) {
+      const ext = extname(file.filename);
+      const uuid = file.filename.replace('photo-', '').replace(ext, '');
+      const newFilename = `photo-${plate}-${dateStr}-${uuid}${ext}`;
+      const newPath = join(file.destination, newFilename);
+      await fsPromises.rename(file.path, newPath);
+      photoPaths.push(`/uploads/field-photos/${newFilename}`);
+    }
+
     return this.tripsService.fieldVerify(
       id,
       sealNumber,
-      photoPath,
+      photoPaths,
       user,
     );
   }

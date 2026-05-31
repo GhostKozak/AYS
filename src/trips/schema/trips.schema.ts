@@ -55,6 +55,9 @@ export class Trip {
   @Prop({ default: null })
   field_photo_path: string;
 
+  @Prop({ type: [String], default: [] })
+  field_photo_paths: string[];
+
   @Prop({ default: null })
   seal_number: string;
 
