@@ -125,11 +125,6 @@ export class CreateTripDto {
   @IsBoolean()
   has_gps_tracking?: boolean;
 
-  @ApiPropertyOptional({ description: 'In temporary parking lot' })
-  @IsOptional()
-  @IsBoolean()
-  is_in_temporary_parking_lot?: boolean;
-
   @ApiPropertyOptional({ description: 'Is trip canceled' })
   @IsOptional()
   @IsBoolean()
@@ -147,6 +142,19 @@ export class CreateTripDto {
   @IsOptional()
   @IsDateString()
   parked_at?: string;
+
+  @ApiPropertyOptional({ description: 'Parking area name', example: 'Murat Garaj' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  parking_area?: string;
+
+  @ApiPropertyOptional({ description: 'Parking note', example: 'Gece gelindi, kapıda beklendi' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  @Transform(({ value }) => value?.trim())
+  parking_note?: string;
 
   @ApiPropertyOptional({ description: 'Seal number', example: 'SEAL-ABC123' })
   @IsOptional()

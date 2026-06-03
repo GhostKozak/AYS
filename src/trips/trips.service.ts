@@ -83,15 +83,19 @@ export class TripsService {
     }
 
     try {
+      const isInParkingLot = this.isVehicleInParkingLot(
+        createTripDto.unload_status,
+        createTripDto.is_trip_canceled,
+      );
       const newTrip = new this.tripModel({
         ...createTripDto,
         driver: driver?._id,
         company: company?._id,
         vehicle: vehicle?._id,
-        is_in_parking_lot: this.isVehicleInParkingLot(
-          createTripDto.unload_status,
-          createTripDto.is_trip_canceled,
-        ),
+        is_in_parking_lot: isInParkingLot,
+        parking_history: isInParkingLot
+          ? [{ entered_at: new Date(), area: createTripDto.parking_area ?? 'Murat Garaj', note: createTripDto.parking_note ?? '' }]
+          : [],
       });
       const savedTrip = await newTrip.save();
       this.eventsGateway.emitTripCreated(savedTrip);
@@ -154,7 +158,7 @@ export class TripsService {
         .find(query)
         .setOptions({ skipSoftDelete: showDeleted })
         .select(
-          'arrival_time departure_time unload_status is_in_parking_lot is_in_temporary_parking_lot has_gps_tracking parked_at notes company driver vehicle status field_photo_path field_photo_paths seal_number field_verified_at',
+          'arrival_time departure_time unload_status is_in_parking_lot has_gps_tracking parked_at parking_area parking_note parking_history notes company driver vehicle status field_photo_path field_photo_paths seal_number field_verified_at',
         )
         .sort({ arrival_time: -1 })
         .skip(offset ?? 0)
@@ -195,7 +199,7 @@ export class TripsService {
     const [data, count] = await Promise.all([
       baseQuery
         .select(
-          'arrival_time departure_time unload_status is_in_parking_lot is_in_temporary_parking_lot has_gps_tracking parked_at is_trip_canceled createdAt updatedAt notes company driver vehicle status field_photo_path field_photo_paths seal_number field_verified_at',
+          'arrival_time departure_time unload_status is_in_parking_lot has_gps_tracking parked_at parking_area parking_note parking_history is_trip_canceled createdAt updatedAt notes company driver vehicle status field_photo_path field_photo_paths seal_number field_verified_at',
         )
         .sort({ arrival_time: 1 })
         .skip(offset)
@@ -249,19 +253,35 @@ export class TripsService {
       );
     }
 
+    const wasParked = existingTrip.is_in_parking_lot;
+    const nowParked = this.isVehicleInParkingLot(
+      updateTripDto.unload_status || existingTrip.unload_status,
+      updateTripDto.is_trip_canceled !== undefined
+        ? updateTripDto.is_trip_canceled
+        : existingTrip.is_trip_canceled,
+    );
+
+    const updateData: Record<string, any> = {
+      ...updateTripDto,
+      is_in_parking_lot: nowParked,
+    };
+
+    // Auto-track parking history when vehicle enters parking
+    if (!wasParked && nowParked) {
+      updateData.parking_history = [
+        ...(existingTrip.parking_history ?? []),
+        {
+          entered_at: new Date(),
+          area: updateTripDto.parking_area ?? existingTrip.parking_area ?? 'Murat Garaj',
+          note: updateTripDto.parking_note ?? existingTrip.parking_note ?? '',
+        },
+      ];
+    }
+
     const updatedTrip = await this.tripModel
       .findOneAndUpdate(
         { _id: id },
-        {
-          ...updateTripDto,
-          // Update is_in_parking_lot based on status changes
-          is_in_parking_lot: this.isVehicleInParkingLot(
-            updateTripDto.unload_status || existingTrip.unload_status,
-            updateTripDto.is_trip_canceled !== undefined
-              ? updateTripDto.is_trip_canceled
-              : existingTrip.is_trip_canceled,
-          ),
-        },
+        updateData,
         { new: true, returnDocument: 'after', skipSoftDelete: false },
       )
       .setOptions({ skipSoftDelete: false })

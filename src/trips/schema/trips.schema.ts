@@ -34,9 +34,6 @@ export class Trip {
   has_gps_tracking: boolean;
 
   @Prop({ default: false })
-  is_in_temporary_parking_lot: boolean;
-
-  @Prop({ default: false })
   is_trip_canceled: boolean;
 
   @Prop({ default: false })
@@ -44,6 +41,15 @@ export class Trip {
 
   @Prop({ default: null })
   parked_at: Date;
+
+  @Prop({ default: 'Murat Garaj' })
+  parking_area: string;
+
+  @Prop({ default: null })
+  parking_note: string;
+
+  @Prop({ type: [{ entered_at: { type: Date }, area: { type: String }, note: { type: String } }], default: [] })
+  parking_history: { entered_at: Date; area: string; note: string }[];
 
   @Prop({
     type: String,

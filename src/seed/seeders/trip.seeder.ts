@@ -85,6 +85,9 @@ export class TripSeeder {
       entry.unload_status = UnloadStatus.WAITING;
       entry.is_in_parking_lot = true;
       entry.parked_at = entry.arrival_time;
+      entry.parking_area = this.randomParkingArea();
+      entry.parking_note = Math.random() < 0.3 ? 'Gece geliş' : '';
+      entry.parking_history = [{ entered_at: entry.arrival_time, area: entry.parking_area, note: entry.parking_note }];
       entry.departure_time = null;
       entry.is_trip_canceled = false;
       // Waiting vehicles should be present but NOT necessarily pending verification
@@ -177,6 +180,8 @@ export class TripSeeder {
       notes = 'Planlanan sefer';
     }
 
+    const parkingArea = isInParkingLot ? this.randomParkingArea() : undefined;
+
     return {
       arrival_time: arrivalTime,
       departure_time: departureTime,
@@ -184,6 +189,11 @@ export class TripSeeder {
       is_trip_canceled: isTripCanceled,
       is_in_parking_lot: isInParkingLot,
       parked_at: isInParkingLot ? arrivalTime : undefined,
+      parking_area: parkingArea,
+      parking_note: isInParkingLot ? (Math.random() < 0.2 ? 'Gece geliş' : '') : undefined,
+      parking_history: isInParkingLot && parkingArea
+        ? [{ entered_at: arrivalTime, area: parkingArea, note: '' }]
+        : [],
       status: tripStatus,
       notes,
       ...(tripStatus === VerificationStatus.CONFIRMED && unloadStatus === UnloadStatus.UNLOADED
@@ -193,6 +203,11 @@ export class TripSeeder {
       driver: driver._id,
       vehicle: vehicle._id,
     };
+  }
+
+  private randomParkingArea(): string {
+    const areas = ['Murat Garaj', 'Morgül Park', 'Koridor Kesik', 'Açık Sahada'];
+    return areas[Math.floor(Math.random() * areas.length)];
   }
 
   private buildRecentTripEntry(
@@ -248,6 +263,8 @@ export class TripSeeder {
       notes = 'İptal edildi';
     }
 
+    const parkingArea = isInParkingLot ? this.randomParkingArea() : undefined;
+
     return {
       arrival_time: arrivalTime,
       departure_time: departureTime,
@@ -255,6 +272,11 @@ export class TripSeeder {
       is_trip_canceled: isTripCanceled,
       is_in_parking_lot: isInParkingLot,
       parked_at: isInParkingLot ? arrivalTime : undefined,
+      parking_area: parkingArea,
+      parking_note: isInParkingLot ? (Math.random() < 0.2 ? 'Gece geliş' : '') : undefined,
+      parking_history: isInParkingLot && parkingArea
+        ? [{ entered_at: arrivalTime, area: parkingArea, note: '' }]
+        : [],
       status: tripStatus,
       notes,
       ...(tripStatus === VerificationStatus.CONFIRMED && unloadStatus === UnloadStatus.UNLOADED
